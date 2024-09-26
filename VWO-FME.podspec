@@ -17,5 +17,7 @@ Pod::Spec.new do |spec|
   spec.platform     	= :ios, "12.0"
   spec.swift_version 	= '5.0'
   spec.source       	= { :git => "https://github.com/wingify/vwo-fme-ios-sdk.git", :tag => "#{spec.version}" }
+  spec.source_files 	= 'VWO-FME/**/*.{h,m,swift,json}'
+  spec.resources 	= ['VWO-FME/Resources/*.json']
 
 end
