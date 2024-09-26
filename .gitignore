@@ -1,0 +1,63 @@
+# macOS
+.DS_Store
+
+# Xcode
+*.pbxuser
+*.mode1v3
+*.mode2v3
+*.perspectivev3
+xcuserdata
+*.xcscmblueprint
+
+# Swift Package Manager
+.build/
+Package.resolved
+
+# CocoaPods
+Pods/
+Podfile.lock
+
+# Carthage
+Carthage/Build/
+
+# Fastlane
+fastlane/report.xml
+fastlane/Preview.html
+fastlane/screenshots
+fastlane/test_output
+
+# Archives
+*.xcarchive
+
+# Derived data
+DerivedData/
+
+# Build products
+build/
+
+# Index
+*.hmap
+
+# Logs
+*.log
+
+# Temporary files
+*.swp
+*~.nib
+*.tmp
+
+# Playgrounds
+timeline.xctimeline
+playground.xcworkspace
+
+# AppCode
+.idea/
+
+# Other
+*.xccheckout
+*.moved-aside
+*.xcuserstate
+*.xcuserdatad
+
+# SwiftPM
+.swiftpm/xcode/package.pins
