@@ -5,7 +5,37 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [1.0.0] - 2024-09-26
+## [1.0.0] - 2024-10-15
+
+### Added
+
+- Added integration support with [VWO Gateway Service](https://hub.docker.com/r/wingifysoftware/vwo-fme-gateway-service)
+
+```swift
+import VWO_FME
+
+let options = VWOInitOptions(sdkKey: sdkKey, accountId: accountId, gatewayService: ["url": "REPLACE_WITH_GATEWAY_URL"])
+
+VWOFme.initialize(options: options) { result in
+    switch result {
+        case .success(let message):
+            print("VWO init success")
+
+        case .failure(let error):
+            print("VWO init failed")
+    }
+}
+
+let userContext = VWOContext(
+    id: USER_ID,
+    ipAddress: "1.2.3.4", // pass actual IP Address
+    userAgent: "Mozilla/5.0 (iPhone; CPU iPhone OS 14_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/15E148" // pass actual user agent
+)
+
+let featureFlagObj = VWOFme.getFlag(featureKey: FEATURE_KEY, context: userContext)
+```
+
+## [0.1.0] - 2024-09-26
 
 ### Added
 
