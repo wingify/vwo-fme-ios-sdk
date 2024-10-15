@@ -44,7 +44,8 @@ struct RequestModel {
         var options: [String: Any] = [:]
         options["hostname"] = url
         options["agent"] = false
-        options["scheme"] = scheme
+        let urlValue = url ?? ""
+        options["scheme"] = urlValue.hasPrefix("localhost") ? "http" : scheme // this is added for gateway integration testing
         if port != 80 {
             options["port"] = port
         }

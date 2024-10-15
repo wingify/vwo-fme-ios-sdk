@@ -24,8 +24,10 @@ public class VWOContext {
     var variationTargetingVariables: [String: Any] = [:]
     var vwo: GatewayService?
     
-    public init(id: String?, customVariables: [String: Any]) {
+    public init(id: String?, customVariables: [String: Any], ipAddress: String = "", userAgent: String = "") {
         self.id = id
         self.customVariables = customVariables
+        self.ipAddress = ipAddress
+        self.userAgent = userAgent
     }
 }

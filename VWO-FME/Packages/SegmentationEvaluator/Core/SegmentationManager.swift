@@ -54,26 +54,34 @@ class SegmentationManager {
         // If gateway service is required and the base URL is not the default one, fetch the data from the gateway service
         if feature.isGatewayServiceRequired && !UrlService.baseUrl.contains(Constants.HOST_NAME)
             && (context.vwo == nil) {
-
+            
             var queryParams: [String: String] = [:]
             if context.userAgent.isEmpty && context.ipAddress.isEmpty {
                 return
             }
             queryParams["userAgent"] = context.userAgent
             queryParams["ipAddress"] = context.ipAddress
-
-            do {
-                let params = GatewayServiceUtil.getQueryParams(queryParams)
-                let vwo = GatewayServiceUtil.getFromGatewayService(queryParams: params, endpoint: UrlEnum.getUserData.rawValue)
+            
+            let dispatchGroup = DispatchGroup()
+            dispatchGroup.enter()
+            
+            let params = GatewayServiceUtil.getQueryParams(queryParams)
+            GatewayServiceUtil.getFromGatewayService(queryParams: params, endpoint: UrlEnum.getUserData.rawValue) { gatewayResponse in
+                defer { dispatchGroup.leave() }
                 
-                if let vwo = vwo, let vwoData = vwo.data(using: .utf8)  {
-                    let gatewayServiceModel = try JSONDecoder().decode(GatewayService.self, from: vwoData)
-                    context.vwo = gatewayServiceModel
+                if let modelData = gatewayResponse {
+                    if let stringData = modelData.data {
+                        do {
+                            let gatewayData = stringData.data(using: .utf8)
+                            let gatewayServiceModel = try JSONDecoder().decode(GatewayService.self, from: gatewayData!)
+                            context.vwo = gatewayServiceModel
+                        } catch {
+                            LoggerService.log(level: .error, message: "Failed to decode GatewayService model")
+                        }
+                    }
                 }
-                
-            } catch {
-                LoggerService.log( level: .error, message: "Error in setting contextual data for segmentation. Got error: \(error)")
             }
+            dispatchGroup.wait()
         }
     }
 

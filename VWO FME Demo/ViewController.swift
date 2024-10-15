@@ -120,7 +120,10 @@ class ViewController: UIViewController {
         
         let myUserId = "unique_user_id"
         let customVariables = ["key_1":5, "key_2": 0] as [String : Any]
-        self.context = VWOContext(id: myUserId, customVariables: customVariables)
+        self.context = VWOContext(id: myUserId, 
+                                  customVariables: customVariables,
+                                  ipAddress: "1.2.3.4", 
+                                  userAgent: "Mozilla/5.0 (iPhone; CPU iPhone OS 14_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/15E148")
     }
     
     func initVwoSdk() {

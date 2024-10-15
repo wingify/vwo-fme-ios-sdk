@@ -29,11 +29,17 @@ public class VWOInitOptions {
     var vwoBuilder: VWOBuilder?
     var gatewayService: [String: Any] = [:]
     
-    public init(sdkKey: String? = nil, accountId: Int? = nil, logLevel: LogLevelEnum = .error, integrations: IntegrationCallback? = nil) {
+    public init(sdkKey: String? = nil, 
+                accountId: Int? = nil,
+                logLevel: LogLevelEnum = .error,
+                integrations: IntegrationCallback? = nil,
+                gatewayService: [String: Any] = [:]) {
+
         self.sdkKey = sdkKey
         self.accountId = accountId
         self.logLevel = logLevel
         self.logger = ["level": "\(logLevel.rawValue)"]
         self.integrations = integrations
+        self.gatewayService = gatewayService
     }
 }

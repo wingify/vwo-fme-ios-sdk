@@ -51,12 +51,26 @@ class SegmentOperandEvaluator {
             var queryParamsObj = [String: String]()
             queryParamsObj["attribute"] = attributeValue
             queryParamsObj["listId"] = listId
+            
+            let semaphore = DispatchSemaphore(value: 0)
+            var result = false
 
             // Make a web service call to check the attribute against the list
-            guard let gatewayServiceResponse = GatewayServiceUtil.getFromGatewayService(queryParams: queryParamsObj, endpoint: UrlEnum.attributeCheck.rawValue) else {
-                return false
+            GatewayServiceUtil.getFromGatewayService(queryParams: queryParamsObj, endpoint: UrlEnum.attributeCheck.rawValue) { gatewayResponse in
+
+                if let modelData = gatewayResponse {
+                    if let stringValue = modelData.data {
+                        if let booleanValue = stringValue.toBool {
+                            result = booleanValue
+                        }
+                    }
+                }
+                semaphore.signal() // Signal the semaphore to unblock the waiting thread
             }
-            return Bool(gatewayServiceResponse) ?? false
+
+            // Wait for the API call to complete
+            semaphore.wait()
+            return result
         } else {
             // Process other types of operands
             var tagValue = properties[operandKey] ?? ""
@@ -284,4 +298,16 @@ fileprivate extension String {
         let range = NSRange(location: 0, length: self.count)
         return regex.stringByReplacingMatches(in: self, options: [], range: range, withTemplate: replacement)
     }
+    
+    var toBool: Bool? {
+        switch self.lowercased() {
+        case "true":
+            return true
+        case "false":
+            return false
+        default:
+            return nil
+        }
+    }
+    
 }

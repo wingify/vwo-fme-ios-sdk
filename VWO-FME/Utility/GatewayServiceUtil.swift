@@ -30,32 +30,26 @@ class GatewayServiceUtil {
      * @param endpoint The endpoint to send the request to
      * @return The response data from the gateway service
      */
-    static func getFromGatewayService(queryParams: [String: String], endpoint: String) -> String? {
+    static func getFromGatewayService(queryParams: [String: String], endpoint: String, completion: @escaping (ResponseModel?) -> Void) {
         if UrlService.baseUrl.contains(Constants.HOST_NAME) {
             LoggerService.log(level: .error, key: "GATEWAY_URL_ERROR", details: nil)
-            return nil
+            completion(nil)
+            return
         }
         
-        do {
-            let request = RequestModel(
-                url: UrlService.baseUrl,
-                method: HTTPMethod.get.rawValue,
-                path: endpoint,
-                query: queryParams,
-                body: nil,
-                headers: nil,
-                scheme: SettingsManager.instance?.protocolType ?? Constants.HTTPS_PROTOCOL,
-                port: SettingsManager.instance?.port ?? 0
-            )
-            return nil
-
-            /*
-            var newResponseModel = ResponseModel()
-            newResponseModel.data = "Gateway service response data"
-            return newResponseModel.data
-            */
-        } catch {
-            return nil
+        let request = RequestModel(
+            url: UrlService.baseUrl,
+            method: HTTPMethod.get.rawValue,
+            path: endpoint,
+            query: queryParams,
+            body: nil,
+            headers: nil,
+            scheme: SettingsManager.instance?.protocolType ?? Constants.HTTPS_PROTOCOL,
+            port: SettingsManager.instance?.port ?? 0
+        )
+        
+        NetworkManager.get(request) { response in
+            completion(response)
         }
     }
     
