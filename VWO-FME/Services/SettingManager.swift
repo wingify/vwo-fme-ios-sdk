@@ -16,10 +16,16 @@
 
 import Foundation
 
+/**
+ * Manages the settings for the SDK.
+ *
+ * This class handles fetching, caching, and providing access to the settings required for the SDK operation.
+ * It supports fetching settings from a server or using cached settings if available.
+ */
 class SettingsManager {
     private let sdkKey: String
     private let accountId: Int
-    private let expiry: Int
+    private let cachedSettingsExpiryInterval: Int64
     private let networkTimeout: Int
     var hostname: String
     var port: Int = 0
@@ -27,43 +33,43 @@ class SettingsManager {
     var isSettingsFetchInProgress = false
 
     var isGatewayServiceProvided: Bool = false
-    private var localStorageService = LocalStorageService()
+    private var localStorageService = StorageService()
 
     static var instance: SettingsManager?
     
+    /**
+     * Initializes a new instance of SettingsManager.
+     *
+     * - Parameters:
+     *   - options: The initialization options containing SDK key, account ID, and other configurations.
+     */
     init(options: VWOInitOptions) {
         self.sdkKey = options.sdkKey ?? ""
         self.accountId = options.accountId!
-        self.expiry = Constants.SETTINGS_EXPIRY
+        self.cachedSettingsExpiryInterval = options.cachedSettingsExpiryTime
         self.networkTimeout = Constants.SETTINGS_TIMEOUT
         
         if !options.gatewayService.isEmpty {
-            
             isGatewayServiceProvided = true
-            do {
-                var parsedUrl: URL
-                let gatewayServiceUrl = options.gatewayService["url"] as! String
-                let gatewayServiceProtocol = options.gatewayService["protocol"] as? String
-                let gatewayServicePort = options.gatewayService["port"] as? Int
-                
-                if gatewayServiceUrl.hasPrefix("http://") || gatewayServiceUrl.hasPrefix("https://") {
-                    parsedUrl = URL(string: gatewayServiceUrl)!
-                } else if let protocolType = gatewayServiceProtocol, !protocolType.isEmpty {
-                    parsedUrl = URL(string: "\(protocolType)://\(gatewayServiceUrl)")!
-                } else {
-                    parsedUrl = URL(string: "https://\(gatewayServiceUrl)")!
-                }
-                
-                self.hostname = parsedUrl.host ?? Constants.HOST_NAME
-                self.protocolType = parsedUrl.scheme ?? "https"
-                if parsedUrl.port != nil {
-                    self.port = parsedUrl.port!
-                } else if let port = gatewayServicePort {
-                    self.port = port
-                }
-            } catch {
-                LoggerService.log(level: .error, message: "Error occurred while parsing gateway service URL: \(error.localizedDescription)")
-                self.hostname = Constants.HOST_NAME
+            var parsedUrl: URL
+            let gatewayServiceUrl = options.gatewayService["url"] as! String
+            let gatewayServiceProtocol = options.gatewayService["protocol"] as? String
+            let gatewayServicePort = options.gatewayService["port"] as? Int
+            
+            if gatewayServiceUrl.hasPrefix("http://") || gatewayServiceUrl.hasPrefix("https://") {
+                parsedUrl = URL(string: gatewayServiceUrl)!
+            } else if let protocolType = gatewayServiceProtocol, !protocolType.isEmpty {
+                parsedUrl = URL(string: "\(protocolType)://\(gatewayServiceUrl)")!
+            } else {
+                parsedUrl = URL(string: "https://\(gatewayServiceUrl)")!
+            }
+            
+            self.hostname = parsedUrl.host ?? Constants.HOST_NAME
+            self.protocolType = parsedUrl.scheme ?? "https"
+            if parsedUrl.port != nil {
+                self.port = parsedUrl.port!
+            } else if let port = gatewayServicePort {
+                self.port = port
             }
         } else {
             self.hostname = Constants.HOST_NAME
@@ -71,13 +77,38 @@ class SettingsManager {
         SettingsManager.instance = self
     }
     
-    private func fetchSettingsAndCacheInStorage(completion: @escaping (Settings?) -> Void) {
-        
-        fetchSettings(completion: completion)
+    /**
+     * Fetches and caches server settings.
+     *
+     * - Parameters:
+     *   - completion: A closure to be executed once the fetch is complete, with the fetched settings.
+     */
+    private func fetchAndCacheServerSettings(completion: @escaping (Settings?) -> Void) {
+        self.fetchSettings(completion: completion)
     }
     
+    /**
+     * Fetches settings from cache or server.
+     *
+     * - Parameters:
+     *   - completion: A closure to be executed once the fetch is complete, with the fetched settings.
+     */
+    private func fetchFromCacheOrServer(completion: @escaping (Settings?) -> Void) {
+        if self.canUseCachedSettings(), let settingObj = self.getSettingFromUserDefaults() {
+            LoggerService.log(level: .info, key: "SETTINGS_FETCH_SUCCESS", details: [:])
+            completion(settingObj)
+        } else {
+            self.fetchAndCacheServerSettings(completion: completion)
+        }
+    }
+    
+    /**
+     * Fetches settings from the server.
+     *
+     * - Parameters:
+     *   - completion: A closure to be executed once the fetch is complete, with the fetched settings.
+     */
     private func fetchSettings(completion: @escaping (Settings?) -> Void) {
-
         guard !sdkKey.isEmpty else {
             LoggerService.log(level: .error,
                               key: "SETTINGS_FETCH_ERROR",
@@ -112,10 +143,21 @@ class SettingsManager {
                     let settingsObj = try JSONDecoder().decode(Settings.self, from: data)
                     LoggerService.log(level: .info, key: "SETTINGS_FETCH_SUCCESS", details: [:])
                     self.saveSettingInUserDefaults(settingObj: settingsObj)
+                    self.saveSettingExpiryInUserDefault()
                     completion(settingsObj)
                 } else {
-                    LoggerService.log(level: .error, key: "SETTINGS_FETCH_ERROR", details: ["err": "\(result.errorMessage ?? "Unknown error")"])
-                    completion(nil)
+                    if result.error == .noNetwork {
+                        if let cachedSetting = self.getSettingFromUserDefaults() {
+                            LoggerService.log(level: .info, key: "SETTINGS_FETCH_SUCCESS", details: [:])
+                            completion(cachedSetting)
+                        } else {
+                            LoggerService.log(level: .error, key: "SETTINGS_FETCH_ERROR", details: ["err": "\(result.errorMessage ?? "Unknown error")"])
+                            completion(nil)
+                        }
+                    } else {
+                        LoggerService.log(level: .error, key: "SETTINGS_FETCH_ERROR", details: ["err": "\(result.errorMessage ?? "Unknown error")"])
+                        completion(nil)
+                    }
                 }
             } catch {
                 LoggerService.log(level: .error, key: "SETTINGS_FETCH_ERROR", details: ["err": "\(error.localizedDescription)"])
@@ -123,29 +165,82 @@ class SettingsManager {
             }
         }
     }
-        
+      
+    /**
+     * Retrieves settings, optionally forcing a fetch from the server.
+     *
+     * - Parameters:
+     *   - forceFetch: A boolean indicating whether to force a fetch from the server.
+     *   - completion: A closure to be executed once the fetch is complete, with the fetched settings.
+     */
     func getSettings(forceFetch: Bool, completion: @escaping (Settings?) -> Void) {
-        
         if self.isSettingsFetchInProgress {
             return
         }
         
         if (forceFetch) {
-            fetchSettingsAndCacheInStorage(completion: completion)
+            fetchAndCacheServerSettings(completion: completion)
         } else {
-            if let settings = getSettingFromUserDefaults() {
-                completion(settings)
-            } else {
-                fetchSettingsAndCacheInStorage(completion: completion)
-            }
+            self.fetchFromCacheOrServer(completion: completion)
         }
     }
     
-    private func getSettingFromUserDefaults() -> Settings? {
+    /**
+     * Retrieves settings from user defaults.
+     *
+     * - Returns: The cached settings, if available.
+     */
+    func getSettingFromUserDefaults() -> Settings? {
         return localStorageService.loadSettings()
     }
     
-    private func saveSettingInUserDefaults(settingObj: Settings) {
+    /**
+     * Saves settings to user defaults.
+     *
+     * - Parameters:
+     *   - settingObj: The settings object to be saved.
+     */
+    func saveSettingInUserDefaults(settingObj: Settings) {
         localStorageService.saveSettings(settingObj)
+    }
+    
+    /**
+     * Saves the settings expiry time in user defaults.
+     */
+    func saveSettingExpiryInUserDefault() {
+        let time = Date().currentTimeMillis() + self.cachedSettingsExpiryInterval
+        localStorageService.saveSettingExpiry(timeInterval: time)
+    }
+    
+    /**
+     * Retrieves the settings expiry time from user defaults.
+     *
+     * - Returns: The expiry time, if available.
+     */
+    func getSettingExpiryFromUserDefault() -> Int64? {
+        return localStorageService.getSettingExpiry()
+    }
+    
+    /**
+     * Determines if cached settings can be used.
+     *
+     * - Returns: A boolean indicating if cached settings are valid and can be used.
+     */
+    func canUseCachedSettings() -> Bool {
+        return cachedSettingsExpiryInterval == 0 ? false : self.isCachedSettingValid()
+    }
+    
+    /**
+     * Checks if the cached settings are still valid.
+     *
+     * - Returns: A boolean indicating if the cached settings are valid.
+     */
+    func isCachedSettingValid() -> Bool {
+        let savedExpiryTime = self.getSettingExpiryFromUserDefault()
+        let now = Date().currentTimeMillis()
+        if let expiryTime = savedExpiryTime {
+            return now < expiryTime
+        }
+        return false
     }
 }

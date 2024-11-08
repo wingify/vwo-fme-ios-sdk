@@ -130,12 +130,8 @@ class SegmentEvaluator {
 
             // Check if the count of keys encountered is equal to dslNodes.count
             if isUaParser && keyCount == dslNodes.count {
-                do {
-                    let uaParserResult = try checkUserAgentParser(uaParserMap: uaParserMap)
-                    return uaParserResult
-                } catch {
-                    LoggerService.log(level: .error, message: "Failed to validate User Agent. Error: \(error)")
-                }
+                let uaParserResult = checkUserAgentParser(uaParserMap: uaParserMap)
+                return uaParserResult
             }
 
             // Recursively check each DSL node
@@ -242,13 +238,12 @@ class SegmentEvaluator {
      */
     func checkInUserStorage(featureKey: String, context: VWOContext) -> Bool {
         let storageService = StorageService()
-        let storedDataMap = StorageDecorator().getFeatureFromStorage(featureKey: featureKey, context: context, storageService: storageService)
+        let storedDataMap = storageService.getFeatureFromStorage(featureKey: featureKey, context: context)
         
-        guard let storedDataMap = storedDataMap, !storedDataMap.isEmpty else {
-            LoggerService.log(level: .error, message: "Stored data map is empty or nil.")
+        guard let storedDataMap = storedDataMap else {
+            LoggerService.log(level: .error, key: "STORED_DATA_ERROR", details: ["err": "Stored data map is nil"])
             return false
         }
-        
-        return false
+        return !storedDataMap.isEmpty
     }
 }

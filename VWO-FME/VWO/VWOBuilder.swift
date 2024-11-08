@@ -20,6 +20,8 @@ class VWOBuilder {
     private var vwoClient: VWOClient?
     private var options: VWOInitOptions?
     private var settingFileManager: SettingsManager?
+    private var originalSettings: Settings? = nil
+    private var timer: Timer?
 
     init(options: VWOInitOptions?) {
         self.options = options
@@ -64,7 +66,12 @@ class VWOBuilder {
      */
     private func fetchSettings(forceFetch: Bool, completion: @escaping (Settings?) -> Void) {
         guard let settingMangager = settingFileManager else { return }
-        settingMangager.getSettings(forceFetch: forceFetch, completion: completion)
+        settingMangager.getSettings(forceFetch: forceFetch) { settingObj in
+            if let setting = settingObj {
+                self.originalSettings = setting
+            }
+            completion(settingObj)
+        }
     }
 
     /**
@@ -74,17 +81,6 @@ class VWOBuilder {
      */
     func getSettings(forceFetch: Bool, completion: @escaping (Settings?) -> Void) {
         fetchSettings(forceFetch: forceFetch, completion: completion)
-    }
-
-    /**
-     * Sets the storage connector for the VWO instance.
-     * @return  The instance of this builder.
-     */
-    func setStorage() -> VWOBuilder {
-        if let storage = options?.storage {
-//            StorageOps.attachConnector(storage)
-        }
-        return self
     }
 
     /**
@@ -123,39 +119,100 @@ class VWOBuilder {
             return self
         }
 
-        if !DataTypeUtil.isInteger(pollInterval) {
-            LoggerService.log(level: .error, key: "INIT_OPTIONS_INVALID", details: ["key": "pollInterval", "correctType": "number"])
-            return self
-        }
-
         if pollInterval < 1000 {
             LoggerService.log(level: .error, key: "INIT_OPTIONS_INVALID", details: ["key": "pollInterval", "correctType": "number"])
             return self
         }
 
         DispatchQueue.global().async {
-            self.checkAndPoll()
+            self.startPolling(interval: pollInterval)
         }
         return self
     }
-
+    
     /**
      * Checks and polls for settings updates at the provided interval.
      */
-    private func checkAndPoll() {
-        let pollingInterval = options?.pollInterval ?? 1000
-        
-        while true {
-            do {
-                guard let settingMangager = settingFileManager else { return }
-                settingMangager.getSettings(forceFetch: true) { setting in
-                    if let objSetting = setting {
-                        // update setting here
+    private func startPolling(interval: Int64) {
+        self.stopPolling()
+        let intervalInMilliseconds = interval
+        // Convert milliseconds to seconds
+        let pollingIntervalSeconds = TimeInterval(intervalInMilliseconds) / 1000.0
+        DispatchQueue.main.async {
+            self.timer = Timer.scheduledTimer(timeInterval: pollingIntervalSeconds, target: self, selector: #selector(self.checkSettingUpdates), userInfo: nil, repeats: true)
+            if self.timer != nil {
+                RunLoop.current.add(self.timer!, forMode: .common)
+            }
+        }
+    }
+    
+    private func stopPolling() {
+        self.timer?.invalidate()
+        self.timer = nil
+    }
+
+    @objc private func checkSettingUpdates() {
+        let pollingQueue = DispatchQueue(label: "com.vwo.fme.polling", qos: .background)
+        pollingQueue.async { [unowned self] in
+            guard let settingMangager = self.settingFileManager else { return }
+            settingMangager.getSettings(forceFetch: true) { settingObj in
+                
+                if let latestSettings = settingObj, let originalSetting = self.originalSettings {
+                    let isDifferent = self.findDifference(localSettings: originalSetting, apiSettings: latestSettings)
+                    if isDifferent {
+                        self.originalSettings = latestSettings
+                        settingMangager.saveSettingInUserDefaults(settingObj: latestSettings)
+                        settingMangager.saveSettingExpiryInUserDefault()
+                        
+                        if let vwoClient = self.vwoClient {
+                            vwoClient.updateSettings(newSettings: self.originalSettings)
+                        }
+
+                        LoggerService.log(level: .info, key: "POLLING_SET_SETTINGS", details: [:])
                     } else {
-                        LoggerService.log(level: .error, key: "POLLING_FETCH_SETTINGS_FAILED", details: nil)
+                        LoggerService.log(level: .info, key: "POLLING_NO_CHANGE_IN_SETTINGS", details: [:])
                     }
                 }
             }
         }
+    }
+    
+    private func findDifference(localSettings: Settings, apiSettings: Settings) -> Bool {
+        var differences = [String]()
+        
+        let sortedLocalSettingFeatures = localSettings.features.sortedById()
+        let sortedApiSettingsFeatures = apiSettings.features.sortedById()
+        
+        if sortedLocalSettingFeatures != sortedApiSettingsFeatures {
+            differences.append("features")
+        }
+        if localSettings.accountId != apiSettings.accountId {
+            differences.append("accountId")
+        }
+        if localSettings.groups != apiSettings.groups {
+            differences.append("groups")
+        }
+        if localSettings.campaignGroups != apiSettings.campaignGroups {
+            differences.append("campaignGroups")
+        }
+        if localSettings.isNBv2 != apiSettings.isNBv2 {
+            differences.append("isNBv2")
+        }
+        if localSettings.campaigns != apiSettings.campaigns {
+            differences.append("campaigns")
+        }
+        if localSettings.isNB != apiSettings.isNB {
+            differences.append("isNB")
+        }
+        if localSettings.sdkKey != apiSettings.sdkKey {
+            differences.append("sdkKey")
+        }
+        if localSettings.version != apiSettings.version {
+            differences.append("version")
+        }
+        if localSettings.collectionPrefix != apiSettings.collectionPrefix {
+            differences.append("collectionPrefix")
+        }
+        return !differences.isEmpty
     }
 }

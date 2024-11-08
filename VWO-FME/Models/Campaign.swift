@@ -22,7 +22,7 @@ import Foundation
  * This class encapsulates information about a VWO campaign, including its ID, segments, status,
  * traffic allocation, variations, and other related data.
  */
-struct Campaign: Codable {
+struct Campaign: Codable, Equatable {
     var isAlwaysCheckSegment: Bool?
     var isUserListEnabled: Bool?
     var id: Int?
@@ -140,6 +140,23 @@ struct Campaign: Codable {
     /// - Parameter model: The campaign object to copy properties from.
     mutating func setModelFromDictionary(_ model: Campaign) {
         self = model
+    }
+}
+
+extension Array where Element == Campaign {
+    func sortedById() -> [Campaign] {
+        return self.sorted { (campaign1, campaign2) -> Bool in
+            switch (campaign1.id, campaign2.id) {
+            case let (id1?, id2?):
+                return id1 < id2
+            case (nil, _?):
+                return false // Change to false to keep nils at the end
+            case (_?, nil):
+                return true
+            case (nil, nil):
+                return false
+            }
+        }
     }
 }
 

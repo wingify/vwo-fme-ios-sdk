@@ -16,7 +16,6 @@
 
 import Foundation
 
-// Define the VWOClient class
 class VWOClient {
     var processedSettings: Settings?
     var options: VWOInitOptions?
@@ -37,25 +36,17 @@ class VWOClient {
     }
     
     // Update the settings
-    func updateSettings(newSettings: String?) {
-        do {
-            if let newSettings = newSettings {
-                let data = newSettings.data(using: .utf8)!
-                self.processedSettings = try JSONDecoder().decode(Settings.self, from: data)
-                if var processedSettings = self.processedSettings {
-                    SettingsUtil.processSettings(&processedSettings)
-                    self.processedSettings = processedSettings
-                }
-            }
-        } catch {
-            LoggerService.log(level: .error, message: "Exception occurred while updating settings \(error.localizedDescription)")
+    func updateSettings(newSettings: Settings?) {
+        if var newSettings = newSettings {
+            SettingsUtil.processSettings(&newSettings)
+            self.processedSettings = newSettings
         }
     }
     
     // Get the flag value for the given feature key
     func getFlag(featureKey: String?, context: VWOContext) -> GetFlag {
         let apiName = "getFlag"
-        var getFlag = GetFlag()
+        let getFlag = GetFlag()
         do {
             LoggerService.log(level: .debug, key: "API_CALLED", details: ["apiName": apiName])
             let hooksManager = HooksManager(callback: options?.integrations)

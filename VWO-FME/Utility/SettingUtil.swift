@@ -16,22 +16,42 @@
 
 import Foundation
 
+/**
+ * Utility class for processing settings.
+ *
+ * This class provides methods to process and modify settings, including handling campaigns and features.
+ */
 class SettingsUtil {
     
+    /**
+     * Processes the given settings by updating campaigns and adding necessary flags.
+     *
+     * - Parameter settings: The settings to be processed.
+     */
     static func processSettings(_ settings: inout Settings) {
         guard var campaigns = settings.campaigns else { return }
+        
+        // Iterate over each campaign and set variation allocation
         for i in 0..<campaigns.count {
             CampaignUtil.setVariationAllocation(&campaigns[i])
         }
         settings.campaigns = campaigns
+        
+        // Add linked campaigns and gateway service flag to settings
         addLinkedCampaignsToSettings(&settings)
         addIsGatewayServiceRequiredFlag(&settings)
     }
     
+    /**
+     * Adds linked campaigns to the settings based on feature rules.
+     *
+     * - Parameter settings: The settings to be updated with linked campaigns.
+     */
     private static func addLinkedCampaignsToSettings(_ settings: inout Settings) {
         
         guard let campaigns = settings.campaigns else { return }
         
+        // Create a map of campaigns by their ID
         let campaignMap = Dictionary(uniqueKeysWithValues: campaigns.map { ($0.id ?? 0, $0) })
         
         for i in 0..<settings.features.count {
@@ -42,6 +62,7 @@ class SettingsUtil {
                 var campaign = Campaign()
                 campaign.setModelFromDictionary(originalCampaign)
                 
+                // Filter variations based on rule's variation ID
                 if let variationId = rule.variationId {
                     if let variation = campaign.variations?.first(where: { $0.id == variationId }) {
                         campaign.variations = [variation]
@@ -54,8 +75,14 @@ class SettingsUtil {
         }
     }
         
+    /**
+     * Adds a flag to indicate if gateway service is required based on feature rules.
+     *
+     * - Parameter settings: The settings to be updated with the gateway service flag.
+     */
     private static func addIsGatewayServiceRequiredFlag(_ settings: inout Settings) {
         
+        // Define regex pattern to match specific segments or custom variables
         let patternString = "\\b(country|region|city|os|device_type|browser_string|ua)\\b|\"custom_variable\"\\s*:\\s*\\{\\s*\"name\"\\s*:\\s*\"inlist\\([^)]*\\)\""
         
         guard let regex = try? NSRegularExpression(pattern: patternString, options: []) else {
@@ -63,24 +90,30 @@ class SettingsUtil {
             return
         }
 
+        // Iterate over each feature to check if gateway service is required
         for i in 0..<settings.features.count {
             var feature = settings.features[i]
             guard let rules = feature.rulesLinkedCampaign else { continue }
             
             for rule in rules {
+                // Determine segments based on campaign type
                 let segments = (rule.type == CampaignTypeEnum.rollout.rawValue || rule.type == CampaignTypeEnum.personalize.rawValue) ? rule.variations?.first?.segments : rule.segments
                 if let segments = segments {
                     
                     do {
+                        // Convert segments to JSON-compatible structure
                         let jsonCompatibleStructure = segments.mapValues { $0.toJSONCompatible() }
                         
+                        // Serialize segments to JSON string
                         let jsonData = try JSONSerialization.data(withJSONObject: jsonCompatibleStructure, options: [.prettyPrinted])
                         let jsonString = String(data: jsonData, encoding: .utf8)!
                         
+                        // Match regex pattern in JSON string
                         let matches = regex.matches(in: jsonString, options: [], range: NSRange(location: 0, length: jsonString.count))
                         
                         for match in matches {
                             let matchString = (jsonString as NSString).substring(with: match.range)
+                            // Check if match is within a custom variable
                             if matchString.range(of: "\\b(country|region|city|os|device_type|browser_string|ua)\\b", options: .regularExpression) != nil {
                                 if !isWithinCustomVariable(startIndex: match.range.location, input: jsonString) {
                                     feature.isGatewayServiceRequired = true
@@ -101,9 +134,16 @@ class SettingsUtil {
             settings.features[i] = feature
         }
     }
-        
+    
+    /**
+     * Checks if a match is within a custom variable in the input string.
+     *
+     * - Parameters:
+     *   - startIndex: The start index of the match.
+     *   - input: The input string to be checked.
+     * - Returns: A boolean indicating if the match is within a custom variable.
+     */
     private static func isWithinCustomVariable(startIndex: Int, input: String) -> Bool {
-                
         guard let index = input.range(of: "\"custom_variable\"", options: .backwards, range: input.startIndex..<input.index(input.startIndex, offsetBy: startIndex))?.lowerBound else {
             return false
         }

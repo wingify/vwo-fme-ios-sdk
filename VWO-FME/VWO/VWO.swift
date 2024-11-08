@@ -49,11 +49,10 @@ public class VWOFme {
             let vwoBuilder = options.vwoBuilder ?? VWOBuilder(options: options)
             vwoBuilder.setLogger()
                 .setSettingsManager()
-                .setStorage()
                 .setNetworkManager()
                 .setSegmentation()
-                        
-            vwoBuilder.getSettings(forceFetch: true) { result in
+                .initPolling()
+                .getSettings(forceFetch: false) { result in
                 
                 guard let settingObj = result else {
                     DispatchQueue.main.async {
@@ -82,7 +81,7 @@ public class VWOFme {
     }
     
     // Updates the settings
-    public static func updateSettings(_ newSettings: String) {
+    static func updateSettings(_ newSettings: Settings) {
         VWOFme.vwoClient?.updateSettings(newSettings: newSettings)
     }
     

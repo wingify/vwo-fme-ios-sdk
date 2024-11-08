@@ -22,10 +22,12 @@ import Foundation
  * start range variation, end range variation, variables, variations, and segments.
  */
 
-struct Variation: Codable {
+struct Variation: Codable, Equatable {
     var id: Int?
     var key: String?
     var name: String?
+    var ruleKey: String?
+    var type: String?
     var weight: Double = 0.0
     var startRangeVariation: Int = 0
     var endRangeVariation: Int = 0
@@ -37,6 +39,8 @@ struct Variation: Codable {
         case id
         case key
         case name
+        case ruleKey
+        case type
         case weight
         case startRangeVariation
         case endRangeVariation
@@ -50,6 +54,8 @@ struct Variation: Codable {
         id = try container.decodeIfPresent(Int.self, forKey: .id)
         key = try container.decodeIfPresent(String.self, forKey: .key)
         name = try container.decodeIfPresent(String.self, forKey: .name)
+        ruleKey = try container.decodeIfPresent(String.self, forKey: .ruleKey)
+        type = try container.decodeIfPresent(String.self, forKey: .type)
         weight = try container.decodeIfPresent(Double.self, forKey: .weight) ?? 0.0
         startRangeVariation = try container.decodeIfPresent(Int.self, forKey: .startRangeVariation) ?? 0
         endRangeVariation = try container.decodeIfPresent(Int.self, forKey: .endRangeVariation) ?? 0
@@ -73,7 +79,7 @@ struct Variation: Codable {
     }
 }
 
-enum CodableValue: Codable {
+enum CodableValue: Codable, Equatable {
     case string(String)
     case int(Int)
     case float(Float)

@@ -16,6 +16,12 @@
 
 import Foundation
 
+/**
+ * Represents initialization options for the VWO SDK.
+ *
+ * This class provides configuration options for initializing the VWO SDK, including SDK key, account ID,
+ * logging preferences, network client interface, and other settings.
+ */
 public class VWOInitOptions {
     var sdkKey: String?
     var accountId: Int?
@@ -24,22 +30,60 @@ public class VWOInitOptions {
     var logLevel: LogLevelEnum = .error
     var networkClientInterface: NetworkClientInterface?
     var segmentEvaluator: SegmentEvaluator?
-    var storage: ConnectorProtocol?
-    var pollInterval: Int?
+    var storage: StorageService?
+    var pollInterval: Int64?
     var vwoBuilder: VWOBuilder?
     var gatewayService: [String: Any] = [:]
+    var cachedSettingsExpiryTime: Int64 = Constants.SETTINGS_EXPIRY
     
-    public init(sdkKey: String? = nil, 
+    /**
+     * Initializes a new instance of VWOInitOptions.
+     *
+     * - Parameters:
+     *   - sdkKey: The SDK key for authentication.
+     *   - accountId: The account ID associated with the SDK.
+     *   - logLevel: The level of logging to be used.
+     *   - logPrefix: A prefix to be added to log messages.
+     *   - integrations: Callback for integrations.
+     *   - gatewayService: Configuration for the gateway service.
+     *   - cachedSettingsExpiryTime: Expiry time for cached settings in milliseconds.
+     *   - pollInterval: Interval for polling updates in milliseconds.
+     */
+    public init(sdkKey: String? = nil,
                 accountId: Int? = nil,
                 logLevel: LogLevelEnum = .error,
+                logPrefix: String = "",
                 integrations: IntegrationCallback? = nil,
-                gatewayService: [String: Any] = [:]) {
-
+                gatewayService: [String: Any] = [:],
+                cachedSettingsExpiryTime: Int64? = nil,
+                pollInterval: Int64? = nil) {
+        
+        // Assigning the SDK key
         self.sdkKey = sdkKey
+        
+        // Assigning the account ID
         self.accountId = accountId
+        
+        // Setting the log level
         self.logLevel = logLevel
-        self.logger = ["level": "\(logLevel.rawValue)"]
+        
+        // Configuring the logger with level and prefix
+        self.logger = ["level": "\(logLevel.rawValue)", "prefix": "\(logPrefix)"]
+        
+        // Setting the integrations callback
         self.integrations = integrations
+        
+        // Configuring the gateway service
         self.gatewayService = gatewayService
+        
+        // Setting the cached settings expiry time if provided
+        if let userExpiryTime = cachedSettingsExpiryTime {
+            self.cachedSettingsExpiryTime = userExpiryTime
+        }
+        
+        // Setting the poll interval if provided
+        if let pollingTime = pollInterval {
+            self.pollInterval = pollingTime
+        }
     }
 }

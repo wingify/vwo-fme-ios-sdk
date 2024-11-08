@@ -34,56 +34,50 @@ struct RuleEvaluationUtil {
         campaign: Campaign,
         context: VWOContext,
         evaluatedFeatureMap: inout [String: Any],
-        megGroupWinnerCampaigns: inout [Int: Int]?,
+        megGroupWinnerCampaigns: inout [Int: String]?,
         storageService: StorageService,
         decision: inout [String: Any]
     ) -> [String: Any] {
-        // Perform whitelisting and pre-segmentation checks
-        do {
-            // Check if the campaign satisfies the whitelisting and pre-segmentation
-            let checkResult = DecisionUtil.checkWhitelistingAndPreSeg(
+        // Check if the campaign satisfies the whitelisting and pre-segmentation
+        let checkResult = DecisionUtil.checkWhitelistingAndPreSeg(
+            settings: settings,
+            feature: feature,
+            campaign: campaign,
+            context: context,
+            evaluatedFeatureMap: &evaluatedFeatureMap,
+            megGroupWinnerCampaigns: &megGroupWinnerCampaigns,
+            storageService: storageService,
+            decision: &decision
+        )
+        
+        // Extract the results of the evaluation
+        let preSegmentationResult = checkResult["preSegmentationResult"] as? Bool ?? false
+        let whitelistedObject = checkResult["whitelistedObject"] as? Variation
+        
+        // If pre-segmentation is successful and a whitelisted object exists, proceed to send an impression
+        if let whitelistedId = whitelistedObject?.id, preSegmentationResult {
+            // Update the decision object with campaign and variation details
+            let cmpId = campaign.id ?? 0
+            decision["experimentId"] = cmpId
+            decision["experimentKey"] = campaign.key ?? ""
+            decision["experimentVariationId"] = whitelistedId
+            
+            // Send an impression for the variation shown
+            ImpressionUtil.createAndSendImpressionForVariationShown(
                 settings: settings,
-                feature: feature,
-                campaign: campaign,
-                context: context,
-                evaluatedFeatureMap: &evaluatedFeatureMap,
-                megGroupWinnerCampaigns: &megGroupWinnerCampaigns,
-                storageService: storageService,
-                decision: &decision
+                campaignId: cmpId,
+                variationId: whitelistedId,
+                context: context
             )
-
-            // Extract the results of the evaluation
-            let preSegmentationResult = checkResult["preSegmentationResult"] as? Bool ?? false
-            let whitelistedObject = checkResult["whitelistedObject"] as? Variation
-
-            // If pre-segmentation is successful and a whitelisted object exists, proceed to send an impression
-            if let whitelistedId = whitelistedObject?.id, preSegmentationResult {
-                // Update the decision object with campaign and variation details
-                let cmpId = campaign.id ?? 0
-                decision["experimentId"] = cmpId
-                decision["experimentKey"] = campaign.key ?? ""
-                decision["experimentVariationId"] = whitelistedId
-
-                // Send an impression for the variation shown
-                ImpressionUtil.createAndSendImpressionForVariationShown(
-                    settings: settings,
-                    campaignId: cmpId,
-                    variationId: whitelistedId,
-                    context: context
-                )
-            }
-
-            // Return the results of the evaluation
-            var result: [String: Any] = [:]
-            result["preSegmentationResult"] = preSegmentationResult
-            if let whitelistedObject = whitelistedObject {
-                result["whitelistedObject"] = whitelistedObject
-            }
-            result["updatedDecision"] = decision
-            return result
-        } catch {
-            LoggerService.log(level: .error, message: "Error occurred while evaluating rule: \(error)")
-            return [:]
         }
+        
+        // Return the results of the evaluation
+        var result: [String: Any] = [:]
+        result["preSegmentationResult"] = preSegmentationResult
+        if let whitelistedObject = whitelistedObject {
+            result["whitelistedObject"] = whitelistedObject
+        }
+        result["updatedDecision"] = decision
+        return result
     }
 }

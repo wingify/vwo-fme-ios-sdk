@@ -67,12 +67,10 @@
 		EB06C7FA2C90247600A25E07 /* CampaignDecisionService.swift in Sources */ = {isa = PBXBuildFile; fileRef = EB06C7F52C90246E00A25E07 /* CampaignDecisionService.swift */; };
 		EB06C7FB2C90247600A25E07 /* LoggerService.swift in Sources */ = {isa = PBXBuildFile; fileRef = EB06C7F82C90246E00A25E07 /* LoggerService.swift */; };
 		EB06C7FC2C90247600A25E07 /* SettingManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = EB06C7F62C90246E00A25E07 /* SettingManager.swift */; };
-		EB06C7FD2C90247600A25E07 /* StorageService.swift in Sources */ = {isa = PBXBuildFile; fileRef = EB06C7F72C90246E00A25E07 /* StorageService.swift */; };
 		EB06C7FE2C90247600A25E07 /* HooksManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = EB06C7F42C90246E00A25E07 /* HooksManager.swift */; };
 		EB06C7FF2C90247600A25E07 /* UrlService.swift in Sources */ = {isa = PBXBuildFile; fileRef = EB06C7F92C90246E00A25E07 /* UrlService.swift */; };
 		EB06C8612C90260700A25E07 /* LogLevelEnum.swift in Sources */ = {isa = PBXBuildFile; fileRef = EB06C8602C90260400A25E07 /* LogLevelEnum.swift */; };
 		EB06C8622C90260900A25E07 /* LogManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = EB06C85F2C90260100A25E07 /* LogManager.swift */; };
-		EB06C8652C90261E00A25E07 /* StorageDecorator.swift in Sources */ = {isa = PBXBuildFile; fileRef = EB06C8642C90261900A25E07 /* StorageDecorator.swift */; };
 		EB06C86F2C90264A00A25E07 /* DecisionMaker.swift in Sources */ = {isa = PBXBuildFile; fileRef = EB06C86E2C90264600A25E07 /* DecisionMaker.swift */; };
 		EB06C8732C90266D00A25E07 /* RequestHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = EB06C8722C90266A00A25E07 /* RequestHandler.swift */; };
 		EB06C8762C90267C00A25E07 /* NetworkManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = EB06C8752C90267A00A25E07 /* NetworkManager.swift */; };
@@ -80,8 +78,6 @@
 		EB06C87E2C90269F00A25E07 /* RequestModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = EB06C87C2C90269B00A25E07 /* RequestModel.swift */; };
 		EB06C87F2C90269F00A25E07 /* GlobalRequestModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = EB06C87D2C90269C00A25E07 /* GlobalRequestModel.swift */; };
 		EB06C8802C90269F00A25E07 /* ResponseModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = EB06C87B2C90269B00A25E07 /* ResponseModel.swift */; };
-		EB06C8842C9026B300A25E07 /* Connector.swift in Sources */ = {isa = PBXBuildFile; fileRef = EB06C8832C9026B000A25E07 /* Connector.swift */; };
-		EB06C8852C9026B300A25E07 /* StorageOps.swift in Sources */ = {isa = PBXBuildFile; fileRef = EB06C8822C9026B000A25E07 /* StorageOps.swift */; };
 		EB06C88C2C9026E200A25E07 /* SegmentationManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = EB06C88B2C9026DE00A25E07 /* SegmentationManager.swift */; };
 		EB06C8902C9026EB00A25E07 /* SegmentOperatorValueEnum.swift in Sources */ = {isa = PBXBuildFile; fileRef = EB06C88D2C9026E900A25E07 /* SegmentOperatorValueEnum.swift */; };
 		EB06C8912C9026EB00A25E07 /* SegmentOperandRegexEnum.swift in Sources */ = {isa = PBXBuildFile; fileRef = EB06C88E2C9026E900A25E07 /* SegmentOperandRegexEnum.swift */; };
@@ -189,12 +185,10 @@
 		EB06C7F42C90246E00A25E07 /* HooksManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HooksManager.swift; sourceTree = "<group>"; };
 		EB06C7F52C90246E00A25E07 /* CampaignDecisionService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CampaignDecisionService.swift; sourceTree = "<group>"; };
 		EB06C7F62C90246E00A25E07 /* SettingManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingManager.swift; sourceTree = "<group>"; };
-		EB06C7F72C90246E00A25E07 /* StorageService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StorageService.swift; sourceTree = "<group>"; };
 		EB06C7F82C90246E00A25E07 /* LoggerService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LoggerService.swift; sourceTree = "<group>"; };
 		EB06C7F92C90246E00A25E07 /* UrlService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UrlService.swift; sourceTree = "<group>"; };
 		EB06C85F2C90260100A25E07 /* LogManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LogManager.swift; sourceTree = "<group>"; };
 		EB06C8602C90260400A25E07 /* LogLevelEnum.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LogLevelEnum.swift; sourceTree = "<group>"; };
-		EB06C8642C90261900A25E07 /* StorageDecorator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StorageDecorator.swift; sourceTree = "<group>"; };
 		EB06C86E2C90264600A25E07 /* DecisionMaker.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DecisionMaker.swift; sourceTree = "<group>"; };
 		EB06C8722C90266A00A25E07 /* RequestHandler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RequestHandler.swift; sourceTree = "<group>"; };
 		EB06C8752C90267A00A25E07 /* NetworkManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NetworkManager.swift; sourceTree = "<group>"; };
@@ -202,8 +196,6 @@
 		EB06C87B2C90269B00A25E07 /* ResponseModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ResponseModel.swift; sourceTree = "<group>"; };
 		EB06C87C2C90269B00A25E07 /* RequestModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RequestModel.swift; sourceTree = "<group>"; };
 		EB06C87D2C90269C00A25E07 /* GlobalRequestModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GlobalRequestModel.swift; sourceTree = "<group>"; };
-		EB06C8822C9026B000A25E07 /* StorageOps.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StorageOps.swift; sourceTree = "<group>"; };
-		EB06C8832C9026B000A25E07 /* Connector.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Connector.swift; sourceTree = "<group>"; };
 		EB06C88B2C9026DE00A25E07 /* SegmentationManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SegmentationManager.swift; sourceTree = "<group>"; };
 		EB06C88D2C9026E900A25E07 /* SegmentOperatorValueEnum.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SegmentOperatorValueEnum.swift; sourceTree = "<group>"; };
 		EB06C88E2C9026E900A25E07 /* SegmentOperandRegexEnum.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SegmentOperandRegexEnum.swift; sourceTree = "<group>"; };
@@ -417,7 +409,6 @@
 				EB06C7F42C90246E00A25E07 /* HooksManager.swift */,
 				EB06C7F82C90246E00A25E07 /* LoggerService.swift */,
 				EB06C7F62C90246E00A25E07 /* SettingManager.swift */,
-				EB06C7F72C90246E00A25E07 /* StorageService.swift */,
 				EB06C7F92C90246E00A25E07 /* UrlService.swift */,
 				EB22C9D92C946A8C00381E34 /* LocalStorageService.swift */,
 			);
@@ -431,8 +422,6 @@
 				EB06C85E2C9025F800A25E07 /* Logger */,
 				EB06C8702C90265000A25E07 /* Network */,
 				EB06C8862C9026BC00A25E07 /* SegmentationEvaluator */,
-				EB06C8812C9026A800A25E07 /* Storage */,
-				EB06C8632C90261000A25E07 /* StorageDecorator */,
 			);
 			path = Packages;
 			sourceTree = "<group>";
@@ -444,14 +433,6 @@
 				EB06C85F2C90260100A25E07 /* LogManager.swift */,
 			);
 			path = Logger;
-			sourceTree = "<group>";
-		};
-		EB06C8632C90261000A25E07 /* StorageDecorator */ = {
-			isa = PBXGroup;
-			children = (
-				EB06C8642C90261900A25E07 /* StorageDecorator.swift */,
-			);
-			path = StorageDecorator;
 			sourceTree = "<group>";
 		};
 		EB06C86D2C90263A00A25E07 /* DecisionMaker */ = {
@@ -505,15 +486,6 @@
 				EB06C87B2C90269B00A25E07 /* ResponseModel.swift */,
 			);
 			path = Models;
-			sourceTree = "<group>";
-		};
-		EB06C8812C9026A800A25E07 /* Storage */ = {
-			isa = PBXGroup;
-			children = (
-				EB06C8832C9026B000A25E07 /* Connector.swift */,
-				EB06C8822C9026B000A25E07 /* StorageOps.swift */,
-			);
-			path = Storage;
 			sourceTree = "<group>";
 		};
 		EB06C8862C9026BC00A25E07 /* SegmentationEvaluator */ = {
@@ -745,7 +717,6 @@
 				EB06C7ED2C90245300A25E07 /* HooksEnum.swift in Sources */,
 				EB06C8962C9026F400A25E07 /* SegmentOperandEvaluator.swift in Sources */,
 				EB06C7D82C90243300A25E07 /* DataTypeUtil.swift in Sources */,
-				EB06C8852C9026B300A25E07 /* StorageOps.swift in Sources */,
 				EB06C7E12C90243300A25E07 /* MegUtil.swift in Sources */,
 				EB06C7DC2C90243300A25E07 /* LogMessageUtil.swift in Sources */,
 				EB06C7F12C90245300A25E07 /* ApiEnum.swift in Sources */,
@@ -768,7 +739,6 @@
 				EB06C7C02C9023EB00A25E07 /* Storage.swift in Sources */,
 				EB06C7BC2C9023E500A25E07 /* Group.swift in Sources */,
 				EB06C7DF2C90243300A25E07 /* NetworkUtil.swift in Sources */,
-				EB06C8842C9026B300A25E07 /* Connector.swift in Sources */,
 				EB06C7EC2C90245300A25E07 /* CampaignTypeEnum.swift in Sources */,
 				EB06C7D52C90243300A25E07 /* RuleEvaluationUtil.swift in Sources */,
 				EB06C7C62C90241E00A25E07 /* Constants.swift in Sources */,
@@ -782,11 +752,9 @@
 				EB06C7DA2C90243300A25E07 /* DecisionUtil.swift in Sources */,
 				EB06C8A32C90274C00A25E07 /* Event.swift in Sources */,
 				EB06C7B82C9023E500A25E07 /* ImpactCampaign.swift in Sources */,
-				EB06C8652C90261E00A25E07 /* StorageDecorator.swift in Sources */,
 				EB06C7EB2C90245300A25E07 /* EventEnum.swift in Sources */,
 				EB06C89A2C90273500A25E07 /* GatewayService.swift in Sources */,
 				EB22C9DA2C946A8C00381E34 /* LocalStorageService.swift in Sources */,
-				EB06C7FD2C90247600A25E07 /* StorageService.swift in Sources */,
 				EB06C8952C9026F400A25E07 /* SegmentEvaluator.swift in Sources */,
 				EB06C8A02C90274C00A25E07 /* EventArchPayload.swift in Sources */,
 				EB06C7B92C9023E500A25E07 /* Metric.swift in Sources */,

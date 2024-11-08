@@ -67,8 +67,6 @@ class SegmentationManager {
             
             let params = GatewayServiceUtil.getQueryParams(queryParams)
             GatewayServiceUtil.getFromGatewayService(queryParams: params, endpoint: UrlEnum.getUserData.rawValue) { gatewayResponse in
-                defer { dispatchGroup.leave() }
-                
                 if let modelData = gatewayResponse {
                     if let stringData = modelData.data {
                         do {
@@ -80,6 +78,7 @@ class SegmentationManager {
                         }
                     }
                 }
+                dispatchGroup.leave()
             }
             dispatchGroup.wait()
         }

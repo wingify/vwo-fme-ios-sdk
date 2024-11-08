@@ -19,7 +19,7 @@ import Foundation
 struct Constants {
     static let defaultString: String = ""
     static let PLATFORM: String = "ios"
-    static let SDK_VERSION: String = "1.0.0"
+    static let SDK_VERSION: String = "1.1.0"
 
     static let MAX_TRAFFIC_PERCENT: Int = 100
     static let MAX_TRAFFIC_VALUE: Int = 10000
@@ -30,7 +30,7 @@ struct Constants {
     static let DEFAULT_REQUEST_TIME_INTERVAL: TimeInterval = 600 // 10 * 60(secs) = 600 secs i.e. 10 minutes
     static let DEFAULT_EVENTS_PER_REQUEST: Int = 100
     static let SDK_NAME: String = "vwo-fme-ios-sdk"
-    static let SETTINGS_EXPIRY: Int = 10000
+    static let SETTINGS_EXPIRY: Int64 = 0 // default time for cached setting expiry
     static let SETTINGS_TIMEOUT: Int = 30
     
     static let HOST_NAME: String = "dev.visualwebsiteoptimizer.com"
@@ -42,6 +42,7 @@ struct Constants {
     static let RANDOM_ALGO: Int = 1
     
     static let SDK_USERDEFAULT_SUITE = "com.vwo.fme.userdefault.suite"
+    static let VWO_META_MEG_KEY = "_vwo_meta_meg_"
 }
 
 public typealias VWOInitCompletionHandler = (Result<String, Error>) -> Void

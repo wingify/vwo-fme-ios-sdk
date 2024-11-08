@@ -21,7 +21,7 @@ import Foundation
  *
  * This class serves as a container for various settings and configurations used by the VWO SDK.
  */
-struct Settings: Codable {
+struct Settings: Codable, Equatable {
     var features: [Feature] = []
     var accountId: Int?
     var groups: [String: Groups]?

@@ -21,7 +21,7 @@ import Foundation
  *
  * This class encapsulates information about a VWO variable, including its value, type, key, and ID.
  */
-struct Variable: Codable {
+struct Variable: Codable, Equatable {
     var value: CodableValue?
     var type: String?
     var key: String?

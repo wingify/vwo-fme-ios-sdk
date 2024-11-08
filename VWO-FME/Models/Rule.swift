@@ -22,7 +22,7 @@ import Foundation
  * This class encapsulates information about a VWO rule, including its rule key, variation ID,
  * campaign ID, and type.
  */
-struct Rule: Codable {
+struct Rule: Codable, Equatable {
     let ruleKey: String?
     let variationId: Int?
     let campaignId: Int?

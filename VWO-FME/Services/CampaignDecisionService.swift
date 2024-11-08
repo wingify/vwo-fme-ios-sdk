@@ -25,7 +25,7 @@ class CampaignDecisionService {
      * @return  boolean value indicating if the user is part of the campaign.
      */
     func isUserPartOfCampaign(userId: String?, campaign: Campaign?) -> Bool {
-        guard let campaign = campaign, let userId = userId else {
+        guard let campaign = campaign, let campaignId = campaign.id , let userId = userId else {
             return false
         }
         
@@ -40,7 +40,7 @@ class CampaignDecisionService {
             trafficAllocation = Double(campaign.percentTraffic ?? 0)
         }
         // Get the bucket value assigned to the user
-        let valueAssignedToUser = DecisionMaker.getBucketValueForUser(userId: "\(String(describing: campaign.id))_\(userId)")
+        let valueAssignedToUser = DecisionMaker.getBucketValueForUser(userId: "\(campaignId)_\(userId)")
         let isUserPart = valueAssignedToUser != 0 && valueAssignedToUser <= Int(trafficAllocation)
         
         LoggerService.log(
@@ -48,7 +48,7 @@ class CampaignDecisionService {
             key: "USER_PART_OF_CAMPAIGN",
             details: [
                 "userId": userId,
-                "campaignKey": campaign.ruleKey ?? "",
+                "campaignKey": campaign.type == CampaignTypeEnum.ab.rawValue ? "\(campaign.key ?? "--")" : "\(campaign.name ?? "--")_\(campaign.ruleKey ?? "--")",
                 "notPart": isUserPart ? "" : "not"
             ]
         )
@@ -91,14 +91,14 @@ class CampaignDecisionService {
      * @return  VariationModel object containing the variation allotted to the user.
      */
     func bucketUserToVariation(userId: String?, accountId: String, campaign: Campaign?) -> Variation? {
-        guard let campaign = campaign, let userId = userId else {
+        guard let campaign = campaign, let campaignId = campaign.id, let userId = userId else {
             return nil
         }
         
         let multiplier = campaign.percentTraffic != 0 ? 1 : 0
         let percentTraffic = campaign.percentTraffic
         
-        let hashValue = DecisionMaker.generateHashValue(hashKey: "\(String(describing: campaign.id))_\(accountId)_\(userId)")
+        let hashValue = DecisionMaker.generateHashValue(hashKey: "\(campaignId)_\(accountId)_\(userId)")
         
         let bucketValue = DecisionMaker.generateBucketValue(hashValue: hashValue, maxValue: Constants.MAX_TRAFFIC_VALUE, multiplier: multiplier)
         
@@ -108,7 +108,7 @@ class CampaignDecisionService {
             details: [
                 "userId": userId,
                 "campaignKey": campaign.ruleKey ?? "",
-                "percentTraffic": "\(String(describing: percentTraffic))",
+                "percentTraffic": "\(percentTraffic ?? 0)",
                 "bucketValue": "\(bucketValue)",
                 "hashValue": "\(hashValue)"
             ]
@@ -139,14 +139,14 @@ class CampaignDecisionService {
         if segments.isEmpty {
             LoggerService.log(level: .info, key: "SEGMENTATION_SKIP", details: [
                 "userId": context.id ?? "",
-                "campaignKey": campaign.ruleKey ?? ""
+                "campaignKey": campaign.type == CampaignTypeEnum.ab.rawValue ? "\(campaign.key ?? "--")" : "\(campaign.name ?? "--")_\(campaign.ruleKey ?? "--")",
             ])
             return true
         } else {
             let preSegmentationResult = SegmentationManager.validateSegmentation(dsl: segments, properties: context.customVariables)
             LoggerService.log(level: .info, key: "SEGMENTATION_STATUS", details: [
                 "userId": context.id ?? "",
-                "campaignKey": campaign.ruleKey ?? "",
+                "campaignKey": campaign.type == CampaignTypeEnum.ab.rawValue ? "\(campaign.key ?? "--")" : "\(campaign.name ?? "--")_\(campaign.ruleKey ?? "--")",
                 "status": preSegmentationResult ? "passed" : "failed"
             ])
             return preSegmentationResult

@@ -37,13 +37,15 @@ enum HTTPMethod: String {
     case post = "POST"
 }
 
-enum APIError: Error {
+enum APIError: Error, Equatable {
+    
     case requestFailed
     case jsonConversionFailure
     case invalidData
     case responseUnsuccessful
     case jsonParsingFailure
     case badUrl
+    case noNetwork
     case unsupportedBodyType(type: Any.Type)
     var localizedDescription: String {
         switch self {
@@ -54,6 +56,24 @@ enum APIError: Error {
         case .jsonConversionFailure: return "JSON Conversion Failure"
         case .badUrl: return "Bad Url"
         case .unsupportedBodyType(let type): return "Unsupported body type: \(type)"
+        case .noNetwork: return "No network connection"
+        }
+    }
+    
+    static func == (lhs: APIError, rhs: APIError) -> Bool {
+        switch (lhs, rhs) {
+        case (.requestFailed, .requestFailed),
+            (.jsonConversionFailure, .jsonConversionFailure),
+            (.invalidData, .invalidData),
+            (.responseUnsuccessful, .responseUnsuccessful),
+            (.jsonParsingFailure, .jsonParsingFailure),
+            (.badUrl, .badUrl),
+            (.noNetwork, .noNetwork):
+            return true
+        case (.unsupportedBodyType(let leftType), .unsupportedBodyType(let rightType)):
+            return leftType == rightType
+        default:
+            return false
         }
     }
 }

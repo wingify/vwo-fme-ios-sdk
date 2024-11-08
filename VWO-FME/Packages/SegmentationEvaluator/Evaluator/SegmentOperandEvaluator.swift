@@ -39,7 +39,7 @@ class SegmentOperandEvaluator {
 
         // Handle 'inlist' operand
         if operandValue.contains("inlist") {
-            let listIdPattern = try? NSRegularExpression(pattern: "inlist\\((\\w+:\\d+)\\)")
+            let listIdPattern = try? NSRegularExpression(pattern: "inlist\\(([^)]+)\\)")
             let matches = listIdPattern?.matches(in: operandValue, options: [], range: NSRange(location: 0, length: operandValue.utf16.count))
             guard let match = matches?.first, let range = Range(match.range(at: 1), in: operandValue) else {
                 LoggerService.log(level: .error, message: "Invalid 'inList' operand format")
@@ -52,12 +52,11 @@ class SegmentOperandEvaluator {
             queryParamsObj["attribute"] = attributeValue
             queryParamsObj["listId"] = listId
             
-            let semaphore = DispatchSemaphore(value: 0)
+            let dispatchGroup = DispatchGroup()
             var result = false
-
+            dispatchGroup.enter()
             // Make a web service call to check the attribute against the list
             GatewayServiceUtil.getFromGatewayService(queryParams: queryParamsObj, endpoint: UrlEnum.attributeCheck.rawValue) { gatewayResponse in
-
                 if let modelData = gatewayResponse {
                     if let stringValue = modelData.data {
                         if let booleanValue = stringValue.toBool {
@@ -65,11 +64,11 @@ class SegmentOperandEvaluator {
                         }
                     }
                 }
-                semaphore.signal() // Signal the semaphore to unblock the waiting thread
+                dispatchGroup.leave()
             }
 
             // Wait for the API call to complete
-            semaphore.wait()
+            dispatchGroup.wait()
             return result
         } else {
             // Process other types of operands

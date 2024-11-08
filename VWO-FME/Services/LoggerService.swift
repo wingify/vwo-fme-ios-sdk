@@ -41,15 +41,23 @@ class LoggerService {
      */
     private func readLogFiles(fileName: String) -> [String: String] {
         do {
+#if SWIFT_PACKAGE
+            // For Swift Package Manager
+            let bundle = Bundle.module
+#else
+            // For CocoaPods
             let bundle = Bundle(for: type(of: self))
-            if let path = bundle.path(forResource: fileName, ofType: nil) {
-                let data = try Data(contentsOf: URL(fileURLWithPath: path))
+#endif
+            
+            // Attempt to find the file with or without an extension
+            if let url = bundle.url(forResource: fileName, withExtension: nil) ?? bundle.url(forResource: fileName, withExtension: "json") {
+                let data = try Data(contentsOf: url)
                 if let json = try JSONSerialization.jsonObject(with: data, options: []) as? [String: Any] {
                     return json as? [String: String] ?? [:]
                 }
             }
         } catch {
-            print(error.localizedDescription)
+            LoggerService.log(level: .error, message: "Error reading log files: \(error.localizedDescription)")
         }
         return [:]
     }

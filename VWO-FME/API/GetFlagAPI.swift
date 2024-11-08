@@ -27,9 +27,10 @@ class GetFlagAPI {
      */
     static func getFlag(featureKey: String, settings: Settings, context: VWOContext, hookManager: HooksManager) -> GetFlag {
         
-        let semaphore = DispatchSemaphore(value: 0)
         let getFlag = GetFlag()
         let queueFlag = DispatchQueue(label: "com.vwo.fme.getflag",qos: .userInitiated, attributes: .concurrent)
+        let dispatchGroup = DispatchGroup()
+        dispatchGroup.enter()
         queueFlag.async {
             
             var shouldCheckForExperimentsRules = false
@@ -40,21 +41,30 @@ class GetFlagAPI {
             let feature: Feature? = FunctionUtil.getFeatureFromKey(settings: settings, featureKey: featureKey)
             
             /**
+             * if feature is not found, return false
+             */
+            guard let feature = feature else {
+                LoggerService.log(level: .error, key: "FEATURE_NOT_FOUND", details: [
+                    "featureKey": featureKey
+                ])
+                getFlag.setIsEnabled(isEnabled: false)
+                dispatchGroup.leave()
+                return
+            }
+            
+            /**
              * Decision object to be sent for the integrations
              */
             var decision: [String: Any] = [:]
-            if let feature = feature {
-                decision["featureName"] = feature.name
-                decision["featureId"] = feature.id
-                decision["featureKey"] = feature.key
-            }
+            decision["featureName"] = feature.name
+            decision["featureId"] = feature.id
+            decision["featureKey"] = feature.key
             decision["userId"] = context.id
             decision["api"] = ApiEnum.getFlag.rawValue
             
             
             let storageService = StorageService()
-            let storedDataMap = StorageDecorator().getFeatureFromStorage(featureKey: featureKey, context: context, storageService: storageService)
-            
+            let storedDataMap = storageService.getFeatureFromStorage(featureKey: featureKey, context: context)
             
             /**
              * If feature is found in the storage, return the stored variation
@@ -78,7 +88,7 @@ class GetFlagAPI {
                                 ])
                                 getFlag.setIsEnabled(isEnabled: true)
                                 getFlag.setVariables(variation.variables)
-                                semaphore.signal()
+                                dispatchGroup.leave()
                                 return
                             }
                         }
@@ -116,18 +126,6 @@ class GetFlagAPI {
                 LoggerService.log(level: .debug, message: "Error parsing stored data: \(error.localizedDescription)")
             }
             
-            /**
-             * if feature is not found, return false
-             */
-            guard let feature = feature else {
-                LoggerService.log(level: .error, key: "FEATURE_NOT_FOUND", details: [
-                    "featureKey": featureKey
-                ])
-                getFlag.setIsEnabled(isEnabled: false)
-                semaphore.signal()
-                return
-            }
-            
             SegmentationManager.setContextualData(settings: settings, feature: feature, context: context)
             
             /**
@@ -139,7 +137,7 @@ class GetFlagAPI {
                 var rolloutRulesToEvaluate: [Campaign] = []
                 for rule in rollOutRules {
                     
-                    var megGroupWinnerCampaigns: [Int : Int]? = [:]
+                    var megGroupWinnerCampaigns: [Int : String]? = [:]
                     
                     let evaluateRuleResult = RuleEvaluationUtil.evaluateRule(settings: settings, feature: feature, campaign: rule, context: context, evaluatedFeatureMap: &evaluatedFeatureMap, megGroupWinnerCampaigns: &megGroupWinnerCampaigns, storageService: storageService, decision: &decision)
                     
@@ -184,7 +182,7 @@ class GetFlagAPI {
             if shouldCheckForExperimentsRules {
                 var experimentRulesToEvaluate: [Campaign] = []
                 let experimentRules = FunctionUtil.getAllExperimentRules(feature: feature)
-                var megGroupWinnerCampaigns: [Int : Int]? = [:]
+                var megGroupWinnerCampaigns: [Int : String]? = [:]
                 
                 for rule in experimentRules {
                     // Evaluate the rule here
@@ -227,12 +225,10 @@ class GetFlagAPI {
                 var storageMap: [String: Any] = [:]
                 
                 storageMap["featureKey"] = feature.key
-                storageMap["user"] = context.id
+                storageMap["userId"] = context.id
                 storageMap.merge(passedRulesInformation) { (_, new) in new }
                 
-                
-                
-                StorageDecorator().setDataInStorage(data: storageMap, storageService: storageService)
+                storageService.setDataInStorage(data: storageMap)
             }
             
             // Execute the integrations
@@ -251,9 +247,9 @@ class GetFlagAPI {
                 ])
                 ImpressionUtil.createAndSendImpressionForVariationShown(settings: settings, campaignId: impactCampaignId, variationId: getFlag.isEnabled() ? 2 : 1, context: context)
             }
-            semaphore.signal()
+            dispatchGroup.leave()
         }
-        semaphore.wait()
+        dispatchGroup.wait()
         return getFlag
     }
 
@@ -267,7 +263,7 @@ class GetFlagAPI {
     private static func updateIntegrationsDecisionObject(campaign: Campaign, variation: Variation, passedRulesInformation: inout [String: Any], decision: inout [String: Any]) {
         if campaign.type == CampaignTypeEnum.rollout.rawValue {
             passedRulesInformation["rolloutId"] = campaign.id ?? 0
-            passedRulesInformation["rolloutKey"] = campaign.name ?? ""
+            passedRulesInformation["rolloutKey"] = campaign.key ?? ""
             passedRulesInformation["rolloutVariationId"] = variation.id ?? 0
         } else {
             passedRulesInformation["experimentId"] = campaign.id ?? 0

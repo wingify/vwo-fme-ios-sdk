@@ -87,7 +87,7 @@ class NetworkClient: NetworkClientInterface {
         
         performRequestWithRetry(request: request, completion: completion)
     }
-
+    
     private func constructUrl(networkOptions: [String: Any?]) -> String {
         var hostname = networkOptions["hostname"] as? String ?? ""
         let path = networkOptions["path"] as? String ?? ""
@@ -103,6 +103,17 @@ class NetworkClient: NetworkClientInterface {
         var responseModel = ResponseModel()
         
         let (data, response, error) = URLSession.shared.synchronousDataTask(with: request)
+        
+        if let error = error as? URLError {
+            // Check if the error is due to no network connection
+            if error.code == .notConnectedToInternet {
+                responseModel.errorMessage = APIError.noNetwork.localizedDescription
+                responseModel.error = .noNetwork
+                completion(responseModel)
+                // Return early to avoid retrying the request
+                return
+            }
+        }
         
         guard let httpResponse = response as? HTTPURLResponse else {
             if retryCount > 0 {
@@ -120,7 +131,7 @@ class NetworkClient: NetworkClientInterface {
         
         responseModel.statusCode = httpResponse.statusCode
         
-        if httpResponse.statusCode == 200 {
+        if httpResponse.isResponseOK() {
             if let data = data, let responseData = String(data: data, encoding: .utf8) {
                 responseModel.data = responseData
                 responseModel.data2 = data
@@ -172,3 +183,8 @@ extension URLSession {
     }
 }
 
+extension HTTPURLResponse {
+    func isResponseOK() -> Bool {
+        return (200...299).contains(self.statusCode)
+    }
+}

@@ -21,7 +21,7 @@ class ViewController: UIViewController {
     
     var featureFlagObj: GetFlag? = nil
     var context: VWOContext?
-    
+    var stackView: UIStackView!
     override func viewDidLoad() {
         super.viewDidLoad()
         
@@ -56,6 +56,7 @@ class ViewController: UIViewController {
             stackView.centerYAnchor.constraint(equalTo: view.centerYAnchor),
             stackView.widthAnchor.constraint(equalTo: view.widthAnchor, multiplier: 0.5)
         ])
+        self.stackView = stackView
     }
     
     func createButton(title: String, action: Selector) -> UIButton {
@@ -86,6 +87,13 @@ class ViewController: UIViewController {
         return label
     }
     
+    func disableInitButton() {
+
+        if let button = self.stackView.arrangedSubviews[1] as? UIButton {
+            button.isEnabled = false
+            button.layer.borderColor = UIColor.systemGray4.cgColor
+        }
+    }
     
     // MARK: - Button action methods
     
@@ -120,9 +128,9 @@ class ViewController: UIViewController {
         
         let myUserId = "unique_user_id"
         let customVariables = ["key_1":5, "key_2": 0] as [String : Any]
-        self.context = VWOContext(id: myUserId, 
+        self.context = VWOContext(id: myUserId,
                                   customVariables: customVariables,
-                                  ipAddress: "1.2.3.4", 
+                                  ipAddress: "1.2.3.4",
                                   userAgent: "Mozilla/5.0 (iPhone; CPU iPhone OS 14_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/15E148")
     }
     
@@ -130,15 +138,20 @@ class ViewController: UIViewController {
 
         let sdkKey = "dummy_key"
         let accountId: Int = 123456
-        let integrations = MyIntegrationCallback()
-        let options = VWOInitOptions(sdkKey: sdkKey, accountId: accountId, logLevel: .trace, integrations: integrations)
+        let integrationss = MyIntegrationCallback()
+        let options = VWOInitOptions(sdkKey: sdkKey,
+                                     accountId: accountId,
+                                     logLevel: .trace,
+                                     integrations: integrationss,
+                                     cachedSettingsExpiryTime: 2 * 60 * 1000, // in milliseconds
+                                     pollInterval: nil)
         
         VWOFme.initialize(options: options) { result in
             switch result {
             case .success(let message):
                 print("Demo app >>> \(message)")
+                self.disableInitButton()
                 // do something else like get feature flag data
-                
             case .failure(let error):
                 print("Demo app >>> ", error)
             }
@@ -178,6 +191,8 @@ class ViewController: UIViewController {
             let variable1 = featureFlag.getVariable(key: "feature_flag_variable1", defaultValue: "default-value1")
             let variable2 = featureFlag.getVariable(key: "feature_flag_variable2", defaultValue: "default-value2")
             print("Variables from feature flag: \(variables)")
+            print("Variable 1 from feature flag: \(variable1)")
+            print("Variable 2 from feature flag: \(variable2)")
             
         } else {
             print("Feature flag is not enabled")

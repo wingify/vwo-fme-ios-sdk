@@ -32,21 +32,41 @@ internal class LogManager {
     private var transports: [[String: Any]] = []
     var level: LogLevelEnum
     private var tag = "VWO FME Logger"
+    private var prefix: String = ""
 
-    init(config: [String: Any]?, logLevel: LogLevelEnum) {
+    /**
+     * Initializes a new instance of LogManager.
+     *
+     * - Parameters:
+     *   - config: A dictionary containing configuration settings.
+     *   - logLevel: The initial log level.
+     */
+    init(config: [String: Any], logLevel: LogLevelEnum) {
         self.level = logLevel
         self.dateTimeForm = DateFormatter()
         self.dateTimeForm.dateFormat = "yyyy-MM-dd'T'HH:mm:ss.SSSZ"
+        self.prefix = config["prefix"] as! String
         LogManager.instance = self
     }
     
+    /**
+     * Retrieves the current date and time as a formatted string.
+     *
+     * - Returns: A string representing the current date and time.
+     */
     private func getDateAndTime() -> String {
-        
         let now = Date()
         let dateString = self.dateTimeForm.string(from: now)
         return dateString
     }
     
+    /**
+     * Logs a message with a specified log level.
+     *
+     * - Parameters:
+     *   - level: The log level for the message.
+     *   - message: The message to be logged.
+     */
     private func logMessage(level: LogLevelEnum, message: String?) {
         var osLogType: OSLogType = .default
         switch level {
@@ -59,10 +79,17 @@ internal class LogManager {
         case .error:
             osLogType = .error
         }
-        let formatMessage = "\(tag): \(level.levelIndicator): \(message ?? "")"
+        let formatMessage = "\(prefix.isEmpty ? "\(tag)" : "\(prefix)"): \(level.levelIndicator): \(message ?? "")"
         os_log("%{public}@", log: OSLog(subsystem: tag, category: level.rawValue), type: osLogType, formatMessage)
     }
     
+    /**
+     * Logs a message if the specified log level is enabled.
+     *
+     * - Parameters:
+     *   - level: The log level for the message.
+     *   - message: The message to be logged.
+     */
     func log(level: LogLevelEnum, message: String?) {
         guard let message = message else { return }
         let configLevel = self.level

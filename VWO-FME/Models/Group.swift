@@ -21,13 +21,13 @@ import Foundation
  *
  * This class encapsulates information about a group of VWO campaigns, including its name, associated campaigns, and settings for experiment type, priority, and weight.
  */
-struct Groups: Codable {
+struct Groups: Codable, Equatable {
     var name: String?
-    var campaigns: [Int]?
+    var campaigns: [String]?
     var et: Int?
-    var p: [Int]?
-    var wt: [String: Int]?
-    
+    var p: [String]?
+    var wt: [String: Double]?
+
     enum CodingKeys: String, CodingKey {
         case name
         case campaigns

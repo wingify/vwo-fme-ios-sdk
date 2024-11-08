@@ -22,7 +22,7 @@ import Foundation
  * This struct encapsulates information about a VWO metric, including its various properties such as
  * `mca`, `hasProps`, `identifier`, `id`, and `type`.
  */
-struct Metric: Codable {
+struct Metric: Codable, Equatable {
     var mca: Int?
     var hasProps: Bool?
     var identifier: String?

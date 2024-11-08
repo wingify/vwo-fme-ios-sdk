@@ -64,7 +64,7 @@ class RequestHandler {
         // Merge configuration query parameters into the request query parameters if they don't exist
         for (key, value) in configQueryParams {
             if requestQueryParams[key] == nil {
-                requestQueryParams[key] = value as! String
+                requestQueryParams[key] = value as? String
             }
         }
 

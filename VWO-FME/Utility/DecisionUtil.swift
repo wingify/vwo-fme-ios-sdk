@@ -18,21 +18,37 @@ import Foundation
 
 class DecisionUtil {
     
+    /**
+     * Checks whitelisting and pre-segmentation for a given campaign.
+     *
+     * - Parameters:
+     *   - settings: The settings object containing account information.
+     *   - feature: The feature being evaluated (optional).
+     *   - campaign: The campaign to be evaluated.
+     *   - context: The context of the current VWO session.
+     *   - evaluatedFeatureMap: A map to store evaluated features.
+     *   - megGroupWinnerCampaigns: A map to store winner campaigns in mutually exclusive groups.
+     *   - storageService: The storage service for retrieving stored data.
+     *   - decision: A map to store decision-related data.
+     * - Returns: A dictionary containing the pre-segmentation result and whitelisted object.
+     */
     static func checkWhitelistingAndPreSeg(
         settings: Settings,
         feature: Feature?,
         campaign: Campaign,
         context: VWOContext,
         evaluatedFeatureMap: inout [String: Any],
-        megGroupWinnerCampaigns: inout [Int: Int]?,
+        megGroupWinnerCampaigns: inout [Int: String]?,
         storageService: StorageService,
         decision: inout [String: Any]
     ) -> [String: Any] {
         
+        // Generate a unique user ID for the campaign
         let stringAccountId = "\(settings.accountId ?? 0)"
         let vwoUserId = UUIDUtils.getUUID(userId: context.id, accountId: stringAccountId)
-        let campaignId = campaign.id
+        let campaignId = campaign.id!
         
+        // Handle AB campaign type
         if campaign.type == CampaignTypeEnum.ab.rawValue {
             let id = campaign.isUserListEnabled == true ? vwoUserId : context.id
             if let id = id {
@@ -41,12 +57,13 @@ class DecisionUtil {
             
             decision["variationTargetingVariables"] = context.variationTargetingVariables
             
+            // Check for forced variation
             if campaign.isForcedVariationEnabled == true {
                 if let whitelistedVariation = checkCampaignWhitelisting(campaign: campaign, context: context) {
                     let variation = whitelistedVariation["variation"] ?? ""
                     return [
                         "preSegmentationResult": true,
-                        "whitelistedObject": variation
+                        "whitelistedObject": variation as Any
                     ]
                 }
             } else {
@@ -58,48 +75,163 @@ class DecisionUtil {
             }
         }
         
+        // Set custom variables for the user
         let userId = campaign.isUserListEnabled == true ? vwoUserId : context.id
         context.customVariables["_vwoUserId"] = userId ?? ""
         
         decision["customVariables"] = context.customVariables
         
-        // Check if RUle being evaluated is part of Mutually Exclusive Group
-        let groupIdValue = CampaignUtil.getGroupDetailsIfCampaignPartOfIt(settings: settings, campaignId: campaignId ?? 0)["groupId"]
+        // Check if the rule is part of a Mutually Exclusive Group
+        let variationId = campaign.type == CampaignTypeEnum.personalize.rawValue ? campaign.variations?[0].id : -1
         
-        if let groupId = groupIdValue, let groupIdInt = Int(groupId) {
-            if let groupWinnerCampaignId = megGroupWinnerCampaigns?[groupIdInt], groupWinnerCampaignId == campaignId {
+        let groupIdValue = CampaignUtil.getGroupDetailsIfCampaignPartOfIt(settings: settings, campaignId: campaignId, variationId: variationId ?? -1)["groupId"]
+        
+        if let groupId = groupIdValue, let groudIdInt = Int(groupId) {
+            
+            if let groupWinnerCampaignId = megGroupWinnerCampaigns?[groudIdInt], !groupWinnerCampaignId.isEmpty {
+                
+                if campaign.type == CampaignTypeEnum.ab.rawValue {
+                    if groupWinnerCampaignId == "\(campaignId)" {
+                        return [
+                            "preSegmentationResult": true,
+                            "whitelistedObject": NSNull()
+                        ]
+                    }
+                } else if campaign.type == CampaignTypeEnum.personalize.rawValue {
+                    if groupWinnerCampaignId == "\(campaignId)_\(campaign.variations?.first?.id ?? 0)" {
+                        return [
+                            "preSegmentationResult": true,
+                            "whitelistedObject": NSNull()
+                        ]
+                    }
+                }
                 return [
-                    "preSegmentationResult": true
+                    "preSegmentationResult": false,
+                    "whitelistedObject": NSNull()
                 ]
-            } else if let groupWinnerCampaignId = megGroupWinnerCampaigns?[groupIdInt] {
-                return [
-                    "preSegmentationResult": false
-                ]
+            } else {
+                
+                let storageFeatureKey = Constants.VWO_META_MEG_KEY + groupId
+                let storageDataMap = storageService.getFeatureFromStorage(featureKey: storageFeatureKey, context: context)
+                
+                if let storageDataMap = storageDataMap {
+                    
+                    do {
+                        let storageData = try JSONDecoder().decode(Storage.self, from: JSONSerialization.data(withJSONObject: storageDataMap))
+                        
+                        if let experimentId = storageData.experimentId, let experimentKey = storageData.experimentKey {
+                            LoggerService.log(level: .info, key: "MEG_CAMPAIGN_FOUND_IN_STORAGE", details: [
+                                "campaignKey": experimentKey,
+                                "userId": "\(context.id ?? "--")"
+                            ])
+                            if experimentId == campaignId {
+                                if campaign.type == CampaignTypeEnum.personalize.rawValue {
+                                    if storageData.experimentVariationId == campaign.variations?[0].id {
+                                        return [
+                                            "preSegmentationResult": true,
+                                            "whitelistedObject": NSNull()
+                                        ]
+                                    } else {
+                                        megGroupWinnerCampaigns?[Int(groupId) ?? 0] = "\(experimentId)_\(storageData.experimentVariationId ?? 0)"
+                                        return [
+                                            "preSegmentationResult": false,
+                                            "whitelistedObject": NSNull()
+                                        ]
+                                    }
+                                } else {
+                                    return [
+                                        "preSegmentationResult": true,
+                                        "whitelistedObject": NSNull()
+                                    ]
+                                }
+                            }
+                            if storageData.experimentVariationId != -1 {
+                                megGroupWinnerCampaigns?[Int(groupId) ?? 0] = "\(experimentId)_\(storageData.experimentVariationId ?? 0)"
+                            } else {
+                                megGroupWinnerCampaigns?[Int(groupId) ?? 0] = String(experimentId)
+                            }
+                            return [
+                                "preSegmentationResult": false,
+                                "whitelistedObject": NSNull()
+                            ]
+                        }
+                    } catch {
+                        LoggerService.log(level: .error, key: "STORED_DATA_ERROR", details: [
+                            "err": error.localizedDescription
+                        ])
+                    }
+                }
             }
         }
         
+        // Evaluate pre-segmentation decision
         let isPreSegmentationPassed = CampaignDecisionService().getPreSegmentationDecision(campaign: campaign, context: context)
         
-        if isPreSegmentationPassed, let groupId = groupIdValue, let groupIdInt = Int(groupId) {
+        let variationId2 = campaign.type == CampaignTypeEnum.personalize.rawValue ? campaign.variations?[0].id : -1
+        
+        let groupDetails = CampaignUtil.getGroupDetailsIfCampaignPartOfIt(settings: settings, campaignId: campaign.id ?? -1, variationId: variationId2 ?? -1)
+        let groupId = groupDetails["groupId"]
+        
+        if let groupId = groupId, !groupId.isEmpty, isPreSegmentationPassed {
             
-            let variationM = MegUtil.evaluateGroups(settings: settings, feature: feature, groupId: Int(groupId) ?? 0, evaluatedFeatureMap: &evaluatedFeatureMap, context: context, storageService: storageService)
+            let variationModelEvaluated = MegUtil.evaluateGroups(settings: settings, feature: feature, groupId: Int(groupId) ?? 0, evaluatedFeatureMap: &evaluatedFeatureMap, context: context, storageService: storageService)
             
-            if let variationModel = variationM, variationModel.id == campaignId {
+            if let variationModel = variationModelEvaluated, let variationId = variationModel.id, variationId == campaignId {
+                
+                if variationModel.type == CampaignTypeEnum.ab.rawValue {
+                    return [
+                        "preSegmentationResult": true,
+                        "whitelistedObject": NSNull()
+                    ]
+                } else {
+                    if variationModel.variations[0].id == campaign.variations?[0].id {
+                        return [
+                            "preSegmentationResult": true,
+                            "whitelistedObject": NSNull()
+                        ]
+                    } else {
+                        megGroupWinnerCampaigns?[Int(groupId) ?? 0] = "\(variationId)_\(variationModel.variations.first?.id ?? 0)"
+                        return [
+                            "preSegmentationResult": false,
+                            "whitelistedObject": NSNull()
+                        ]
+                    }
+                }
+            } else if let variationModel = variationModelEvaluated, let variationId = variationModel.id {
+                
+                if variationModel.type == CampaignTypeEnum.ab.rawValue {
+                    megGroupWinnerCampaigns?[Int(groupId) ?? 0] = String(variationId)
+                } else {
+                    megGroupWinnerCampaigns?[Int(groupId) ?? 0] = "\(variationId)_\(variationModel.variations.first?.id ?? 0)"
+                }
                 return [
-                    "preSegmentationResult": true
+                    "preSegmentationResult": false,
+                    "whitelistedObject": NSNull()
                 ]
             }
-            megGroupWinnerCampaigns?[Int(groupId) ?? 0] = variationM?.id ?? 0
+            
+            megGroupWinnerCampaigns?[Int(groupId) ?? 0] = String(-1)
             return [
-                "preSegmentationResult": false
+                "preSegmentationResult": false,
+                "whitelistedObject": NSNull()
             ]
         }
         
         return [
-            "preSegmentationResult": isPreSegmentationPassed
+            "preSegmentationResult": isPreSegmentationPassed,
+            "whitelistedObject": NSNull()
         ]
     }
     
+    /**
+     * Evaluates traffic and determines the appropriate variation for a user.
+     *
+     * - Parameters:
+     *   - settings: The settings object containing account information.
+     *   - campaign: The campaign to be evaluated.
+     *   - userId: The user ID for which the variation is to be determined.
+     * - Returns: The variation assigned to the user, if any.
+     */
     static func evaluateTrafficAndGetVariation(
         settings: Settings,
         campaign: Campaign,
@@ -109,22 +241,30 @@ class DecisionUtil {
         let variation = CampaignDecisionService().getVariationAllotted(userId: userId, accountId: stringAccountId, campaign: campaign)
         
         if variation == nil {
-            LoggerService.log(level: .info, 
+            LoggerService.log(level: .info,
                               key: "USER_CAMPAIGN_BUCKET_INFO",
                               details: ["userId": userId ?? "",
-                                        "campaignKey": campaign.ruleKey ?? "",
+                                        "campaignKey": campaign.type == CampaignTypeEnum.ab.rawValue ? "\(campaign.key ?? "--")" : "\(campaign.name ?? "--")_\(campaign.ruleKey ?? "--")",
                                         "status": "did not get any variation"])
             return nil
         }
         
-        LoggerService.log(level: .info, 
+        LoggerService.log(level: .info,
                           key: "USER_CAMPAIGN_BUCKET_INFO",
                           details: ["userId": userId ?? "",
-                                    "campaignKey": campaign.ruleKey ?? "",
-                                    "status": "got variation: \(variation?.name)"])
+                                    "campaignKey": campaign.type == CampaignTypeEnum.ab.rawValue ? "\(campaign.key ?? "--")" : "\(campaign.name ?? "--")_\(campaign.ruleKey ?? "--")",
+                                    "status": "got variation: \(variation?.name ?? "--")"])
         return variation
     }
     
+    /**
+     * Checks if a campaign is whitelisted for a given context.
+     *
+     * - Parameters:
+     *   - campaign: The campaign to be evaluated.
+     *   - context: The context of the current VWO session.
+     * - Returns: A dictionary containing the whitelisted variation, if any.
+     */
     private static func checkCampaignWhitelisting(campaign: Campaign, context: VWOContext) -> [String: Any?]? {
         let whitelistingResult = evaluateWhitelisting(campaign: campaign, context: context)
         let status = whitelistingResult != nil ? StatusEnum.passed : StatusEnum.failed
@@ -132,12 +272,20 @@ class DecisionUtil {
         LoggerService.log(level: .info,
                           key: "WHITELISTING_STATUS",
                           details: ["userId": context.id ?? "",
-                                    "campaignKey": campaign.ruleKey ?? "",
+                                    "campaignKey": campaign.type == CampaignTypeEnum.ab.rawValue ? "\(campaign.key ?? "--")" : "\(campaign.name ?? "--")_\(campaign.ruleKey ?? "--")",
                                     "status": status.rawValue,
                                     "variationString": variationString])
         return whitelistingResult
     }
     
+    /**
+     * Evaluates whitelisting for a campaign based on the context.
+     *
+     * - Parameters:
+     *   - campaign: The campaign to be evaluated.
+     *   - context: The context of the current VWO session.
+     * - Returns: A dictionary containing the whitelisted variation, if any.
+     */
     private static func evaluateWhitelisting(campaign: Campaign, context: VWOContext) -> [String: Any?]? {
         
         var targetedVariations = [Variation]()
@@ -153,13 +301,10 @@ class DecisionUtil {
                 continue
             }
             
-            if let segments = variation.segments {
-                let segmentationResult = SegmentationManager.validateSegmentation(dsl: segments, properties: context.variationTargetingVariables)
-                
-                if segmentationResult {
-                    if let clonedVariation = FunctionUtil.cloneObject(variation) {
-                        targetedVariations.append(clonedVariation)
-                    }
+            let segmentationResult = SegmentationManager.validateSegmentation(dsl: segments, properties: context.variationTargetingVariables)
+            if segmentationResult {
+                if let clonedVariation = FunctionUtil.cloneObject(variation) {
+                    targetedVariations.append(clonedVariation)
                 }
             }
         }

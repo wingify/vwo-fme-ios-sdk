@@ -19,7 +19,7 @@ import Foundation
 /// Represents an impact campaign in VWO.
 ///
 /// This struct encapsulates information about a VWO impact campaign, including its campaign ID and type.
-struct ImpactCampaign: Codable {
+struct ImpactCampaign: Codable, Equatable {
     /// The ID of the campaign.
     var campaignId: Int?
     
