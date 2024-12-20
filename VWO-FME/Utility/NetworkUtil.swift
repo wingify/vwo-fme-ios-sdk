@@ -132,8 +132,8 @@ class NetworkUtil {
     // Creates the props model for the event arch APIs
     private static func createProps(settings: Settings) -> Props {
         var props = Props()
-        props.vwoSdkName = Constants.SDK_NAME
-        props.vwoSdkVersion = Constants.SDK_VERSION
+        props.vwoSdkName = SDKMetaUtil.name
+        props.vwoSdkVersion = SDKMetaUtil.version
         props.vwoEnvKey = settings.sdkKey
         return props
     }

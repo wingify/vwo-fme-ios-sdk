@@ -171,12 +171,12 @@ class ViewController: UIViewController {
         }
         
         let featureFlagName = "feature_flag_name"
-        let featureFlag = VWOFme.getFlag(featureKey: featureFlagName, context: userContext)
-        
-        if let featureFlag = featureFlag {
+
+        VWOFme.getFlag(featureKey: featureFlagName, context: userContext, completion: { featureFlag in
             self.featureFlagObj = featureFlag
             print("Feature flag result: \(featureFlagName) || enabled: \(featureFlag.isEnabled())")
-        }
+            
+        })
     }
     
     func getVariable() {

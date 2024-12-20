@@ -35,6 +35,8 @@ public class VWOInitOptions {
     var vwoBuilder: VWOBuilder?
     var gatewayService: [String: Any] = [:]
     var cachedSettingsExpiryTime: Int64 = Constants.SETTINGS_EXPIRY
+    var sdkName: String = Constants.SDK_NAME
+    var sdkVersion: String = Constants.SDK_VERSION
     
     /**
      * Initializes a new instance of VWOInitOptions.
@@ -56,7 +58,9 @@ public class VWOInitOptions {
                 integrations: IntegrationCallback? = nil,
                 gatewayService: [String: Any] = [:],
                 cachedSettingsExpiryTime: Int64? = nil,
-                pollInterval: Int64? = nil) {
+                pollInterval: Int64? = nil,
+                sdkName: String? = nil,
+                sdkVersion: String? = nil) {
         
         // Assigning the SDK key
         self.sdkKey = sdkKey
@@ -66,7 +70,7 @@ public class VWOInitOptions {
         
         // Setting the log level
         self.logLevel = logLevel
-        
+                
         // Configuring the logger with level and prefix
         self.logger = ["level": "\(logLevel.rawValue)", "prefix": "\(logPrefix)"]
         
@@ -84,6 +88,22 @@ public class VWOInitOptions {
         // Setting the poll interval if provided
         if let pollingTime = pollInterval {
             self.pollInterval = pollingTime
+        }
+        
+        if let sdkNameClient = sdkName {
+            self.sdkName = sdkNameClient
+            SDKMetaUtil.name = sdkNameClient
+        } else {
+            self.sdkName = Constants.SDK_NAME
+            SDKMetaUtil.name = Constants.SDK_NAME
+        }
+        
+        if let sdkVersionClient = sdkVersion {
+            self.sdkVersion = sdkVersionClient
+            SDKMetaUtil.version = sdkVersionClient
+        } else {
+            self.sdkVersion = Constants.SDK_VERSION
+            SDKMetaUtil.version = Constants.SDK_VERSION
         }
     }
 }

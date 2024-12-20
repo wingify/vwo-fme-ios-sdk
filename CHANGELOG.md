@@ -5,11 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.2.0] - 2024-12-20
+
+### Added
+
+- Support for passing SDK name and version for hybrid SDKs i.e. React Native & Flutter SDKs
+
+
 ## [1.1.0] - 2024-11-08
 
 ### Added
 
-- Added support for Personalise rules within Mutually Exclusive Groups. 
+- Added support for Personalise rules within Mutually Exclusive Groups.
 - Storage support: Built in storage capabilities to manage feature and variation data and preventing changes in variations upon each initialization.
 - Settings cache: Cached settings will be used till it expires. Client can set the expiry time of cache.
 - Added SPM support.
@@ -21,7 +28,7 @@ let options = VWOInitOptions(sdkKey: SDK_KEY,
                              accountId: ACCOUNT_ID,
                              gatewayService: ["url": "REPLACE_WITH_GATEWAY_URL"],
                              cachedSettingsExpiryTime: 10 * 60 * 1000) // in milliseconds
-                             
+
 VWOFme.initialize(options: options) { result in
     switch result {
         case .success(let message):

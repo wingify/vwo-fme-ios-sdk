@@ -34,4 +34,6 @@ class SDKMetaUtil {
         return bundle.bundleIdentifier ?? "Unknown"
     }
     
+    static var name = ""
+    static var version = ""
 }

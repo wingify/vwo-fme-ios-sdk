@@ -86,8 +86,8 @@ public class VWOFme {
     }
     
     // Gets the flag value for the given feature key
-    public static func getFlag(featureKey: String, context: VWOContext) -> GetFlag? {
-        return VWOFme.vwoClient?.getFlag(featureKey: featureKey, context: context)
+    public static func getFlag(featureKey: String, context: VWOContext, completion: @escaping (GetFlag) -> Void) {
+        VWOFme.vwoClient?.getFlag(featureKey: featureKey, context: context, completion: completion)
     }
     
     // Tracks an event with properties

@@ -25,7 +25,7 @@ class GetFlagAPI {
      * @param hookManager  HooksManager object containing the integrations.
      * @return GetFlag object containing the flag value.
      */
-    static func getFlag(featureKey: String, settings: Settings, context: VWOContext, hookManager: HooksManager) -> GetFlag {
+    static func getFlag(featureKey: String, settings: Settings, context: VWOContext, hookManager: HooksManager, completion: @escaping (GetFlag) -> Void) {
         
         let getFlag = GetFlag()
         let queueFlag = DispatchQueue(label: "com.vwo.fme.getflag",qos: .userInitiated, attributes: .concurrent)
@@ -250,7 +250,7 @@ class GetFlagAPI {
             dispatchGroup.leave()
         }
         dispatchGroup.wait()
-        return getFlag
+        completion(getFlag)
     }
 
     /**

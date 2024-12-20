@@ -44,7 +44,7 @@ class VWOClient {
     }
     
     // Get the flag value for the given feature key
-    func getFlag(featureKey: String?, context: VWOContext) -> GetFlag {
+    func getFlag(featureKey: String?, context: VWOContext, completion: @escaping (GetFlag) -> Void) {
         let apiName = "getFlag"
         let getFlag = GetFlag()
         do {
@@ -63,14 +63,15 @@ class VWOClient {
             guard let procSettings = self.processedSettings, SettingsSchema().isSettingsValid(procSettings) else {
                 LoggerService.log(level: .error, key: "SETTINGS_SCHEMA_INVALID", details: nil)
                 getFlag.setIsEnabled(isEnabled: false)
-                return getFlag
+                completion(getFlag)
+                return
             }
             
-            return GetFlagAPI.getFlag(featureKey: featureKey, settings: procSettings, context: context, hookManager: hooksManager)
+            return GetFlagAPI.getFlag(featureKey: featureKey, settings: procSettings, context: context, hookManager: hooksManager, completion: completion)
         } catch {
             LoggerService.log(level: .error, key: "API_THROW_ERROR", details: ["apiName": apiName, "err": error.localizedDescription])
             getFlag.setIsEnabled(isEnabled: false)
-            return getFlag
+            completion(getFlag)
         }
     }
     
