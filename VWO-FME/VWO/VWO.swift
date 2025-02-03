@@ -1,5 +1,5 @@
 /**
- * Copyright 2024 Wingify Software Pvt. Ltd.
+ * Copyright 2024-2025 Wingify Software Pvt. Ltd.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -50,6 +50,7 @@ public class VWOFme {
             vwoBuilder.setLogger()
                 .setSettingsManager()
                 .setNetworkManager()
+                .setNetworkMonitoring()
                 .setSegmentation()
                 .initPolling()
                 .getSettings(forceFetch: false) { result in
@@ -70,8 +71,8 @@ public class VWOFme {
                     }
                     return
                 }
-                
                 vwoBuilder.setVWOClient(self.vwoClient!)
+                vwoBuilder.initSyncManager()
                 self.isInitialized = true
                 DispatchQueue.main.async {
                     completion(.success(VWOInitSuccess.initializationSuccess.rawValue))
@@ -98,5 +99,16 @@ public class VWOFme {
     // Sets an attribute for a user in the context provided
     public static func setAttribute(attributeKey: String, attributeValue: Any, context: VWOContext) {
         VWOFme.vwoClient?.setAttribute(attributeKey: attributeKey, attributeValue: attributeValue, context: context)
+    }
+    
+    /**
+     * Manually triggers the synchronization of saved events.
+     * This function can be used to ensure that all pending events are sent to the server.
+     * It is particularly useful in scenarios where the app supports background modes,
+     * allowing events to be synced even when the app is not in the foreground.
+     * This is an optional feature for users who have enabled background tasks at the app level.
+     */
+    public static func performEventSync() {
+        SyncManager.shared.syncSavedEvents(manually: true, ignoreThreshold: true)
     }
 }

@@ -1,5 +1,5 @@
 /**
- * Copyright 2024 Wingify Software Pvt. Ltd.
+ * Copyright 2024-2025 Wingify Software Pvt. Ltd.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -40,4 +40,10 @@ struct ResponseModel {
     var data2: Data?
     
     var error: APIError?
+}
+
+extension ResponseModel {
+    func isResponseOK() -> Bool {
+        return (200...299).contains(self.statusCode)
+    }
 }

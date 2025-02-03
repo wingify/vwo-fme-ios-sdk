@@ -1,5 +1,5 @@
 /**
- * Copyright 2024 Wingify Software Pvt. Ltd.
+ * Copyright 2024-2025 Wingify Software Pvt. Ltd.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,7 +19,7 @@ import Foundation
 struct Constants {
     static let defaultString: String = ""
     static let PLATFORM: String = "ios"
-    static let SDK_VERSION: String = "1.2.0"
+    static let SDK_VERSION: String = "1.3.0"
 
     static let MAX_TRAFFIC_PERCENT: Int = 100
     static let MAX_TRAFFIC_VALUE: Int = 10000
@@ -35,6 +35,7 @@ struct Constants {
     
     static let HOST_NAME: String = "dev.visualwebsiteoptimizer.com"
     static let SETTINGS_ENDPOINT: String = "/server-side/v2-settings"
+    static let EVENT_BATCH_ENDPOINT: String = "/server-side/batch-events-v2"
     
     static let VWO_FS_ENVIRONMENT: String = "vwo_fs_environment"
     static let HTTPS_PROTOCOL: String = "https"
@@ -43,6 +44,8 @@ struct Constants {
     
     static let SDK_USERDEFAULT_SUITE = "com.vwo.fme.userdefault.suite"
     static let VWO_META_MEG_KEY = "_vwo_meta_meg_"
+    
+    static let DEFAULT_BATCH_UPLOAD_INTERVAL: Int64 = 3 * 60 * 1000 // 3 minutes in milliseconds
 }
 
 public typealias VWOInitCompletionHandler = (Result<String, Error>) -> Void

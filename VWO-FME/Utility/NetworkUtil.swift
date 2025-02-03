@@ -1,5 +1,5 @@
 /**
- * Copyright 2024 Wingify Software Pvt. Ltd.
+ * Copyright 2024-2025 Wingify Software Pvt. Ltd.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -88,6 +88,14 @@ class NetworkUtil {
         let accountIdString = String(describing: setting.accountId ?? 0)
         let requestQueryParams = RequestQueryParams(en: eventName, a: accountIdString, env: setting.sdkKey!, visitorUa: visitorUserAgent!, visitorIp: ipAddress ?? "", url: generateEventUrl())
         return requestQueryParams.queryParams
+    }
+    
+    static func getBatchEventsBaseProperties() -> [String:String] {
+        let settingManager = SettingsManager.instance
+        let accountId = "\(settingManager?.accountId ?? 0)"
+        let sdkKey = "\(settingManager?.sdkKey ?? "")"
+        let requestQueryParam = EventBatchQueryParams(i: sdkKey, env: sdkKey, a: accountId)
+        return requestQueryParam.queryParams
     }
     
     // Creates the base payload for the event arch APIs
@@ -211,7 +219,7 @@ class NetworkUtil {
         NetworkManager.postAsync(request) { result in
             
             if result.errorMessage != nil {
-                LoggerService.log(level: .error, key: "NETWORK_CALL_FAILED", details: ["method": "POST", "err": "\(String(describing: result.errorMessage))"])
+                LoggerService.log(level: .error, key: "NETWORK_CALL_FAILED", details: ["method": "POST", "err": "\(result.errorMessage ?? "")"])
             }
         }
     }

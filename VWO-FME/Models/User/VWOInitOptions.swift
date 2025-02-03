@@ -1,5 +1,5 @@
 /**
- * Copyright 2024 Wingify Software Pvt. Ltd.
+ * Copyright 2024-2025 Wingify Software Pvt. Ltd.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,6 +35,8 @@ public class VWOInitOptions {
     var vwoBuilder: VWOBuilder?
     var gatewayService: [String: Any] = [:]
     var cachedSettingsExpiryTime: Int64 = Constants.SETTINGS_EXPIRY
+    var batchMinSize: Int?
+    var batchUploadTimeInterval: Int64?
     var sdkName: String = Constants.SDK_NAME
     var sdkVersion: String = Constants.SDK_VERSION
     
@@ -50,6 +52,8 @@ public class VWOInitOptions {
      *   - gatewayService: Configuration for the gateway service.
      *   - cachedSettingsExpiryTime: Expiry time for cached settings in milliseconds.
      *   - pollInterval: Interval for polling updates in milliseconds.
+     *   - batchMinSize: Minimum size of batch to upload.
+     *   - batchUploadTimeInterval: Batch upload time interval in milliseconds. Please specify at least few minutes.
      */
     public init(sdkKey: String? = nil,
                 accountId: Int? = nil,
@@ -59,6 +63,8 @@ public class VWOInitOptions {
                 gatewayService: [String: Any] = [:],
                 cachedSettingsExpiryTime: Int64? = nil,
                 pollInterval: Int64? = nil,
+                batchMinSize: Int? = nil,
+                batchUploadTimeInterval: Int64? = nil,
                 sdkName: String? = nil,
                 sdkVersion: String? = nil) {
         
@@ -88,6 +94,14 @@ public class VWOInitOptions {
         // Setting the poll interval if provided
         if let pollingTime = pollInterval {
             self.pollInterval = pollingTime
+        }
+        
+        if let batchSize = batchMinSize {
+            self.batchMinSize = batchSize
+        }
+        
+        if let timeInterval = batchUploadTimeInterval {
+            self.batchUploadTimeInterval = timeInterval
         }
         
         if let sdkNameClient = sdkName {

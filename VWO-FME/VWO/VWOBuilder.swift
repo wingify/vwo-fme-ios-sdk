@@ -1,5 +1,5 @@
 /**
- * Copyright 2024 Wingify Software Pvt. Ltd.
+ * Copyright 2024-2025 Wingify Software Pvt. Ltd.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -120,7 +120,7 @@ class VWOBuilder {
         }
 
         if pollInterval < 1000 {
-            LoggerService.log(level: .error, key: "INIT_OPTIONS_INVALID", details: ["key": "pollInterval", "correctType": "number"])
+            LoggerService.log(level: .error, key: "INIT_OPTIONS_INVALID", details: ["key": "pollInterval", "correctType": "number", "value": "1000"])
             return self
         }
 
@@ -214,5 +214,27 @@ class VWOBuilder {
             differences.append("collectionPrefix")
         }
         return !differences.isEmpty
+    }
+    
+    /**
+     * Starts network monitoring.
+     * @return The instance of this builder.
+     */
+    func setNetworkMonitoring() -> VWOBuilder {
+        NetworkMonitor.shared.startMonitoring()
+        return self
+    }
+    
+    /**
+     * Initializes the SyncManager with batch processing options.
+     */
+    func initSyncManager() {
+        let batchSize = options?.batchMinSize
+        let batchTime = options?.batchUploadTimeInterval
+        let isAllowed = SyncManager.shared.checkOnlineBatchingAllowed(batchSize: batchSize, batchUploadInterval: batchTime)
+        if isAllowed {
+            SyncManager.shared.initialize(minBatchSize: batchSize, timeInterval: batchTime)
+        }
+        LoggerService.log(level: .info, key: "ONLINE_BATCH_PROCESSING_STATUS", details: ["status": isAllowed ? "enabled" : "disabled"])
     }
 }

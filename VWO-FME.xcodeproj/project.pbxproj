@@ -109,6 +109,14 @@
 		EB5500862CA51C3C00A8B729 /* GetFlagAPI.swift in Sources */ = {isa = PBXBuildFile; fileRef = EB5500852CA51C3C00A8B729 /* GetFlagAPI.swift */; };
 		EB5500872CA51C3C00A8B729 /* SetAttributeAPI.swift in Sources */ = {isa = PBXBuildFile; fileRef = EB5500832CA51C3C00A8B729 /* SetAttributeAPI.swift */; };
 		EB5500882CA51C3C00A8B729 /* TrackEventAPI.swift in Sources */ = {isa = PBXBuildFile; fileRef = EB5500842CA51C3C00A8B729 /* TrackEventAPI.swift */; };
+		EB7E3D6A2D27D3D3009B572F /* OffineEventData.xcdatamodeld in Sources */ = {isa = PBXBuildFile; fileRef = EB7E3D682D27D3D3009B572F /* OffineEventData.xcdatamodeld */; };
+		EB7E3D712D27D7A8009B572F /* EventData+CoreDataClass.swift in Sources */ = {isa = PBXBuildFile; fileRef = EB7E3D6F2D27D7A8009B572F /* EventData+CoreDataClass.swift */; };
+		EB7E3D722D27D7A8009B572F /* EventData+CoreDataProperties.swift in Sources */ = {isa = PBXBuildFile; fileRef = EB7E3D702D27D7A8009B572F /* EventData+CoreDataProperties.swift */; };
+		EB7E3D752D27F351009B572F /* CoreDataStack.swift in Sources */ = {isa = PBXBuildFile; fileRef = EB7E3D742D27F351009B572F /* CoreDataStack.swift */; };
+		EB7E3D772D27FAE5009B572F /* SyncManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = EB7E3D762D27FAE5009B572F /* SyncManager.swift */; };
+		EB8D4B0C2D2BB49F00DB924A /* EventBatchQueryParams.swift in Sources */ = {isa = PBXBuildFile; fileRef = EB8D4B0B2D2BB49F00DB924A /* EventBatchQueryParams.swift */; };
+		EB8D4B0F2D2BE96800DB924A /* NetworkMonitor.swift in Sources */ = {isa = PBXBuildFile; fileRef = EB8D4B0E2D2BE96700DB924A /* NetworkMonitor.swift */; };
+		EB99AC812D2FF4E40011AC6C /* EventDataManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = EB99AC802D2FF4E40011AC6C /* EventDataManager.swift */; };
 		EBF290202C9057A6004BEA87 /* VWOInitEnum.swift in Sources */ = {isa = PBXBuildFile; fileRef = EBF2901F2C9057A6004BEA87 /* VWOInitEnum.swift */; };
 /* End PBXBuildFile section */
 
@@ -216,6 +224,14 @@
 		EB5500832CA51C3C00A8B729 /* SetAttributeAPI.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SetAttributeAPI.swift; sourceTree = "<group>"; };
 		EB5500842CA51C3C00A8B729 /* TrackEventAPI.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TrackEventAPI.swift; sourceTree = "<group>"; };
 		EB5500852CA51C3C00A8B729 /* GetFlagAPI.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GetFlagAPI.swift; sourceTree = "<group>"; };
+		EB7E3D692D27D3D3009B572F /* OffineEventData.xcdatamodel */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcdatamodel; path = OffineEventData.xcdatamodel; sourceTree = "<group>"; };
+		EB7E3D6F2D27D7A8009B572F /* EventData+CoreDataClass.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "EventData+CoreDataClass.swift"; sourceTree = "<group>"; };
+		EB7E3D702D27D7A8009B572F /* EventData+CoreDataProperties.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "EventData+CoreDataProperties.swift"; sourceTree = "<group>"; };
+		EB7E3D742D27F351009B572F /* CoreDataStack.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CoreDataStack.swift; sourceTree = "<group>"; };
+		EB7E3D762D27FAE5009B572F /* SyncManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SyncManager.swift; sourceTree = "<group>"; };
+		EB8D4B0B2D2BB49F00DB924A /* EventBatchQueryParams.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EventBatchQueryParams.swift; sourceTree = "<group>"; };
+		EB8D4B0E2D2BE96700DB924A /* NetworkMonitor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NetworkMonitor.swift; sourceTree = "<group>"; };
+		EB99AC802D2FF4E40011AC6C /* EventDataManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EventDataManager.swift; sourceTree = "<group>"; };
 		EBF2901F2C9057A6004BEA87 /* VWOInitEnum.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VWOInitEnum.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -260,6 +276,7 @@
 		EB06C7822C90229B00A25E07 /* VWO-FME */ = {
 			isa = PBXGroup;
 			children = (
+				EB7E3D662D27BD45009B572F /* CoreData */,
 				EB5500822CA51C3C00A8B729 /* API */,
 				EB06C7C42C90240700A25E07 /* Constants */,
 				EB06C7E22C90243E00A25E07 /* Enums */,
@@ -346,6 +363,7 @@
 				EB06C7AC2C9023DA00A25E07 /* Props.swift */,
 				EB06C7AD2C9023DA00A25E07 /* SettingsQueryParams.swift */,
 				EB06C7AE2C9023DA00A25E07 /* EventArchData.swift */,
+				EB8D4B0B2D2BB49F00DB924A /* EventBatchQueryParams.swift */,
 			);
 			path = Request;
 			sourceTree = "<group>";
@@ -446,6 +464,7 @@
 		EB06C8702C90265000A25E07 /* Network */ = {
 			isa = PBXGroup;
 			children = (
+				EB8D4B0D2D2BE95900DB924A /* Listener */,
 				EB06C8782C90268C00A25E07 /* Models */,
 				EB06C8772C90268700A25E07 /* Client */,
 				EB06C8742C90267200A25E07 /* Manager */,
@@ -564,6 +583,43 @@
 				EB5500842CA51C3C00A8B729 /* TrackEventAPI.swift */,
 			);
 			path = API;
+			sourceTree = "<group>";
+		};
+		EB7E3D662D27BD45009B572F /* CoreData */ = {
+			isa = PBXGroup;
+			children = (
+				EB7E3D732D27D80C009B572F /* Helper */,
+				EB7E3D672D27D3AD009B572F /* Model */,
+			);
+			path = CoreData;
+			sourceTree = "<group>";
+		};
+		EB7E3D672D27D3AD009B572F /* Model */ = {
+			isa = PBXGroup;
+			children = (
+				EB7E3D6F2D27D7A8009B572F /* EventData+CoreDataClass.swift */,
+				EB7E3D702D27D7A8009B572F /* EventData+CoreDataProperties.swift */,
+				EB7E3D682D27D3D3009B572F /* OffineEventData.xcdatamodeld */,
+			);
+			path = Model;
+			sourceTree = "<group>";
+		};
+		EB7E3D732D27D80C009B572F /* Helper */ = {
+			isa = PBXGroup;
+			children = (
+				EB7E3D742D27F351009B572F /* CoreDataStack.swift */,
+				EB7E3D762D27FAE5009B572F /* SyncManager.swift */,
+				EB99AC802D2FF4E40011AC6C /* EventDataManager.swift */,
+			);
+			path = Helper;
+			sourceTree = "<group>";
+		};
+		EB8D4B0D2D2BE95900DB924A /* Listener */ = {
+			isa = PBXGroup;
+			children = (
+				EB8D4B0E2D2BE96700DB924A /* NetworkMonitor.swift */,
+			);
+			path = Listener;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -743,21 +799,27 @@
 				EB06C7D52C90243300A25E07 /* RuleEvaluationUtil.swift in Sources */,
 				EB06C7C62C90241E00A25E07 /* Constants.swift in Sources */,
 				EB06C8902C9026EB00A25E07 /* SegmentOperatorValueEnum.swift in Sources */,
+				EB7E3D712D27D7A8009B572F /* EventData+CoreDataClass.swift in Sources */,
 				EB06C7C12C9023EE00A25E07 /* Variable.swift in Sources */,
 				EB06C7D62C90243300A25E07 /* UUIDUtils.swift in Sources */,
 				EB06C7EE2C90245300A25E07 /* HeadersEnum.swift in Sources */,
 				EB06C8A12C90274C00A25E07 /* RequestQueryParams.swift in Sources */,
 				EB06C89F2C90274C00A25E07 /* EventArchData.swift in Sources */,
+				EB7E3D6A2D27D3D3009B572F /* OffineEventData.xcdatamodeld in Sources */,
 				EB06C7FB2C90247600A25E07 /* LoggerService.swift in Sources */,
+				EB7E3D722D27D7A8009B572F /* EventData+CoreDataProperties.swift in Sources */,
+				EB7E3D752D27F351009B572F /* CoreDataStack.swift in Sources */,
 				EB06C7DA2C90243300A25E07 /* DecisionUtil.swift in Sources */,
 				EB06C8A32C90274C00A25E07 /* Event.swift in Sources */,
 				EB06C7B82C9023E500A25E07 /* ImpactCampaign.swift in Sources */,
 				EB06C7EB2C90245300A25E07 /* EventEnum.swift in Sources */,
+				EB7E3D772D27FAE5009B572F /* SyncManager.swift in Sources */,
 				EB06C89A2C90273500A25E07 /* GatewayService.swift in Sources */,
 				EB22C9DA2C946A8C00381E34 /* LocalStorageService.swift in Sources */,
 				EB06C8952C9026F400A25E07 /* SegmentEvaluator.swift in Sources */,
 				EB06C8A02C90274C00A25E07 /* EventArchPayload.swift in Sources */,
 				EB06C7B92C9023E500A25E07 /* Metric.swift in Sources */,
+				EB8D4B0F2D2BE96800DB924A /* NetworkMonitor.swift in Sources */,
 				EB06C7DD2C90243300A25E07 /* SettingUtil.swift in Sources */,
 				EB06C87F2C90269F00A25E07 /* GlobalRequestModel.swift in Sources */,
 				EB5500862CA51C3C00A8B729 /* GetFlagAPI.swift in Sources */,
@@ -767,9 +829,11 @@
 				EBF290202C9057A6004BEA87 /* VWOInitEnum.swift in Sources */,
 				EB06C7F22C90245300A25E07 /* StatusEnum.swift in Sources */,
 				EB06C89E2C90274C00A25E07 /* Props.swift in Sources */,
+				EB99AC812D2FF4E40011AC6C /* EventDataManager.swift in Sources */,
 				EB06C7EF2C90245300A25E07 /* StorageEnum.swift in Sources */,
 				EB06C8622C90260900A25E07 /* LogManager.swift in Sources */,
 				EB06C79A2C90239C00A25E07 /* VWO.swift in Sources */,
+				EB8D4B0C2D2BB49F00DB924A /* EventBatchQueryParams.swift in Sources */,
 				EB06C7992C90239C00A25E07 /* VWOBuilder.swift in Sources */,
 				EB06C8802C90269F00A25E07 /* ResponseModel.swift in Sources */,
 				EB06C8992C90273500A25E07 /* VWOContext.swift in Sources */,
@@ -1135,6 +1199,16 @@
 			);
 			currentVersion = EB06C8B42C9028B100A25E07 /* VWO_FME_Demo.xcdatamodel */;
 			path = VWO_FME_Demo.xcdatamodeld;
+			sourceTree = "<group>";
+			versionGroupType = wrapper.xcdatamodel;
+		};
+		EB7E3D682D27D3D3009B572F /* OffineEventData.xcdatamodeld */ = {
+			isa = XCVersionGroup;
+			children = (
+				EB7E3D692D27D3D3009B572F /* OffineEventData.xcdatamodel */,
+			);
+			currentVersion = EB7E3D692D27D3D3009B572F /* OffineEventData.xcdatamodel */;
+			path = OffineEventData.xcdatamodeld;
 			sourceTree = "<group>";
 			versionGroupType = wrapper.xcdatamodel;
 		};

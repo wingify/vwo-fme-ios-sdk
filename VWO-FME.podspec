@@ -2,7 +2,7 @@
 Pod::Spec.new do |spec|
 
   spec.name         	= "VWO-FME"
-  spec.version      	= "1.2.0"
+  spec.version      	= "1.3.0"
   spec.summary      	= "VWO iOS SDK for Feature Management and Experimentation"
   spec.description  	= "VWO iOS SDK for Feature Management and Experimentation."
 

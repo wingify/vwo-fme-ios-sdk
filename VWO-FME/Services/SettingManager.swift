@@ -1,5 +1,5 @@
 /**
- * Copyright 2024 Wingify Software Pvt. Ltd.
+ * Copyright 2024-2025 Wingify Software Pvt. Ltd.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,8 +23,8 @@ import Foundation
  * It supports fetching settings from a server or using cached settings if available.
  */
 class SettingsManager {
-    private let sdkKey: String
-    private let accountId: Int
+    public let sdkKey: String
+    public let accountId: Int
     private let cachedSettingsExpiryInterval: Int64
     private let networkTimeout: Int
     var hostname: String

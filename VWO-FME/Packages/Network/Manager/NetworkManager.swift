@@ -1,5 +1,5 @@
 /**
- * Copyright 2024 Wingify Software Pvt. Ltd.
+ * Copyright 2024-2025 Wingify Software Pvt. Ltd.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,6 +22,9 @@ class NetworkManager {
     private static let executorService = DispatchQueue.global(qos: .background)
         
     static func attachClient(client: NetworkClientInterface? = NetworkClient()) {
+        if self.client != nil {
+            return
+        }
         self.client = client
         self.config = GlobalRequestModel() // Initialize with default config
     }
@@ -71,7 +74,26 @@ class NetworkManager {
     
     static func postAsync(_ request: RequestModel, completion: @escaping (ResponseModel) -> Void) {
         executorService.async {
-            post(request, completion: completion)
+            let payloadToStore = request.body ?? [:]
+            
+            // Check if the request is for event batching
+            let isEventBatchingRequest = request.path == Constants.EVENT_BATCH_ENDPOINT
+            
+            // If online batching is allowed and the request is not an event batching request
+            if SyncManager.shared.isOnlineBatchingAllowed && !isEventBatchingRequest {
+                // Store the event payload for later processing
+                EventDataManager.shared.createEvent(payload: payloadToStore)
+                return
+            } else {
+                post(request) { response in
+                    // If the response is not successful and the request is not an event batching request
+                    if !response.isResponseOK() && !isEventBatchingRequest {
+                        // Store the event payload for later processing
+                        EventDataManager.shared.createEvent(payload: payloadToStore)
+                    }
+                    completion(response)
+                }
+            }
         }
     }
 }
