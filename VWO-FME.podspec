@@ -2,7 +2,7 @@
 Pod::Spec.new do |spec|
 
   spec.name         	= "VWO-FME"
-  spec.version      	= "1.3.0"
+  spec.version      	= "1.3.1"
   spec.summary      	= "VWO iOS SDK for Feature Management and Experimentation"
   spec.description  	= "VWO iOS SDK for Feature Management and Experimentation."
 
@@ -18,6 +18,6 @@ Pod::Spec.new do |spec|
   spec.swift_version 	= '5.0'
   spec.source       	= { :git => "https://github.com/wingify/vwo-fme-ios-sdk.git", :tag => "#{spec.version}" }
   spec.source_files 	= 'VWO-FME/**/*.{h,m,swift,json}'
-  spec.resources 	= ['VWO-FME/Resources/*.json']
+  spec.resources 	= ['VWO-FME/Resources/*.json', 'VWO-FME/CoreData/Model/OffineEventData.xcdatamodeld']
 
 end
