@@ -239,11 +239,13 @@ class ViewController: UIViewController {
         
         let attributeName4 = "attribute-new"
         let attributeValue4 = "ios-sdk"
+
+        let attributeDict: [String: Any] = [attributeName1: attributeValue1,
+                                            attributeName2: attributeValue2,
+                                            attributeName3: attributeValue3,
+                                            attributeName4: attributeValue4]
         
-        VWOFme.setAttribute(attributeKey: attributeName1 , attributeValue: attributeValue1, context: userContext)
-        VWOFme.setAttribute(attributeKey: attributeName2 , attributeValue: attributeValue2, context: userContext)
-        VWOFme.setAttribute(attributeKey: attributeName3 , attributeValue: attributeValue3, context: userContext)
-        VWOFme.setAttribute(attributeKey: attributeName4 , attributeValue: attributeValue4, context: userContext)
+        VWOFme.setAttribute(attributes: attributeDict, context: userContext)
     }
 }
 

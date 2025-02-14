@@ -95,10 +95,10 @@ public class VWOFme {
     public static func trackEvent(eventName: String, context: VWOContext, eventProperties: [String: Any]? = nil) {
         VWOFme.vwoClient?.trackEvent(eventName: eventName, context: context, eventProperties: eventProperties ?? [:])
     }
-
-    // Sets an attribute for a user in the context provided
-    public static func setAttribute(attributeKey: String, attributeValue: Any, context: VWOContext) {
-        VWOFme.vwoClient?.setAttribute(attributeKey: attributeKey, attributeValue: attributeValue, context: context)
+    
+    // Sets attributes for a user in the context provided
+    public static func setAttribute(attributes: [String: Any], context: VWOContext) {
+        VWOFme.vwoClient?.setAttribute(attributes: attributes, context: context)
     }
     
     /**

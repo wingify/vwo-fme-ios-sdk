@@ -100,7 +100,13 @@ class CampaignUtil {
         if let groupId = groupId {
             return "\(groupId)_\(userId ?? "")"
         }
-        return "\(campaign?.id ?? 0)_\(userId ?? "")"
+        guard let campaign = campaign, let campaignId = campaign.id , let userId = userId else {
+            return ""
+        }
+        let isRolloutOrPersonalize = campaign.type == CampaignTypeEnum.rollout.rawValue || campaign.type == CampaignTypeEnum.personalize.rawValue
+        let salt = isRolloutOrPersonalize ? campaign.variations?.first?.salt ?? "" : campaign.salt ?? ""
+        let bucketKey = !salt.isEmpty ? "\(salt)_\(userId)" : "\(campaignId)_\(userId)"
+        return bucketKey
     }
     
     /**

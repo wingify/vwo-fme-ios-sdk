@@ -45,6 +45,16 @@ class DataTypeUtil {
     }
     
     /**
+     * Checks if a value is a dictionary.
+     *
+     * - Parameter val: The value to check.
+     * - Returns: `true` if the value is a dictionary, `false` otherwise.
+     */
+    static func isDictionary(_ val: Any?) -> Bool {
+        return val is [AnyHashable: Any]
+    }
+    
+    /**
      * Checks if a value is null.
      *
      * - Parameter val: The value to check.
@@ -163,6 +173,8 @@ class DataTypeUtil {
             return "Date"
         case _ where isInteger(val):
             return "Integer"
+        case _ where isDictionary(val):
+                return "Dictionary"
         default:
             return "Unknown Type"
         }

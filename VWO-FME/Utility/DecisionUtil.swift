@@ -237,7 +237,7 @@ class DecisionUtil {
         campaign: Campaign,
         userId: String?
     ) -> Variation? {
-        let stringAccountId = String(describing: settings.accountId)
+        let stringAccountId = "\(settings.accountId ?? 0)"
         let variation = CampaignDecisionService().getVariationAllotted(userId: userId, accountId: stringAccountId, campaign: campaign)
         
         if variation == nil {

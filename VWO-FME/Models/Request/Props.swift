@@ -29,6 +29,7 @@ struct Props {
     var variation: String?
     var id: Int?
     var isFirst: Int?
+    var isMII: Bool?
     var isCustomEvent: Bool?
     var additionalProperties: [String: Any] = [:]
     
@@ -82,6 +83,9 @@ struct Props {
         }
         if let isCustomEvent = isCustomEvent {
             dict["isCustomEvent"] = isCustomEvent
+        }
+        if let isMII = isMII {
+            dict["isMII"] = isMII
         }
         for (key, value) in additionalProperties {
             dict[key] = value

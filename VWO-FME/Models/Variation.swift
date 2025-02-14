@@ -34,6 +34,7 @@ struct Variation: Codable, Equatable {
     var variables: [Variable] = []
     var variations: [Variation] = []    
     var segments: [String: CodableValue]?
+    var salt: String?
     
     enum CodingKeys: String, CodingKey {
         case id
@@ -47,6 +48,7 @@ struct Variation: Codable, Equatable {
         case variables
         case variations
         case segments
+        case salt
     }
         
     init(from decoder: Decoder) throws {
@@ -62,6 +64,7 @@ struct Variation: Codable, Equatable {
         variables = try container.decodeIfPresent([Variable].self, forKey: .variables) ?? []
         variations = try container.decodeIfPresent([Variation].self, forKey: .variations) ?? []
         segments = try container.decodeIfPresent([String: CodableValue].self, forKey: .segments)
+        salt = try container.decodeIfPresent(String.self, forKey: .salt)
         
     }
     
@@ -76,6 +79,7 @@ struct Variation: Codable, Equatable {
         try container.encodeIfPresent(variables, forKey: .variables)
         try container.encodeIfPresent(variations, forKey: .variations)
         try container.encodeIfPresent(segments, forKey: .segments)
+        try container.encodeIfPresent(salt, forKey: .salt)
     }
 }
 

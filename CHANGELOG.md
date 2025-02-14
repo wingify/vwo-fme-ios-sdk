@@ -5,6 +5,31 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.4.0] - 2025-02-14
+
+### Added
+
+- Added support for custom salt values in campaign rules to ensure consistent user bucketing across different campaigns. This allows multiple campaigns to share the same salt value, resulting in users being assigned to the same variations across those campaigns. Salt for a campaign can be configured inside VWO application only when the campaign is in the draft state.
+- Support for sending multiple attributes at once.
+```swift
+    let attributeName1 = "attribute-name-string"
+    let attributeValue1 = "attribute-value-text"
+    let attributeName2 = "attribute-name-float"
+    let attributeValue2 = 7.0
+    let attributeDict: [String: Any] = [attributeName1: attributeValue1,
+                                        attributeName2: attributeValue2]
+    VWOFme.setAttribute(attributes: [attributeDict], context: userContext)
+```
+
+- Support for configuring SDK when linking with VWO Mobile Insights SDK. This can be configured by setting session data received via callback from Mobile Insights SDK via FmeConfig.
+```swift
+    //The `VWOSessionCallback` protocol in Mobile Insights SDK includes a callback method to provide session information
+     func vwoScreenCaptureSessionDidUpdate(data: [String : Any]) {
+         FmeConfig.setSessionData(data)
+     }
+```
+
+
 ## [1.3.1] - 2025-02-11
 
 ### Fixed

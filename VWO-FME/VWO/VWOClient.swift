@@ -118,29 +118,31 @@ class VWOClient {
         track(eventName: eventName, context: context, eventProperties: [:])
     }
     
-    // Set an attribute for a user in the context provided
-    func setAttribute(attributeKey: String, attributeValue: Any, context: VWOContext?) {
+    // Set attributes for a user in the context provided
+    func setAttribute(attributes: [String: Any], context: VWOContext?) {
         let apiName = "setAttribute"
         do {
             LoggerService.log(level: .debug, key: "API_CALLED", details: ["apiName": apiName])
-            guard DataTypeUtil.isString(attributeKey) else {
-                LoggerService.log(level: .error,
-                                  key: "API_INVALID_PARAM",
+            
+            if attributes.isEmpty {
+                LoggerService.log(level: .warn,
+                                  key: "ATTRIBUTES_NOT_FOUND",
                                   details: ["apiName": apiName,
-                                            "key": "attributeKey",
-                                            "type": DataTypeUtil.getType(attributeKey),
-                                            "correctType": "String"])
-                throw NSError(domain: "TypeError: attributeKey should be a string", code: 0, userInfo: nil)
+                                            "key": "attributes",
+                                            "expectedFormat": "a dictionary with expected keys and value types"])
+                return
             }
             
-            guard DataTypeUtil.isString(attributeValue) || DataTypeUtil.isNumber(attributeValue) || DataTypeUtil.isBoolean(attributeValue) else {
-                LoggerService.log(level: .error,
-                                  key: "API_INVALID_PARAM",
-                                  details: ["apiName": apiName,
-                                            "key": "attributeValue",
-                                            "type": DataTypeUtil.getType(attributeValue),
-                                            "correctType": "String, Number, Boolean"])
-                throw NSError(domain: "TypeError: attributeValue should be a String, Number or Boolean", code: 0, userInfo: nil)
+            for (attributeKey, attributeValue) in attributes {
+                guard DataTypeUtil.isString(attributeValue) || DataTypeUtil.isNumber(attributeValue) || DataTypeUtil.isBoolean(attributeValue) else {
+                    LoggerService.log(level: .error,
+                                      key: "API_INVALID_PARAM",
+                                      details: ["apiName": apiName,
+                                                "key": "attributeValue for attributeKey: \(attributeKey)",
+                                                "type": DataTypeUtil.getType(attributeValue),
+                                                "correctType": "String, Number, Boolean"])
+                    throw NSError(domain: "TypeError: attributeValue should be a String, Number or Boolean", code: 0, userInfo: nil)
+                }
             }
             
             guard let userId = context?.id, !userId.isEmpty else {
@@ -152,11 +154,26 @@ class VWOClient {
                 return
             }
             
-            SetAttributeAPI.setAttribute(settings: processedSettings, attributeKey: attributeKey, attributeValue: attributeValue, context: context!)
-            
-            
+            SetAttributeAPI.setAttributes(settings: processedSettings, attributes: attributes, context: context!)
         } catch {
             LoggerService.log(level: .error, key: "API_THROW_ERROR", details: ["apiName": apiName, "err": error.localizedDescription])
         }
+    }
+    
+    private func removeUnsupportedAttributeValues(attributes: [String: Any], apiName: String) -> [String: Any] {
+        var validAttributes: [String: Any] = [:]
+        for (attributeKey, attributeValue) in attributes {
+            if DataTypeUtil.isString(attributeValue) || DataTypeUtil.isNumber(attributeValue) || DataTypeUtil.isBoolean(attributeValue) {
+                validAttributes[attributeKey] = attributeValue
+            } else {
+                LoggerService.log(level: .error,
+                                  key: "API_INVALID_PARAM",
+                                  details: ["apiName": apiName,
+                                            "key": "attributeValue for attributeKey: \(attributeKey)",
+                                            "type": DataTypeUtil.getType(attributeValue),
+                                            "correctType": "String, Number, Boolean"])
+            }
+        }
+        return validAttributes
     }
 }

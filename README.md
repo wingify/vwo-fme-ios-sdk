@@ -34,22 +34,29 @@ VWOFme.initialize(options: options) { result in
             let userContext = VWOContext(id: "unique_user_id", customVariables: customVariables)
 
             // Get the GetFlag object for the feature key and context
-            let featureFlagObj = VWOFme.getFlag(featureKey: "feature_flag_name", context: userContext)
-
-            // Check if flag is enabled
-            let isFlagEnabled = featureFlagObj?.isEnabled()
-
-            // Get the variable value for the given variable key and default value
-            let variable1 = featureFlagObj?.getVariable(key: "feature_flag_variable1", defaultValue: "default-value1")
+            VWOFme.getFlag(featureKey: "feature_flag_name", context: userContext, completion: { featureFlagObj in
+                // Check if flag is enabled
+                let isFlagEnabled = featureFlagObj.isEnabled()
+                            
+                // Get the variable value for the given variable key and default value
+                let variable1 = featureFlagObj.getVariable(key: "feature_flag_variable", defaultValue: "default-value")
+            })
 
             // Track the event for the given event name and context
             let eventProperties: [String: Any] = ["cart_value":"999"]
             VWOFme.trackEvent(eventName: "vwo_event_name", context: userContext, eventProperties: eventProperties)
 
             // Send attributes data
-            let attributeName = "attribute-name"
-            let attributeValue = "attribute-value"
-            VWOFme.setAttribute(attributeKey: attributeName , attributeValue: attributeValue, context: userContext)
+            let attributeName1 = "attribute-name-string"
+            let attributeValue1 = "attribute-value-text"
+            let attributeName2 = "attribute-name-float"
+            let attributeValue2 = 7.0
+
+            let attributeDict: [String: Any] = [attributeName1: attributeValue1,
+                                                attributeName2: attributeValue2]
+
+            VWOFme.setAttribute(attributes: [attributeDict], context: userContext)
+
 
 
         case .failure(let error):

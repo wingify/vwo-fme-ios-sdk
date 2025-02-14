@@ -109,6 +109,8 @@
 		EB5500862CA51C3C00A8B729 /* GetFlagAPI.swift in Sources */ = {isa = PBXBuildFile; fileRef = EB5500852CA51C3C00A8B729 /* GetFlagAPI.swift */; };
 		EB5500872CA51C3C00A8B729 /* SetAttributeAPI.swift in Sources */ = {isa = PBXBuildFile; fileRef = EB5500832CA51C3C00A8B729 /* SetAttributeAPI.swift */; };
 		EB5500882CA51C3C00A8B729 /* TrackEventAPI.swift in Sources */ = {isa = PBXBuildFile; fileRef = EB5500842CA51C3C00A8B729 /* TrackEventAPI.swift */; };
+		EB8560A72D364C2A00565862 /* FmeConfig.swift in Sources */ = {isa = PBXBuildFile; fileRef = EB8560A62D364C2A00565862 /* FmeConfig.swift */; };
+		EB8560A92D364CBF00565862 /* FmeSession.swift in Sources */ = {isa = PBXBuildFile; fileRef = EB8560A82D364CBF00565862 /* FmeSession.swift */; };
 		EB7E3D6A2D27D3D3009B572F /* OffineEventData.xcdatamodeld in Sources */ = {isa = PBXBuildFile; fileRef = EB7E3D682D27D3D3009B572F /* OffineEventData.xcdatamodeld */; };
 		EB7E3D712D27D7A8009B572F /* EventData+CoreDataClass.swift in Sources */ = {isa = PBXBuildFile; fileRef = EB7E3D6F2D27D7A8009B572F /* EventData+CoreDataClass.swift */; };
 		EB7E3D722D27D7A8009B572F /* EventData+CoreDataProperties.swift in Sources */ = {isa = PBXBuildFile; fileRef = EB7E3D702D27D7A8009B572F /* EventData+CoreDataProperties.swift */; };
@@ -224,6 +226,8 @@
 		EB5500832CA51C3C00A8B729 /* SetAttributeAPI.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SetAttributeAPI.swift; sourceTree = "<group>"; };
 		EB5500842CA51C3C00A8B729 /* TrackEventAPI.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TrackEventAPI.swift; sourceTree = "<group>"; };
 		EB5500852CA51C3C00A8B729 /* GetFlagAPI.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GetFlagAPI.swift; sourceTree = "<group>"; };
+		EB8560A62D364C2A00565862 /* FmeConfig.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FmeConfig.swift; sourceTree = "<group>"; };
+		EB8560A82D364CBF00565862 /* FmeSession.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FmeSession.swift; sourceTree = "<group>"; };
 		EB7E3D692D27D3D3009B572F /* OffineEventData.xcdatamodel */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcdatamodel; path = OffineEventData.xcdatamodel; sourceTree = "<group>"; };
 		EB7E3D6F2D27D7A8009B572F /* EventData+CoreDataClass.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "EventData+CoreDataClass.swift"; sourceTree = "<group>"; };
 		EB7E3D702D27D7A8009B572F /* EventData+CoreDataProperties.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "EventData+CoreDataProperties.swift"; sourceTree = "<group>"; };
@@ -342,6 +346,8 @@
 				EB06C7A22C9023D900A25E07 /* VWOInitOptions.swift */,
 				EB06C7A32C9023D900A25E07 /* GatewayService.swift */,
 				EB06C7A42C9023D900A25E07 /* GetFlag.swift */,
+				EB8560A62D364C2A00565862 /* FmeConfig.swift */,
+				EB8560A82D364CBF00565862 /* FmeSession.swift */,
 			);
 			path = User;
 			sourceTree = "<group>";
@@ -774,6 +780,7 @@
 				EB06C8962C9026F400A25E07 /* SegmentOperandEvaluator.swift in Sources */,
 				EB06C7D82C90243300A25E07 /* DataTypeUtil.swift in Sources */,
 				EB06C7E12C90243300A25E07 /* MegUtil.swift in Sources */,
+				EB8560A92D364CBF00565862 /* FmeSession.swift in Sources */,
 				EB06C7DC2C90243300A25E07 /* LogMessageUtil.swift in Sources */,
 				EB06C7F12C90245300A25E07 /* ApiEnum.swift in Sources */,
 				EB06C8922C9026EB00A25E07 /* SegmentOperandValueEnum.swift in Sources */,
@@ -799,6 +806,7 @@
 				EB06C7D52C90243300A25E07 /* RuleEvaluationUtil.swift in Sources */,
 				EB06C7C62C90241E00A25E07 /* Constants.swift in Sources */,
 				EB06C8902C9026EB00A25E07 /* SegmentOperatorValueEnum.swift in Sources */,
+				EB8560A72D364C2A00565862 /* FmeConfig.swift in Sources */,
 				EB7E3D712D27D7A8009B572F /* EventData+CoreDataClass.swift in Sources */,
 				EB06C7C12C9023EE00A25E07 /* Variable.swift in Sources */,
 				EB06C7D62C90243300A25E07 /* UUIDUtils.swift in Sources */,

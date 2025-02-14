@@ -46,7 +46,7 @@ class NetworkUtil {
     
     // Generates a session ID for the event
     private static func generateSessionId() -> Int64 {
-        return Date().currentTimeSeconds()
+        return FmeConfig.generateSessionId()
     }
     
     // Creates the headers for the request
@@ -162,6 +162,12 @@ class NetworkUtil {
         properties.d?.event?.props?.variation = "\(variationId)"
         properties.d?.event?.props?.isFirst = 1
         
+        if eventName == EventEnum.vwoVariationShown.rawValue {
+            // for FME<>MI integration
+            // isMII flag is set to true for vwoVariationShown event
+            properties.d?.event?.props?.isMII = FmeConfig.checkIsMILinked()
+        }
+
         LoggerService.log(level: .debug, 
                           key: "IMPRESSION_FOR_TRACK_USER",
                           details: ["accountId": "\(String(describing: settings.accountId))",
@@ -191,10 +197,10 @@ class NetworkUtil {
     }
     
     // Returns the payload data for the attribute API
-    static func getAttributePayloadData(settings: Settings, userId: String?, eventName: String, attributeKey: String, attributeValue: Any) -> [String: Any] {
+    static func getAttributePayloadData(settings: Settings, userId: String?, eventName: String, attributes: [String: Any]) -> [String: Any] {
         var properties = NetworkUtil.getEventBasePayload(settings: settings, userId: userId, eventName: eventName, visitorUserAgent: nil, ipAddress: nil)
         properties.d?.event?.props?.setIsCustomEvent(true)
-        let visitorProp: [String: Any] = [attributeKey: attributeValue]
+        let visitorProp: [String: Any] = attributes
         properties.d?.visitor?.props = visitorProp
                 
         LoggerService.log(level: .debug,

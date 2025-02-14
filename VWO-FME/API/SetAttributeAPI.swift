@@ -17,31 +17,29 @@
 import Foundation
 
 class SetAttributeAPI {
+    
     /**
-     * This method is used to set an attribute for the user.
+     * This method is used to set mutiple attributes for the user.
      * @param settings The settings model containing configuration.
-     * @param attributeKey The key of the attribute to set.
-     * @param attributeValue The value of the attribute to set.
+     * @param attributes Dictionary of all the attributes to set.
      * @param context  The user context model containing user-specific data.
      */
-    static func setAttribute(settings: Settings, attributeKey: String, attributeValue: Any, context: VWOContext) {
-        createAndSendImpressionForSetAttribute(settings: settings, attributeKey: attributeKey, attributeValue: attributeValue, context: context)
+    static func setAttributes(settings: Settings, attributes: [String: Any], context: VWOContext) {
+        createAndSendImpressionForSetAttribute(settings: settings, attributes: attributes, context: context)
     }
-
+    
     /**
      * Creates and sends an impression for a track event.
      * This function constructs the necessary properties and payload for the event
      * and uses the NetworkUtil to send a POST API request.
      *
      * @param settings   The settings model containing configuration.
-     * @param attributeKey  The key of the attribute to set.
-     * @param attributeValue  The value of the attribute to set.
+     * @param attributes  Dictionary of all the attributes to set.
      * @param context    The user context model containing user-specific data.
      */
     private static func createAndSendImpressionForSetAttribute(
         settings: Settings,
-        attributeKey: String,
-        attributeValue: Any,
+        attributes: [String: Any],
         context: VWOContext
     ) {
         // Get base properties for the event
@@ -57,8 +55,7 @@ class SetAttributeAPI {
             settings: settings,
             userId: context.id,
             eventName: EventEnum.vwoSyncVisitorProp.rawValue,
-            attributeKey: attributeKey,
-            attributeValue: attributeValue
+            attributes: attributes
         )
 
         // Send the constructed properties and payload as a POST request

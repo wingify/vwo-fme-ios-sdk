@@ -30,17 +30,21 @@ class CampaignDecisionService {
         }
         
         // Check if the campaign is of type ROLLOUT or PERSONALIZE
-        // If yes, set the traffic allocation to the weight of the first variation
-        let trafficAllocation: Double
-        if campaign.type == CampaignTypeEnum.rollout.rawValue || campaign.type == CampaignTypeEnum.personalize.rawValue {
-            
-            trafficAllocation = campaign.variations?[0].weight ?? 0.0
-        } else {
-            // If the campaign is of type AB, set the traffic allocation to the percent traffic of the campaign
-            trafficAllocation = Double(campaign.percentTraffic ?? 0)
-        }
+        let isRolloutOrPersonalize = campaign.type == CampaignTypeEnum.rollout.rawValue || campaign.type == CampaignTypeEnum.personalize.rawValue
+        
+        // Get salt based on campaign type
+        let salt = isRolloutOrPersonalize ? campaign.variations?.first?.salt ?? "" : campaign.salt ?? ""
+        
+        // Get traffic allocation based on campaign type
+        let trafficAllocation = isRolloutOrPersonalize ? campaign.variations?.first?.weight ?? 0.0 : Double(campaign.percentTraffic ?? 0)
+        
+        // Generate bucket key using salt if available, otherwise use campaign ID
+        let bucketKey = !salt.isEmpty ? "\(salt)_\(userId)" : "\(campaignId)_\(userId)"
+        
         // Get the bucket value assigned to the user
-        let valueAssignedToUser = DecisionMaker.getBucketValueForUser(userId: "\(campaignId)_\(userId)")
+        let valueAssignedToUser = DecisionMaker.getBucketValueForUser(userId: "\(bucketKey)")
+        
+        // Check if user is part of campaign
         let isUserPart = valueAssignedToUser != 0 && valueAssignedToUser <= Int(trafficAllocation)
         
         LoggerService.log(
@@ -98,8 +102,13 @@ class CampaignDecisionService {
         let multiplier = campaign.percentTraffic != 0 ? 1 : 0
         let percentTraffic = campaign.percentTraffic
         
-        let hashValue = DecisionMaker.generateHashValue(hashKey: "\(campaignId)_\(accountId)_\(userId)")
+        // Get salt from campaign
+        let salt = campaign.salt ?? ""
         
+        // Generate bucket key using salt if available, otherwise use campaign ID
+        let bucketKey = !salt.isEmpty ? "\(salt)_\(accountId)_\(userId)" : "\(campaignId)_\(accountId)_\(userId)"
+        
+        let hashValue = DecisionMaker.generateHashValue(hashKey: bucketKey)
         let bucketValue = DecisionMaker.generateBucketValue(hashValue: hashValue, maxValue: Constants.MAX_TRAFFIC_VALUE, multiplier: multiplier)
         
         LoggerService.log(

@@ -39,6 +39,7 @@ struct Campaign: Codable, Equatable {
     var endRangeVariation: Int
     var variables: [Variable]?
     var weight: Double
+    var salt: String?
 
     enum CodingKeys: String, CodingKey {
         case isAlwaysCheckSegment
@@ -57,6 +58,7 @@ struct Campaign: Codable, Equatable {
         case endRangeVariation
         case variables
         case weight
+        case salt
     }
     
     init(
@@ -75,7 +77,8 @@ struct Campaign: Codable, Equatable {
            startRangeVariation: Int = 0,
            endRangeVariation: Int = 0,
            variables: [Variable]? = nil,
-           weight: Double = 0.0
+           weight: Double = 0.0,
+           salt: String? = nil
        ) {
            self.isAlwaysCheckSegment = isAlwaysCheckSegment
            self.isUserListEnabled = isUserListEnabled
@@ -93,6 +96,7 @@ struct Campaign: Codable, Equatable {
            self.endRangeVariation = endRangeVariation
            self.variables = variables
            self.weight = weight
+           self.salt = salt
        }
 
     init(from decoder: Decoder) throws {
@@ -113,6 +117,7 @@ struct Campaign: Codable, Equatable {
         endRangeVariation = try container.decodeIfPresent(Int.self, forKey: .endRangeVariation) ?? 0
         variables = try container.decodeIfPresent([Variable].self, forKey: .variables)
         weight = try container.decodeIfPresent(Double.self, forKey: .weight) ?? 0.0
+        salt = try container.decodeIfPresent(String.self, forKey: .salt)
     }
 
     func encode(to encoder: Encoder) throws {
@@ -133,6 +138,7 @@ struct Campaign: Codable, Equatable {
         try container.encode(endRangeVariation, forKey: .endRangeVariation)
         try container.encode(variables, forKey: .variables)
         try container.encode(weight, forKey: .weight)
+        try container.encode(salt, forKey: .salt)
     }
 
     /// Sets the properties of this campaign from another campaign object.
