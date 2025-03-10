@@ -24,9 +24,9 @@ class LoggerService {
     private static var warningMessages: [String: String] = [:]
     private static var traceMessages: [String: String] = [:]
     
-    init(config: [String: Any], logLevel: LogLevelEnum) {
+    init(config: [String: Any], logLevel: LogLevelEnum, logTransport: LogTransport?) {
         // Initialize the LogManager
-        _ = LogManager(config: config, logLevel: logLevel)
+        _ = LogManager(config: config, logLevel: logLevel, logTransport: logTransport)
         
         // Read the log files
         LoggerService.debugMessages = readLogFiles(fileName: "debug-messages.json")

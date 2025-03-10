@@ -44,7 +44,6 @@ class SetAttributeAPI {
     ) {
         // Get base properties for the event
         let properties = NetworkUtil.getEventsBaseProperties(
-            setting: settings,
             eventName: EventEnum.vwoSyncVisitorProp.rawValue,
             visitorUserAgent: ImpressionUtil.encodeURIComponent(context.userAgent),
             ipAddress: context.ipAddress

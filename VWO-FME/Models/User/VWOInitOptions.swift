@@ -39,6 +39,7 @@ public class VWOInitOptions {
     var batchUploadTimeInterval: Int64?
     var sdkName: String = Constants.SDK_NAME
     var sdkVersion: String = Constants.SDK_VERSION
+    var logTransport: LogTransport?
     
     /**
      * Initializes a new instance of VWOInitOptions.
@@ -66,7 +67,8 @@ public class VWOInitOptions {
                 batchMinSize: Int? = nil,
                 batchUploadTimeInterval: Int64? = nil,
                 sdkName: String? = nil,
-                sdkVersion: String? = nil) {
+                sdkVersion: String? = nil,
+                logTransport: LogTransport? = nil) {
         
         // Assigning the SDK key
         self.sdkKey = sdkKey
@@ -119,5 +121,7 @@ public class VWOInitOptions {
             self.sdkVersion = Constants.SDK_VERSION
             SDKMetaUtil.version = Constants.SDK_VERSION
         }
+        
+        self.logTransport = logTransport
     }
 }

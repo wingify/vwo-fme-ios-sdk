@@ -29,10 +29,11 @@ internal class LogManager {
     static var instance: LogManager?
     
     let dateTimeForm: DateFormatter
-    private var transports: [[String: Any]] = []
     var level: LogLevelEnum
     private var tag = "VWO FME Logger"
     private var prefix: String = ""
+    private let logTransport: LogTransport?
+    private var sentMessages: Set<String> = []
 
     /**
      * Initializes a new instance of LogManager.
@@ -41,11 +42,12 @@ internal class LogManager {
      *   - config: A dictionary containing configuration settings.
      *   - logLevel: The initial log level.
      */
-    init(config: [String: Any], logLevel: LogLevelEnum) {
+    init(config: [String: Any], logLevel: LogLevelEnum, logTransport: LogTransport?) {
         self.level = logLevel
         self.dateTimeForm = DateFormatter()
         self.dateTimeForm.dateFormat = "yyyy-MM-dd'T'HH:mm:ss.SSSZ"
         self.prefix = config["prefix"] as! String
+        self.logTransport = logTransport
         LogManager.instance = self
     }
     
@@ -78,9 +80,15 @@ internal class LogManager {
             osLogType = .default
         case .error:
             osLogType = .error
+            self.sendMessageEventIfNeeded(message: message)
         }
         let formatMessage = "\(prefix.isEmpty ? "\(tag)" : "\(prefix)"): \(level.levelIndicator): \(message ?? "")"
-        os_log("%{public}@", log: OSLog(subsystem: tag, category: level.rawValue), type: osLogType, formatMessage)
+        
+        if let logTransport = self.logTransport {
+            logTransport.log(logType: level.rawValue, message: formatMessage)
+        } else {
+            os_log("%{public}@", log: OSLog(subsystem: tag, category: level.rawValue), type: osLogType, formatMessage)
+        }
     }
     
     /**
@@ -99,4 +107,31 @@ internal class LogManager {
             self.logMessage(level: level, message: message)
         }
     }
+    
+    /**
+     * Sends a message event if the message has not been sent before.
+     *
+     * This method checks if the provided message is non-nil, non-empty, and has not
+     * been previously sent. If all conditions are met, it sends the message event
+     * and records the message to prevent future duplicate sends.
+     *
+     * - Parameter message: The message to be sent as an event. If the message is
+     *   nil or empty, the method does nothing.
+     */
+    private func sendMessageEventIfNeeded(message: String?) {
+        if let message = message, !message.isEmpty, !sentMessages.contains(message) {
+            sentMessages.insert(message)
+            LogMessageUtil.sendMessageEvent(message: message)
+        }
+    }
+}
+
+/**
+ * The `LogTransport` protocol defines a standardized interface for handling log messages within the SDK.
+ * It serves as a bridge for capturing and redirecting log messages from the native SDK to external systems,
+ * In the context of a React Native bridge, the `log` method can be used to emit events to JavaScript,
+ * enabling the display of native log messages in the JavaScript console.
+ */
+public protocol LogTransport {
+    func log(logType: String, message: String)
 }

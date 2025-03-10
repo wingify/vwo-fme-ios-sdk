@@ -51,4 +51,20 @@ class LogMessageUtil {
         return result as String
         
     }
+    
+    /**
+     * Sends a messaging event with a specified message.
+     *
+     * - Parameters:
+     *   - message: The message to be sent as part of the event.
+     *
+     * This method constructs the necessary properties and payload for the event using utility functions,
+     * and then sends the event using the `NetworkUtil.sendMessagingEvent` method.
+     * The event is categorized as an "error" type and uses the `vwoError` enum value as event name.
+     */
+    static func sendMessageEvent(message: String) {
+        let properties = NetworkUtil.getEventsBaseProperties(eventName: EventEnum.vwoError.rawValue, visitorUserAgent: "", ipAddress: nil)
+        let payload = NetworkUtil.getMessagingEventPayload(messageType: "error", message: message, eventName: EventEnum.vwoError.rawValue)
+        NetworkUtil.sendMessagingEvent(properties: properties, payload: payload)
+    }
 }

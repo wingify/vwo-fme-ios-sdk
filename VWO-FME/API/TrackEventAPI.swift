@@ -64,7 +64,6 @@ class TrackEventAPI {
     ) {
         // Get base properties for the event
         let properties = NetworkUtil.getEventsBaseProperties(
-            setting: settings,
             eventName: eventName,
             visitorUserAgent: ImpressionUtil.encodeURIComponent(context.userAgent),
             ipAddress: context.ipAddress

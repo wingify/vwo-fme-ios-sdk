@@ -33,4 +33,9 @@ enum EventEnum: String {
      * Event triggered when a user attribute is set.
      */
     case vwoSyncVisitorProp = "vwo_syncVisitorProp"
+    
+    /**
+     * Event triggered when a sdk error is logged.
+     */
+    case vwoError = "vwo_log"
 }

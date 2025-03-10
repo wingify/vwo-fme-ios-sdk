@@ -32,6 +32,8 @@ struct Props {
     var isMII: Bool?
     var isCustomEvent: Bool?
     var additionalProperties: [String: Any] = [:]
+    var product: String?
+    var data: [String: Any] = [:]
     
     mutating func setSdkName(_ sdkName: String?) {
         self.vwoSdkName = sdkName
@@ -51,6 +53,14 @@ struct Props {
     
     mutating func setEnvKey(_ vwoEnvKey: String?) {
         self.vwoEnvKey = vwoEnvKey
+    }
+    
+    mutating func setProduct(_ product: String?) {
+        self.product = product
+    }
+    
+    mutating func setData(_ data: [String: Any]) {
+        self.data = data
     }
     
     func getAdditionalProperties() -> [String: Any] {
@@ -87,8 +97,18 @@ struct Props {
         if let isMII = isMII {
             dict["isMII"] = isMII
         }
+        if let product = product {
+            dict["product"] = product
+        }
         for (key, value) in additionalProperties {
             dict[key] = value
+        }
+        var tempDict: [String: Any] = [:]
+        for (key, value) in data {
+            tempDict[key] = value
+        }
+        if !tempDict.isEmpty {
+            dict["data"] = tempDict
         }
         return dict
     }

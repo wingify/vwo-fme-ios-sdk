@@ -84,9 +84,11 @@ class NetworkUtil {
     }
     
     // Creates the base properties for the event arch APIs
-    static func getEventsBaseProperties(setting: Settings, eventName: String, visitorUserAgent: String?, ipAddress: String?) -> [String: String] {
-        let accountIdString = String(describing: setting.accountId ?? 0)
-        let requestQueryParams = RequestQueryParams(en: eventName, a: accountIdString, env: setting.sdkKey!, visitorUa: visitorUserAgent!, visitorIp: ipAddress ?? "", url: generateEventUrl())
+    static func getEventsBaseProperties(eventName: String, visitorUserAgent: String?, ipAddress: String?) -> [String: String] {
+        let settingManager = SettingsManager.instance
+        let accountIdString = "\(SettingsManager.instance?.accountId ?? 0)"
+        let sdkKey = "\(settingManager?.sdkKey ?? "")"
+        let requestQueryParams = RequestQueryParams(en: eventName, a: accountIdString, env: sdkKey, visitorUa: visitorUserAgent!, visitorIp: ipAddress ?? "", url: generateEventUrl())
         return requestQueryParams.queryParams
     }
     
@@ -99,8 +101,10 @@ class NetworkUtil {
     }
     
     // Creates the base payload for the event arch APIs
-    static func getEventBasePayload(settings: Settings, userId: String?, eventName: String, visitorUserAgent: String?, ipAddress: String?) -> EventArchPayload {
-        let stringAccountId = "\(settings.accountId ?? 0)"
+    static func getEventBasePayload(userId: String?, eventName: String, visitorUserAgent: String?, ipAddress: String?) -> EventArchPayload {
+        
+        let settingManager = SettingsManager.instance
+        let stringAccountId = "\(settingManager?.accountId ?? 0)"
         let uuid = UUIDUtils.getUUID(userId: userId, accountId: stringAccountId)
 
         var eventArchData = EventArchData()
@@ -116,10 +120,10 @@ class NetworkUtil {
             eventArchData.visitorIpAddress = ipAddress
         }
         
-        let event = NetworkUtil.createEvent(eventName: eventName, settings: settings)
+        let event = NetworkUtil.createEvent(eventName: eventName)
         eventArchData.event = event
         
-        let visitor = NetworkUtil.createVisitor(settings: settings)
+        let visitor = NetworkUtil.createVisitor()
         eventArchData.visitor = visitor
         
         var eventArchPayload = EventArchPayload()
@@ -128,9 +132,9 @@ class NetworkUtil {
     }
     
     // Creates the event model for the event arch APIs
-    private static func createEvent(eventName: String, settings: Settings) -> Event {
+    private static func createEvent(eventName: String) -> Event {
         var event = Event()
-        let props = createProps(settings: settings)
+        let props = createProps()
         event.props = props
         event.name = eventName
         event.time = Date().currentTimeMillis()
@@ -138,25 +142,25 @@ class NetworkUtil {
     }
     
     // Creates the props model for the event arch APIs
-    private static func createProps(settings: Settings) -> Props {
+    private static func createProps() -> Props {
         var props = Props()
         props.vwoSdkName = SDKMetaUtil.name
         props.vwoSdkVersion = SDKMetaUtil.version
-        props.vwoEnvKey = settings.sdkKey
+        props.vwoEnvKey = SettingsManager.instance?.sdkKey ?? nil
         return props
     }
     
     // Creates the visitor model for the event arch APIs
-    private static func createVisitor(settings: Settings) -> Visitor {
+    private static func createVisitor() -> Visitor {
         var visitorProps: [String: Any] = [:]
-        visitorProps[Constants.VWO_FS_ENVIRONMENT] = settings.sdkKey ?? Constants.defaultString
+        visitorProps[Constants.VWO_FS_ENVIRONMENT] = SettingsManager.instance?.sdkKey ?? Constants.defaultString
         let visitor = Visitor(props: visitorProps)
         return visitor
     }
     
     // Returns the payload data for the track user API
     class func getTrackUserPayloadData(settings: Settings, userId: String?, eventName: String, campaignId: Int, variationId: Int, visitorUserAgent: String?, ipAddress: String?) -> [String: Any] {
-        var properties = NetworkUtil.getEventBasePayload(settings: settings, userId: userId, eventName: eventName, visitorUserAgent: visitorUserAgent, ipAddress: ipAddress)
+        var properties = NetworkUtil.getEventBasePayload(userId: userId, eventName: eventName, visitorUserAgent: visitorUserAgent, ipAddress: ipAddress)
         
         properties.d?.event?.props?.id = campaignId
         properties.d?.event?.props?.variation = "\(variationId)"
@@ -181,7 +185,7 @@ class NetworkUtil {
     
     // Returns the payload data for the goal API
     static func getTrackGoalPayloadData(settings: Settings, userId: String?, eventName: String, context: VWOContext, eventProperties: [String: Any]) -> [String: Any] {
-        var properties = NetworkUtil.getEventBasePayload(settings: settings, userId: userId, eventName: eventName, visitorUserAgent: context.userAgent, ipAddress: context.ipAddress)
+        var properties = NetworkUtil.getEventBasePayload(userId: userId, eventName: eventName, visitorUserAgent: context.userAgent, ipAddress: context.ipAddress)
         properties.d?.event?.props?.setIsCustomEvent(true)
         properties.d?.event?.props?.setAdditionalProperties(eventProperties)
         
@@ -198,7 +202,7 @@ class NetworkUtil {
     
     // Returns the payload data for the attribute API
     static func getAttributePayloadData(settings: Settings, userId: String?, eventName: String, attributes: [String: Any]) -> [String: Any] {
-        var properties = NetworkUtil.getEventBasePayload(settings: settings, userId: userId, eventName: eventName, visitorUserAgent: nil, ipAddress: nil)
+        var properties = NetworkUtil.getEventBasePayload(userId: userId, eventName: eventName, visitorUserAgent: nil, ipAddress: nil)
         properties.d?.event?.props?.setIsCustomEvent(true)
         let visitorProp: [String: Any] = attributes
         properties.d?.visitor?.props = visitorProp
@@ -213,6 +217,50 @@ class NetworkUtil {
         let payloadDict: [String: Any] = properties.toDictionary()
         let cleanedPayload = removeNullValues(originalMap: payloadDict)
         return cleanedPayload
+    }
+    
+    // Returns the payload data for the messaging event
+    static func getMessagingEventPayload(messageType: String, message: String, eventName: String) -> [String: Any] {
+        let settingManager = SettingsManager.instance
+        let stringAccountId = "\(settingManager?.accountId ?? 0)"
+        let sdkKey = "\(settingManager?.sdkKey ?? "")"
+        
+        let userId = stringAccountId + "_" + sdkKey
+        var properties = NetworkUtil.getEventBasePayload(userId: userId, eventName: eventName, visitorUserAgent: nil, ipAddress: nil)
+        properties.d?.event?.props?.setProduct("fme")
+        
+        var data = [String: Any]()
+        data["type"] = messageType
+        
+        var messageContent = [String: Any]()
+        messageContent["title"] = message
+        messageContent["dateTime"] = Date().currentTimeMillis()
+        data["content"] = messageContent
+        properties.d?.event?.props?.setData(data)
+        
+        let payloadDict: [String: Any] = properties.toDictionary()
+        let cleanedPayload = removeNullValues(originalMap: payloadDict)
+        return cleanedPayload
+    }
+    
+    // Sends a messaging event to DACDN
+    static func sendMessagingEvent(properties: [String: String], payload: [String: Any]) {
+        
+        let request = RequestModel(url: Constants.HOST_NAME,
+                                   method: HTTPMethod.post.rawValue,
+                                   path: UrlEnum.events.rawValue,
+                                   query: properties,
+                                   body: payload,
+                                   headers: nil,
+                                   scheme: Constants.HTTPS_PROTOCOL,
+                                   port: 0)
+        
+        NetworkManager.postAsync(request) { result in
+            
+            if let error = result.errorMessage {
+                LoggerService.log(level: .error, key: "NETWORK_CALL_FAILED", details: ["method": "POST", "err": "\(error)"])
+            }
+        }
     }
     
     // Sends a POST request to the VWO server

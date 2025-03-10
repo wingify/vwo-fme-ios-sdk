@@ -102,9 +102,9 @@ class VWOBuilder {
     func setLogger() -> VWOBuilder {
         
         if let options = options, !options.logger.isEmpty {
-            _ = LoggerService(config: options.logger, logLevel: options.logLevel)
+            _ = LoggerService(config: options.logger, logLevel: options.logLevel, logTransport: options.logTransport)
         } else {
-            _ = LoggerService(config: [:], logLevel: .error)
+            _ = LoggerService(config: [:], logLevel: .error, logTransport: nil)
         }
         LoggerService.log(level: .debug, key: "SERVICE_INITIALIZED", details: ["service": "Logger"])
         return self

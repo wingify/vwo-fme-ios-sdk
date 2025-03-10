@@ -43,7 +43,6 @@ class ImpressionUtil {
     ) {
         // Get base properties for the event
         let properties = NetworkUtil.getEventsBaseProperties(
-            setting: settings,
             eventName: EventEnum.vwoVariationShown.rawValue,
             visitorUserAgent: encodeURIComponent(context.userAgent),
             ipAddress: context.ipAddress
