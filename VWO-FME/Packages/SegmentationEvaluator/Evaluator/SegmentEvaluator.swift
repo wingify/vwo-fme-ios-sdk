@@ -49,10 +49,10 @@ class SegmentEvaluator {
             return some(dslNodes: subDsl.arrayValue ?? [], customVariables: properties)
 
         case .customVariable:
-            return SegmentOperandEvaluator.evaluateCustomVariableDSL(subDsl.dictionaryValue ?? [:], properties)
+            return SegmentOperandEvaluator.evaluateCustomVariableDSL(subDsl.dictionaryValue ?? [:], properties, context, feature)
 
         case .user:
-            return SegmentOperandEvaluator.evaluateUserDSL(subDsl.stringValue ?? "", properties)
+            return SegmentOperandEvaluator.evaluateUserDSL(subDsl.stringValue ?? "", properties, context, feature)
 
         case .ua:
             return SegmentOperandEvaluator.evaluateUserAgentDSL(subDsl.stringValue ?? "", context)
@@ -197,11 +197,6 @@ class SegmentEvaluator {
      * @return A boolean indicating if the location matches.
      */
     func checkLocationPreSegmentation(locationMap: [String: Any]) -> Bool {
-        // Ensure user's IP address is available
-        guard let ipAddress = context?.ipAddress, !ipAddress.isEmpty else {
-            LoggerService.log(level: .info, message: "To evaluate location pre Segment, please pass ipAddress in context object")
-            return false
-        }
         // Check if location data is available and matches the expected values
         guard let location = context?.vwo?.location, !location.isEmpty else {
             return false

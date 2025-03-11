@@ -31,7 +31,9 @@ class GatewayServiceUtil {
      * @return The response data from the gateway service
      */
     static func getFromGatewayService(queryParams: [String: String], endpoint: String, completion: @escaping (ResponseModel?) -> Void) {
-        if UrlService.baseUrl.contains(Constants.HOST_NAME) {
+        
+        let isUsingGatewayService = SettingsManager.instance?.isGatewayServiceProvided ?? false
+        if isUsingGatewayService && UrlService.baseUrl.contains(Constants.HOST_NAME) {
             LoggerService.log(level: .error, key: "GATEWAY_URL_ERROR", details: nil)
             completion(nil)
             return

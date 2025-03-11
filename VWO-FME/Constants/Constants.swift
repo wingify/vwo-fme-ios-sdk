@@ -15,11 +15,12 @@
  */
 
 import Foundation
+import UIKit
 
 struct Constants {
     static let defaultString: String = ""
     static let PLATFORM: String = "ios"
-    static let SDK_VERSION: String = "1.4.1"
+    static let SDK_VERSION: String = "1.5.0"
 
     static let MAX_TRAFFIC_PERCENT: Int = 100
     static let MAX_TRAFFIC_VALUE: Int = 10000
@@ -46,6 +47,12 @@ struct Constants {
     static let VWO_META_MEG_KEY = "_vwo_meta_meg_"
     
     static let DEFAULT_BATCH_UPLOAD_INTERVAL: Int64 = 3 * 60 * 1000 // 3 minutes in milliseconds
+    
+    static let LOCATION_EXPIRY: Int64 = 60 * 60 * 1000 // 60 minutes in milliseconds
+    static let LIST_ATTRIBUTE_EXPIRY: Int64 = 60 * 60 * 1000 // 60 minutes in milliseconds
+
+    static let USER_AGENT_VALUE: String = "VWO-FME (iOS \(UIDevice.current.systemVersion))"
+
 }
 
 public typealias VWOInitCompletionHandler = (Result<String, Error>) -> Void

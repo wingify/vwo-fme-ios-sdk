@@ -51,17 +51,23 @@ class SegmentationManager {
         if context.userAgent.isEmpty && context.ipAddress.isEmpty {
             return
         }
-        // If gateway service is required and the base URL is not the default one, fetch the data from the gateway service
-        if feature.isGatewayServiceRequired && !UrlService.baseUrl.contains(Constants.HOST_NAME)
-            && (context.vwo == nil) {
+
+        if feature.isGatewayServiceRequired && context.vwo == nil {
             
             var queryParams: [String: String] = [:]
             if context.userAgent.isEmpty && context.ipAddress.isEmpty {
                 return
             }
-            queryParams["userAgent"] = context.userAgent
-            queryParams["ipAddress"] = context.ipAddress
             
+            let storageService = StorageService()
+            if let cachedResult = storageService.getUserDetail() {
+                context.vwo = cachedResult
+                return
+            }
+            
+            queryParams["userAgent"] = context.userAgent
+            queryParams["accountId"] = "\(SettingsManager.instance?.accountId ?? 0)"
+
             let dispatchGroup = DispatchGroup()
             dispatchGroup.enter()
             
@@ -73,6 +79,7 @@ class SegmentationManager {
                             let gatewayData = stringData.data(using: .utf8)
                             let gatewayServiceModel = try JSONDecoder().decode(GatewayService.self, from: gatewayData!)
                             context.vwo = gatewayServiceModel
+                            storageService.saveUserDetail(userDetail: gatewayServiceModel)
                         } catch {
                             LoggerService.log(level: .error, message: "Failed to decode GatewayService model")
                         }

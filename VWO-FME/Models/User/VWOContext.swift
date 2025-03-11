@@ -25,7 +25,7 @@ import Foundation
  */
 public class VWOContext {
     var id: String?
-    var userAgent: String = ""
+    var userAgent: String = Constants.USER_AGENT_VALUE
     var ipAddress: String = ""
     var customVariables: [String: Any] = [:]
     var variationTargetingVariables: [String: Any] = [:]
@@ -37,13 +37,9 @@ public class VWOContext {
      * - Parameters:
      *   - id: The unique identifier for the user.
      *   - customVariables: A dictionary of custom variables associated with the user.
-     *   - ipAddress: The IP address of the user. Defaults to an empty string.
-     *   - userAgent: The user agent string of the user's browser. Defaults to an empty string.
      */
-    public init(id: String?, customVariables: [String: Any], ipAddress: String = "", userAgent: String = "") {
+    public init(id: String?, customVariables: [String: Any]) {
         self.id = id
         self.customVariables = customVariables
-        self.ipAddress = ipAddress
-        self.userAgent = userAgent
     }
 }

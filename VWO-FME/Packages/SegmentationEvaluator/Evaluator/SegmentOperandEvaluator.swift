@@ -26,7 +26,8 @@ class SegmentOperandEvaluator {
      * @return `true` if the operand matches the user properties, `false` otherwise.
      */
     
-    static func evaluateCustomVariableDSL(_ dslOperandValue: [String: CodableValue], _ properties: [String: Any]) -> Bool {
+    static func evaluateCustomVariableDSL(_ dslOperandValue: [String: CodableValue], _ properties: [String: Any], _ context: VWOContext?, _ feature: Feature?) -> Bool {
+        guard let userId = context?.id else { return false }
         guard let entry = SegmentUtil.getKeyValue(dslOperandValue) else { return false }
         let operandKey = entry.0
         let operandValueNode = entry.1
@@ -48,27 +49,11 @@ class SegmentOperandEvaluator {
             let listId = String(operandValue[range])
             // Process the tag value and prepare query parameters
             let attributeValue = preProcessTagValue(tagValue as! String)
-            var queryParamsObj = [String: String]()
-            queryParamsObj["attribute"] = attributeValue
-            queryParamsObj["listId"] = listId
             
-            let dispatchGroup = DispatchGroup()
             var result = false
-            dispatchGroup.enter()
-            // Make a web service call to check the attribute against the list
-            GatewayServiceUtil.getFromGatewayService(queryParams: queryParamsObj, endpoint: UrlEnum.attributeCheck.rawValue) { gatewayResponse in
-                if let modelData = gatewayResponse {
-                    if let stringValue = modelData.data {
-                        if let booleanValue = stringValue.toBool {
-                            result = booleanValue
-                        }
-                    }
-                }
-                dispatchGroup.leave()
+            checkAttributeInList(listId: listId, attributeValue: attributeValue, userId: userId, featureKey: feature?.key ?? "", customVariable: true) { booleanValue in
+                result = booleanValue
             }
-
-            // Wait for the API call to complete
-            dispatchGroup.wait()
             return result
         } else {
             // Process other types of operands
@@ -140,9 +125,36 @@ class SegmentOperandEvaluator {
      * @param properties The user properties to evaluate against.
      * @return `true` if the operand matches the user properties, `false` otherwise.
      */
-    static func evaluateUserDSL(_ dslOperandValue: String, _ properties: [String: Any]) -> Bool {
-        let users = dslOperandValue.split(separator: ",").map { $0.trimmingCharacters(in: .whitespacesAndNewlines).replacingOccurrences(of: "\"", with: "") }
-        return users.contains(properties["_vwoUserId"] as? String ?? "")
+    static func evaluateUserDSL(_ dslOperandValue: String, _ properties: [String: Any], _ context: VWOContext?, _ feature: Feature?) -> Bool {
+        
+        guard let userId = context?.id else {
+            return false
+        }
+
+        if dslOperandValue.contains("inlist") {
+            let operandValue = dslOperandValue
+            let listIdPattern = try? NSRegularExpression(pattern: "inlist\\(([^)]+)\\)")
+            let matches = listIdPattern?.matches(in: operandValue, options: [], range: NSRange(location: 0, length: operandValue.utf16.count))
+            guard let match = matches?.first, let range = Range(match.range(at: 1), in: operandValue) else {
+                LoggerService.log(level: .error, message: "Invalid 'inList' operand format")
+                return false
+            }
+            let listId = String(operandValue[range])
+            // Process the tag value and prepare query parameters
+            
+            guard let tagValue = properties["_vwoUserId"] as? String else  {
+                return false
+            }
+            let attributeValue = preProcessTagValue(tagValue)
+            var result = false
+            checkAttributeInList(listId: listId, attributeValue: attributeValue, userId: userId, featureKey: feature?.key ?? "", customVariable: false) { booleanValue in
+                result = booleanValue
+            }
+            return result
+        } else {
+            let users = dslOperandValue.split(separator: ",").map { $0.trimmingCharacters(in: .whitespacesAndNewlines).replacingOccurrences(of: "\"", with: "") }
+            return users.contains(properties["_vwoUserId"] as? String ?? "")
+        }
     }
 
     /**
@@ -288,6 +300,63 @@ class SegmentOperandEvaluator {
             return String(operand[range])
         }
         return operand
+    }
+    
+    /**
+      * Checks if a given attribute value is present in a specified list.
+      *
+      * This function first checks if the result is already cached in local storage.
+      * If not, it makes a web service call to verify the attribute against the list.
+      * The result is then cached for future use.
+      *
+      * @param listId The identifier of the list to check against.
+      * @param attributeValue The attribute value to be checked.
+      * @param userId The user identifier.
+      * @param featureKey The key of the feature being evaluated.
+      * @param customVariable A flag indicating if a custom variable is used.
+      * @param completion A closure that is called with the result of the check.
+      */
+    static func checkAttributeInList(
+        listId: String,
+        attributeValue: String,
+        userId: String,
+        featureKey: String,
+        customVariable: Bool,
+        completion: @escaping (Bool) -> Void
+    ) {
+        let storageService = StorageService()
+        
+        // Check if the result is already cached
+        if let cacheResult = storageService.getAttributeCheck(featureKey: featureKey, listId: listId, attribute: attributeValue, userId: userId, customVariable: customVariable) {
+            completion(cacheResult)
+            return
+        }
+        
+        var queryParamsObj = [String: String]()
+        queryParamsObj["attribute"] = attributeValue
+        queryParamsObj["listId"] = listId
+        queryParamsObj["accountId"] = "\(SettingsManager.instance?.accountId ?? 0)"
+        
+        var result = false
+        let dispatchGroup = DispatchGroup()
+        dispatchGroup.enter()
+        
+        // Make a web service call to check the attribute against the list
+        GatewayServiceUtil.getFromGatewayService(queryParams: queryParamsObj, endpoint: UrlEnum.attributeCheck.rawValue) { gatewayResponse in
+            if let modelData = gatewayResponse {
+                if let stringValue = modelData.data {
+                    if let booleanValue = stringValue.toBool {
+                        storageService.saveAttributeCheck(featureKey: featureKey, listId: listId, attribute: attributeValue, result: booleanValue, userId: userId, customVariable: customVariable)
+                        result = booleanValue
+                    }
+                }
+            }
+            dispatchGroup.leave()
+        }
+        
+        // Wait for the API call to complete
+        dispatchGroup.wait()
+        completion(result)
     }
 }
 

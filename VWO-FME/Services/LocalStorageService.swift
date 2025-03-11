@@ -30,6 +30,9 @@ class StorageService {
         static let settings = "com.vwo.fme.settings"
         static let version = "com.vwo.fme.version"
         static let settingExpiry = "com.vwo.fme.settingExpiry"
+        static let userDetail = "com.vwo.fme.userDetail"
+        static let userDetailExpiry = "com.vwo.fme.userDetailExpiry"
+        static let attributeCheckExpiry = "com.vwo.fme.attributeCheckExpiry"
     }
         
     /**
@@ -114,6 +117,218 @@ class StorageService {
      */
     func clearSettingExpiry() {
         userDefaults.removeObject(forKey: Keys.settingExpiry)
+    }
+    
+    /**
+     * Retrieves the user detail expiry time from local storage.
+     *
+     * - Returns: The expiry time as an Int64 if available, otherwise nil.
+     */
+    func getUserDetailExpiry() -> Int64? {
+        let data = userDefaults.value(forKey: Keys.userDetailExpiry)
+        if let expiryTime = data as? Int64 {
+            return expiryTime
+        }
+        return nil
+    }
+    
+    /**
+     * Saves the user detail expiry time to local storage.
+     *
+     * - Parameter timeInterval: The expiry time to be saved.
+     */
+    func saveUserDetailExpiry(timeInterval: Int64) {
+        userDefaults.set(timeInterval, forKey: Keys.userDetailExpiry)
+    }
+   
+    /**
+     * Clears the user detail expiry time from local storage.
+     */
+    func clearUserDetailExpiry() {
+        userDefaults.removeObject(forKey: Keys.userDetailExpiry)
+    }
+    
+    /**
+     * Retrieves the attribute check expiry time from local storage.
+     *
+     * - Returns: The expiry time as an Int64 if available, otherwise nil.
+     */
+    func getAttributeCheckExpiry(storageKey: String) -> Int64? {
+        let key = "\(storageKey)_\(Keys.attributeCheckExpiry)"
+        let data = userDefaults.value(forKey: key)
+        if let expiryTime = data as? Int64 {
+            return expiryTime
+        }
+        return nil
+    }
+    /**
+     * Saves the attribute check expiry time to local storage.
+     *
+     * - Parameter timeInterval: The expiry time to be saved.
+     */
+    func saveAttributeCheckExpiry(timeInterval: Int64, storageKey: String) {
+        let key = "\(storageKey)_\(Keys.attributeCheckExpiry)"
+        userDefaults.set(timeInterval, forKey: key)
+    }
+    
+    /**
+     * Clears the attribute check expiry time from local storage.
+     */
+    func clearAttributeCheckExpiry() {
+        userDefaults.removeObject(forKey: Keys.attributeCheckExpiry)
+    }
+    
+    /**
+     * Retrieves the user detail from local storage if valid.
+     *
+     * - Returns: The GatewayService object if available and valid, otherwise nil.
+     */
+    func getUserDetail() -> GatewayService? {
+        if !self.isCachedUserDetailValid() {
+            return nil
+        }
+        
+        if let gatewayData = userDefaults.data(forKey: Keys.userDetail) {
+            let decoder = JSONDecoder()
+            do {
+                let gatewayResponse = try decoder.decode(GatewayService.self, from: gatewayData)
+                return gatewayResponse
+            } catch {
+                LoggerService.log(level: .error, key: "STORED_DATA_ERROR", details: ["err": "\(error.localizedDescription)"])
+            }
+        }
+        return nil
+    }
+    
+    /**
+     * Saves the user detail to local storage and updates the expiry time.
+     *
+     * - Parameter userDetail: The GatewayService object to be saved.
+     */
+    func saveUserDetail(userDetail: GatewayService) {
+        let encoder = JSONEncoder()
+        do {
+            let data = try encoder.encode(userDetail)
+            userDefaults.set(data, forKey: Keys.userDetail)
+            
+            let timeExpiry = Date().currentTimeMillis() + Constants.LOCATION_EXPIRY
+            self.saveUserDetailExpiry(timeInterval: timeExpiry)
+        } catch {
+            LoggerService.log(level: .error, key: "STORING_DATA_ERROR", details: ["err": "\(error.localizedDescription)"])
+        }
+    }
+    
+    /**
+     * Clears the user detail from local storage.
+     */
+    func clearUserDetail() {
+        userDefaults.removeObject(forKey: Keys.userDetail)
+    }
+    
+    /**
+     * Retrieves the attribute check result from local storage if valid.
+     *
+     * - Parameters:
+     *   - featureKey: The key for the feature.
+     *   - listId: The list identifier.
+     *   - attribute: The attribute name.
+     *   - userId: The user identifier.
+     *   - customVariable: A flag indicating if a custom variable is used.
+     * - Returns: The attribute check result as a Bool if available and valid, otherwise nil.
+     */
+    func getAttributeCheck(featureKey: String, listId: String, attribute: String, userId: String, customVariable: Bool) -> Bool? {
+        if featureKey.isEmpty, listId.isEmpty, attribute.isEmpty, userId.isEmpty {
+            LoggerService.log(level: .error, key: "STORED_DATA_ERROR", details: ["err": "Invalid data"])
+            return nil
+        }
+        let storageKey = self.getStorageKeyForAttributeCheck(featureKey: featureKey, listId: listId, attribute: attribute, userId: userId, customVariable: customVariable)
+        if !self.isCachedAttributeCheckValid(storageKey: storageKey) {
+            return nil
+        }
+        if let data = userDefaults.dictionary(forKey: storageKey) {
+            if let result = data["result"] as? Bool {
+                return result
+            } else {
+                return nil
+            }
+        } else {
+            return nil
+        }
+    }
+    
+    /**
+     * Saves the attribute check result to local storage and updates the expiry time.
+     *
+     * - Parameters:
+     *   - featureKey: The key for the feature.
+     *   - listId: The list identifier.
+     *   - attribute: The attribute name.
+     *   - result: The result of the attribute check.
+     *   - userId: The user identifier.
+     *   - customVariable: A flag indicating if a custom variable is used.
+     */
+    func saveAttributeCheck(featureKey: String, listId: String, attribute: String, result: Bool, userId: String, customVariable: Bool) {
+        if featureKey.isEmpty, listId.isEmpty, attribute.isEmpty, userId.isEmpty {
+            LoggerService.log(level: .error, key: "STORING_DATA_ERROR", details: ["err": "Invalid data"])
+            return
+        }
+                
+        let storageKey = self.getStorageKeyForAttributeCheck(featureKey: featureKey, listId: listId, attribute: attribute, userId: userId, customVariable: customVariable)
+        let data: [String: Any] = ["featureKey": featureKey,
+                                   "listId": listId,
+                                   "attribute": attribute,
+                                   "userId":userId,
+                                   "result": result,
+                                   "customVariable": customVariable]
+        userDefaults.set(data, forKey: storageKey)
+        
+        let timeExpiry = Date().currentTimeMillis() + Constants.LIST_ATTRIBUTE_EXPIRY
+        self.saveAttributeCheckExpiry(timeInterval: timeExpiry, storageKey: storageKey)
+    }
+    
+    /**
+     * Generates a storage key for attribute check based on the provided parameters.
+     *
+     * - Parameters:
+     *   - featureKey: The key for the feature.
+     *   - listId: The list identifier.
+     *   - attribute: The attribute name.
+     *   - userId: The user identifier.
+     *   - customVariable: A flag indicating if a custom variable is used.
+     * - Returns: A string representing the storage key.
+     */
+    func getStorageKeyForAttributeCheck(featureKey: String, listId: String, attribute: String, userId: String, customVariable: Bool) -> String {
+        let keyDsl = customVariable ? "customVariable" : "vwoUserId"
+        let storageKey = "\(featureKey)_\(userId)_\(listId)_\(keyDsl)_\(attribute))"
+        return storageKey
+    }
+    
+    /**
+     * Checks if the cached attribute check is still valid based on expiry time.
+     *
+     * - Returns: A Bool indicating if the cached attribute check is valid.
+     */
+    func isCachedAttributeCheckValid(storageKey: String) -> Bool {
+        let savedExpiryTime = self.getAttributeCheckExpiry(storageKey: storageKey)
+        let now = Date().currentTimeMillis()
+        if let expiryTime = savedExpiryTime {
+            return now < expiryTime
+        }
+        return false
+    }
+    
+    /**
+     * Checks if the cached user detail is still valid based on expiry time.
+     *
+     * - Returns: A Bool indicating if the cached user detail is valid.
+     */
+    func isCachedUserDetailValid() -> Bool {
+        let savedExpiryTime = self.getUserDetailExpiry()
+        let now = Date().currentTimeMillis()
+        if let expiryTime = savedExpiryTime {
+            return now < expiryTime
+        }
+        return false
     }
     
     /**
