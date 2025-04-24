@@ -1,5 +1,5 @@
 /**
- * Copyright 2024 Wingify Software Pvt. Ltd.
+ * Copyright 2024-2025 Wingify Software Pvt. Ltd.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,5 +24,5 @@ const AnsiColorEnum = {
     WHITE: '\x1b[30m',
     YELLOW: '\x1b[33m'
   };
-  
+
   module.exports = AnsiColorEnum;
