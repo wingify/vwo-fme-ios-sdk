@@ -23,7 +23,7 @@ import Foundation
  * and any custom or variation targeting variables. It also maintains a reference to the
  * VWO gateway service.
  */
-public class VWOContext {
+public class VWOUserContext {
     var id: String?
     var userAgent: String = Constants.USER_AGENT_VALUE
     var ipAddress: String = ""
@@ -32,7 +32,7 @@ public class VWOContext {
     var vwo: GatewayService?
     
     /**
-     * Initializes a new instance of VWOContext.
+     * Initializes a new instance of VWOUserContext.
      *
      * - Parameters:
      *   - id: The unique identifier for the user.

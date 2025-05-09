@@ -25,6 +25,7 @@ class VWOBuilder {
 
     init(options: VWOInitOptions?) {
         self.options = options
+        UsageStatsUtil.setUsageStats(options: options)
     }
 
     // Set VWOClient instance

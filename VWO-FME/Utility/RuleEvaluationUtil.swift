@@ -32,7 +32,7 @@ struct RuleEvaluationUtil {
         settings: Settings,
         feature: Feature?,
         campaign: Campaign,
-        context: VWOContext,
+        context: VWOUserContext,
         evaluatedFeatureMap: inout [String: Any],
         megGroupWinnerCampaigns: inout [Int: String]?,
         storageService: StorageService,

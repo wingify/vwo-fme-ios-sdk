@@ -36,7 +36,7 @@ class DecisionUtil {
         settings: Settings,
         feature: Feature?,
         campaign: Campaign,
-        context: VWOContext,
+        context: VWOUserContext,
         evaluatedFeatureMap: inout [String: Any],
         megGroupWinnerCampaigns: inout [Int: String]?,
         storageService: StorageService,
@@ -265,7 +265,7 @@ class DecisionUtil {
      *   - context: The context of the current VWO session.
      * - Returns: A dictionary containing the whitelisted variation, if any.
      */
-    private static func checkCampaignWhitelisting(campaign: Campaign, context: VWOContext) -> [String: Any?]? {
+    private static func checkCampaignWhitelisting(campaign: Campaign, context: VWOUserContext) -> [String: Any?]? {
         let whitelistingResult = evaluateWhitelisting(campaign: campaign, context: context)
         let status = whitelistingResult != nil ? StatusEnum.passed : StatusEnum.failed
         let variationString = whitelistingResult?["variationName"] as? String ?? ""
@@ -286,7 +286,7 @@ class DecisionUtil {
      *   - context: The context of the current VWO session.
      * - Returns: A dictionary containing the whitelisted variation, if any.
      */
-    private static func evaluateWhitelisting(campaign: Campaign, context: VWOContext) -> [String: Any?]? {
+    private static func evaluateWhitelisting(campaign: Campaign, context: VWOUserContext) -> [String: Any?]? {
         
         var targetedVariations = [Variation]()
         

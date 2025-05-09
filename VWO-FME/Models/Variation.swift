@@ -99,10 +99,10 @@ enum CodableValue: Codable, Equatable {
             self = .string(value)
         } else if let value = try? container.decode(Int.self) {
             self = .int(value)
-        } else if let value = try? container.decode(Float.self) {
-            self = .float(value)
         } else if let value = try? container.decode(Double.self) {
             self = .double(value)
+        } else if let value = try? container.decode(Float.self) {
+            self = .float(value)
         } else if let value = try? container.decode(Bool.self) {
             self = .bool(value)
         } else if let value = try? container.decode([CodableValue].self) {

@@ -72,7 +72,7 @@ class UUIDUtils {
      * @param namespace The namespace used to generate the UUID.
      * @return A UUID.
      */
-    private static func generateUUID(name: String, namespace: UUID) -> UUID {
+    internal static func generateUUID(name: String, namespace: UUID) -> UUID {
         let namespaceBytes = toBytes(uuid: namespace)
         let nameBytes = Array(name.utf8)
         let combined = namespaceBytes + nameBytes

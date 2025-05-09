@@ -21,11 +21,11 @@ class GetFlagAPI {
      * This method is used to get the flag value for the given feature key.
      * @param featureKey Feature key for which flag value is to be fetched.
      * @param settings Settings object containing the account settings.
-     * @param context  VWOContext object containing the user context.
+     * @param context  VWOUserContext object containing the user context.
      * @param hookManager  HooksManager object containing the integrations.
      * @return GetFlag object containing the flag value.
      */
-    static func getFlag(featureKey: String, settings: Settings, context: VWOContext, hookManager: HooksManager, completion: @escaping (GetFlag) -> Void) {
+    static func getFlag(featureKey: String, settings: Settings, context: VWOUserContext, hookManager: HooksManager, completion: @escaping (GetFlag) -> Void) {
         
         let getFlag = GetFlag()
         let queueFlag = DispatchQueue(label: "com.vwo.fme.getflag",qos: .userInitiated, attributes: .concurrent)

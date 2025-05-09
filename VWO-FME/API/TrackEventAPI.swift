@@ -29,7 +29,7 @@ class TrackEventAPI {
     static func track(
         settings: Settings,
         eventName: String,
-        context: VWOContext,
+        context: VWOUserContext,
         eventProperties: [String: Any],
         hooksManager: HooksManager
     ) {
@@ -59,7 +59,7 @@ class TrackEventAPI {
     private static func createAndSendImpressionForTrack(
         settings: Settings,
         eventName: String,
-        context: VWOContext,
+        context: VWOUserContext,
         eventProperties: [String: Any]
     ) {
         // Get base properties for the event

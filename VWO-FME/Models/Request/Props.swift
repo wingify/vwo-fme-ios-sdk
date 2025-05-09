@@ -34,6 +34,7 @@ struct Props {
     var additionalProperties: [String: Any] = [:]
     var product: String?
     var data: [String: Any] = [:]
+    var vwoMeta: [String: Any] = [:]
     
     mutating func setSdkName(_ sdkName: String?) {
         self.vwoSdkName = sdkName
@@ -109,6 +110,10 @@ struct Props {
         }
         if !tempDict.isEmpty {
             dict["data"] = tempDict
+        }
+        
+        if !vwoMeta.isEmpty {
+            dict["vwoMeta"] = vwoMeta
         }
         return dict
     }

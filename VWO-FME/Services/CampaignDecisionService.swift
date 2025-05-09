@@ -129,10 +129,10 @@ class CampaignDecisionService {
     /**
      * This method is used to analyze the pre-segmentation decision for the user in the campaign.
      * @param campaign  CampaignModel object containing the campaign settings.
-     * @param context  VWOContext object containing the user context.
+     * @param context  VWOUserContext object containing the user context.
      * @return  boolean value indicating if the user passes the pre-segmentation.
      */
-    func getPreSegmentationDecision(campaign: Campaign, context: VWOContext) -> Bool {
+    func getPreSegmentationDecision(campaign: Campaign, context: VWOUserContext) -> Bool {
         
         let campaignType = campaign.type
         let segments: [String: Any]

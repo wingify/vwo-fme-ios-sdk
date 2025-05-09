@@ -167,6 +167,20 @@ class NetworkUtil {
         properties.d?.event?.props?.isFirst = 1
         
         if eventName == EventEnum.vwoVariationShown.rawValue {
+            
+            let canSend = UsageStatsUtil.canSendStats()
+            if canSend {
+                let stats = UsageStatsUtil.getUsageStatsDict()
+                let cleanedStats = UsageStatsUtil.removeFalseValues(dict: stats)
+                if !cleanedStats.isEmpty {
+                    // Set properties if stats are available and can be sent (comparing for change)
+                    properties.d?.event?.props?.vwoMeta = cleanedStats
+                }
+            } else {
+                // no change in usage stats so removing collected stats at time of init
+                UsageStatsUtil.emptyUsageStats()
+            }
+            
             // for FME<>MI integration
             // isMII flag is set to true for vwoVariationShown event
             properties.d?.event?.props?.isMII = FmeConfig.checkIsMILinked()
@@ -184,7 +198,7 @@ class NetworkUtil {
     }
     
     // Returns the payload data for the goal API
-    static func getTrackGoalPayloadData(settings: Settings, userId: String?, eventName: String, context: VWOContext, eventProperties: [String: Any]) -> [String: Any] {
+    static func getTrackGoalPayloadData(settings: Settings, userId: String?, eventName: String, context: VWOUserContext, eventProperties: [String: Any]) -> [String: Any] {
         var properties = NetworkUtil.getEventBasePayload(userId: userId, eventName: eventName, visitorUserAgent: context.userAgent, ipAddress: context.ipAddress)
         properties.d?.event?.props?.setIsCustomEvent(true)
         properties.d?.event?.props?.setAdditionalProperties(eventProperties)
@@ -258,7 +272,7 @@ class NetworkUtil {
         NetworkManager.postAsync(request) { result in
             
             if let error = result.errorMessage {
-                LoggerService.log(level: .error, key: "NETWORK_CALL_FAILED", details: ["method": "POST", "err": "\(error)"])
+                LoggerService.log(level: .debug, key: "NETWORK_CALL_FAILED", details: ["method": "POST", "err": "\(error)"])
             }
         }
     }
@@ -271,9 +285,11 @@ class NetworkUtil {
         let request = RequestModel(url: UrlService.baseUrl, method: HTTPMethod.post.rawValue, path: UrlEnum.events.rawValue, query: properties, body: payload, headers: headers, scheme: Constants.HTTPS_PROTOCOL, port: SettingsManager.instance?.port ?? 0)
         
         NetworkManager.postAsync(request) { result in
-            
+                        
             if result.errorMessage != nil {
-                LoggerService.log(level: .error, key: "NETWORK_CALL_FAILED", details: ["method": "POST", "err": "\(result.errorMessage ?? "")"])
+                LoggerService.log(level: .debug, key: "NETWORK_CALL_FAILED", details: ["method": "POST", "err": "\(result.errorMessage ?? "")"])
+            } else {
+                UsageStatsUtil.saveUsageStatsInStorage()
             }
         }
     }

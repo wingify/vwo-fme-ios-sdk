@@ -1,0 +1,238 @@
+{
+    "version": 1,
+    "accountId": 12345,
+    "sdkKey": "000000000000_MASKED_000000000000",
+    "campaigns": [
+        {
+            "type": "FLAG_ROLLOUT",
+            "segments": {},
+            "variations": [
+                {
+                    "segments": {},
+                    "name": "Rollout-rule-1",
+                    "id": 1,
+                    "weight": 100,
+                    "variables": [
+                        {
+                            "id": 1,
+                            "key": "int",
+                            "value": 10,
+                            "type": "integer"
+                        },
+                        {
+                            "id": 2,
+                            "key": "float",
+                            "value": 20.01,
+                            "type": "double"
+                        },
+                        {
+                            "id": 3,
+                            "key": "string",
+                            "value": "string",
+                            "type": "string"
+                        },
+                        {
+                            "id": 4,
+                            "key": "boolean",
+                            "value": false,
+                            "type": "boolean"
+                        },
+                        {
+                            "id": 5,
+                            "key": "json",
+                            "value": {
+                                "name": "tommy"
+                            },
+                            "type": "json"
+                        }
+                    ]
+                }
+            ],
+            "key": "feature1_rolloutRule1",
+            "isAlwaysCheckSegment": false,
+            "isForcedVariationEnabled": false,
+            "name": "Feature1 : Rollout",
+            "status": "RUNNING",
+            "id": 97
+        },
+        {
+            "type": "FLAG_TESTING",
+            "segments": {},
+            "id": 98,
+            "key": "feature1_testingRule1",
+            "isAlwaysCheckSegment": false,
+            "isForcedVariationEnabled": false,
+            "name": "Feature1 : Testing rule 1",
+            "variations": [
+                {
+                    "id": 1,
+                    "variables": [
+                        {
+                            "id": 1,
+                            "key": "int",
+                            "value": 10,
+                            "type": "integer"
+                        },
+                        {
+                            "id": 2,
+                            "key": "float",
+                            "value": 20.01,
+                            "type": "double"
+                        },
+                        {
+                            "id": 3,
+                            "key": "string",
+                            "value": "string",
+                            "type": "string"
+                        },
+                        {
+                            "id": 4,
+                            "key": "boolean",
+                            "value": false,
+                            "type": "boolean"
+                        },
+                        {
+                            "id": 5,
+                            "key": "json",
+                            "value": {
+                                "name": "tommy"
+                            },
+                            "type": "json"
+                        }
+                    ],
+                    "name": "Default",
+                    "weight": 50
+                },
+                {
+                    "id": 2,
+                    "variables": [
+                        {
+                            "id": 1,
+                            "key": "int",
+                            "value": 11,
+                            "type": "integer"
+                        },
+                        {
+                            "id": 2,
+                            "key": "float",
+                            "value": 20.02,
+                            "type": "double"
+                        },
+                        {
+                            "id": 3,
+                            "key": "string",
+                            "value": "test_variation",
+                            "type": "string"
+                        },
+                        {
+                            "id": 4,
+                            "key": "boolean",
+                            "value": true,
+                            "type": "boolean"
+                        },
+                        {
+                            "id": 5,
+                            "key": "json",
+                            "value": {
+                                "name": "vwo"
+                            },
+                            "type": "json"
+                        }
+                    ],
+                    "name": "Variation-1",
+                    "weight": 50
+                }
+            ],
+            "percentTraffic": 100,
+            "status": "RUNNING"
+        },
+        {
+            "type": "FLAG_PERSONALIZE",
+            "segments": {},
+            "variations": [
+                {
+                    "segments": {},
+                    "name": "Personalize-rule-1",
+                    "id": 1,
+                    "weight": 100,
+                    "variables": [
+                        {
+                            "id": 1,
+                            "key": "int",
+                            "value": 10,
+                            "type": "integer"
+                        },
+                        {
+                            "id": 2,
+                            "key": "float",
+                            "value": 20.01,
+                            "type": "double"
+                        },
+                        {
+                            "id": 3,
+                            "key": "string",
+                            "value": "string",
+                            "type": "string"
+                        },
+                        {
+                            "id": 4,
+                            "key": "boolean",
+                            "value": false,
+                            "type": "boolean"
+                        },
+                        {
+                            "id": 5,
+                            "key": "json",
+                            "value": {
+                                "name": "tommy"
+                            },
+                            "type": "json"
+                        }
+                    ]
+                }
+            ],
+            "key": "feature1_personalizeRule1",
+            "isAlwaysCheckSegment": false,
+            "isForcedVariationEnabled": false,
+            "name": "Feature1 : Personalize",
+            "status": "RUNNING",
+            "id": 106
+        }
+    ],
+    "features": [
+        {
+            "type": "FEATURE_FLAG",
+            "rules": [
+                {
+                    "campaignId": 97,
+                    "type": "FLAG_ROLLOUT",
+                    "ruleKey": "rolloutRule1",
+                    "variationId": 1
+                },
+                {
+                    "campaignId": 98,
+                    "type": "FLAG_TESTING",
+                    "ruleKey": "testingRule1"
+                },
+                {
+                    "campaignId": 106,
+                    "type": "FLAG_PERSONALIZE",
+                    "ruleKey": "personalizeRule1",
+                    "variationId": 1
+                }
+            ],
+            "impactCampaign": {},
+            "id": 26,
+            "key": "feature1",
+            "metrics": [
+                {
+                    "id": 1,
+                    "type": "CUSTOM_GOAL",
+                    "identifier": "signUp"
+                }
+            ],
+            "name": "Feature1",
+            "status": "ON"
+        }
+    ]
+}

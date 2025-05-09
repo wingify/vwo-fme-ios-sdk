@@ -17,7 +17,7 @@
 import Foundation
 
 class SegmentEvaluator {
-    var context: VWOContext?
+    var context: VWOUserContext?
     var settings: Settings?
     var feature: Feature?
 
@@ -231,7 +231,7 @@ class SegmentEvaluator {
      * @param context The context object to check against.
      * @return A boolean indicating if the feature is enabled for the user.
      */
-    func checkInUserStorage(featureKey: String, context: VWOContext) -> Bool {
+    func checkInUserStorage(featureKey: String, context: VWOUserContext) -> Bool {
         let storageService = StorageService()
         let storedDataMap = storageService.getFeatureFromStorage(featureKey: featureKey, context: context)
         

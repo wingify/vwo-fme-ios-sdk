@@ -33,6 +33,7 @@ class StorageService {
         static let userDetail = "com.vwo.fme.userDetail"
         static let userDetailExpiry = "com.vwo.fme.userDetailExpiry"
         static let attributeCheckExpiry = "com.vwo.fme.attributeCheckExpiry"
+        static let usageStats = "com.vwo.fme.usageStats"
     }
         
     /**
@@ -226,6 +227,47 @@ class StorageService {
     }
     
     /**
+     * Retrieves the usage stats from local storage.
+     *
+     * - Returns: Dictionary if available and valid, otherwise nil.
+     */
+    func getUsageStats() -> [String: Any]? {
+        guard let data = userDefaults.data(forKey: Keys.usageStats) else {
+            return nil
+        }
+        do {
+            let decodedData = try JSONSerialization.jsonObject(with: data, options: [])
+            if let dict = decodedData as? [String: Any] {
+                return dict
+            }
+        } catch {
+            LoggerService.log(level: .error, key: "STORED_DATA_ERROR", details: ["err": "\(error.localizedDescription)"])
+        }
+        return nil
+    }
+    
+    /**
+     * Saves the usage stats to local storage.
+     *
+     * - Parameter data: Usage stats dictionary to be saved.
+     */
+    func setUsageStats(data: [String: Any]) {
+        do {
+            let jsonData = try JSONSerialization.data(withJSONObject: data, options: [])
+            userDefaults.set(jsonData, forKey: Keys.usageStats)
+        } catch {
+            LoggerService.log(level: .error, key: "STORING_DATA_ERROR", details: ["err": "\(error.localizedDescription)"])
+        }
+    }
+    
+    /**
+     * Clears the usage stats from local storage.
+     */
+    func clearUsageStats() {
+        userDefaults.removeObject(forKey: Keys.usageStats)
+    }
+    
+    /**
      * Retrieves the attribute check result from local storage if valid.
      *
      * - Parameters:
@@ -353,7 +395,7 @@ class StorageService {
      * Empties the local storage suite.
      */
     func emptyLocalStorageSuite() {
-        userDefaults.removeSuite(named: Constants.SDK_USERDEFAULT_SUITE)
+        userDefaults.removePersistentDomain(forName: Constants.SDK_USERDEFAULT_SUITE)
     }
         
     /**
@@ -364,7 +406,7 @@ class StorageService {
      *   - context: The context containing user information.
      * - Returns: A dictionary of stored data if available, otherwise nil.
      */
-    private func getDataInStorage(featureKey: String?, context: VWOContext) -> [String: Any]? {
+    private func getDataInStorage(featureKey: String?, context: VWOUserContext) -> [String: Any]? {
         guard let featureKey = featureKey else { return nil }
         guard let userId = context.id else { return nil }
         
@@ -414,7 +456,7 @@ class StorageService {
      *   - context: The context containing user information.
      * - Returns: A dictionary of stored data if available, otherwise nil.
      */
-    func getFeatureFromStorage(featureKey: String, context: VWOContext) -> [String : Any]? {
+    func getFeatureFromStorage(featureKey: String, context: VWOUserContext) -> [String : Any]? {
         return self.getDataInStorage(featureKey: featureKey, context: context)
     }
     

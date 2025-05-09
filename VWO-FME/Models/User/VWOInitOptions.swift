@@ -40,7 +40,8 @@ public class VWOInitOptions {
     var sdkName: String = Constants.SDK_NAME
     var sdkVersion: String = Constants.SDK_VERSION
     var logTransport: LogTransport?
-    
+    var isUsageStatsDisabled: Bool = false
+    var vwoMeta: [String: Any] = [:]
     /**
      * Initializes a new instance of VWOInitOptions.
      *
@@ -68,7 +69,9 @@ public class VWOInitOptions {
                 batchUploadTimeInterval: Int64? = nil,
                 sdkName: String? = nil,
                 sdkVersion: String? = nil,
-                logTransport: LogTransport? = nil) {
+                logTransport: LogTransport? = nil,
+                isUsageStatsDisabled: Bool = false,
+                vwoMeta: [String: Any] = [:]) {
         
         // Assigning the SDK key
         self.sdkKey = sdkKey
@@ -123,5 +126,7 @@ public class VWOInitOptions {
         }
         
         self.logTransport = logTransport
+        self.isUsageStatsDisabled = isUsageStatsDisabled
+        self.vwoMeta = vwoMeta
     }
 }

@@ -87,17 +87,17 @@ public class VWOFme {
     }
     
     // Gets the flag value for the given feature key
-    public static func getFlag(featureKey: String, context: VWOContext, completion: @escaping (GetFlag) -> Void) {
+    public static func getFlag(featureKey: String, context: VWOUserContext, completion: @escaping (GetFlag) -> Void) {
         VWOFme.vwoClient?.getFlag(featureKey: featureKey, context: context, completion: completion)
     }
     
     // Tracks an event with properties
-    public static func trackEvent(eventName: String, context: VWOContext, eventProperties: [String: Any]? = nil) {
+    public static func trackEvent(eventName: String, context: VWOUserContext, eventProperties: [String: Any]? = nil) {
         VWOFme.vwoClient?.trackEvent(eventName: eventName, context: context, eventProperties: eventProperties ?? [:])
     }
     
     // Sets attributes for a user in the context provided
-    public static func setAttribute(attributes: [String: Any], context: VWOContext) {
+    public static func setAttribute(attributes: [String: Any], context: VWOUserContext) {
         VWOFme.vwoClient?.setAttribute(attributes: attributes, context: context)
     }
     

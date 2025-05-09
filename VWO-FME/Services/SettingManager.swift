@@ -137,31 +137,30 @@ class SettingsManager {
 
         NetworkManager.get(request) { result in
             self.isSettingsFetchInProgress = false
-            do {
-                let error = result.errorMessage
-                if let data = result.data2, error == nil {
-                    let settingsObj = try JSONDecoder().decode(Settings.self, from: data)
+            let error = result.errorMessage
+            if let data = result.data2, error == nil {
+                if let settingsObj = try? JSONDecoder().decode(Settings.self, from: data) {
                     LoggerService.log(level: .info, key: "SETTINGS_FETCH_SUCCESS", details: [:])
                     self.saveSettingInUserDefaults(settingObj: settingsObj)
                     self.saveSettingExpiryInUserDefault()
                     completion(settingsObj)
                 } else {
-                    if result.error == .noNetwork {
-                        if let cachedSetting = self.getSettingFromUserDefaults() {
-                            LoggerService.log(level: .info, key: "SETTINGS_FETCH_SUCCESS", details: [:])
-                            completion(cachedSetting)
-                        } else {
-                            LoggerService.log(level: .error, key: "SETTINGS_FETCH_ERROR", details: ["err": "\(result.errorMessage ?? "Unknown error")"])
-                            completion(nil)
-                        }
+                    LoggerService.log(level: .error, key: "SETTINGS_SCHEMA_INVALID", details: nil)
+                    completion(nil)
+                }
+            } else {
+                if result.error == .noNetwork {
+                    if let cachedSetting = self.getSettingFromUserDefaults() {
+                        LoggerService.log(level: .info, key: "SETTINGS_FETCH_SUCCESS", details: [:])
+                        completion(cachedSetting)
                     } else {
                         LoggerService.log(level: .error, key: "SETTINGS_FETCH_ERROR", details: ["err": "\(result.errorMessage ?? "Unknown error")"])
                         completion(nil)
                     }
+                } else {
+                    LoggerService.log(level: .error, key: "SETTINGS_FETCH_ERROR", details: ["err": "\(result.errorMessage ?? "Unknown error")"])
+                    completion(nil)
                 }
-            } catch {
-                LoggerService.log(level: .error, key: "SETTINGS_FETCH_ERROR", details: ["err": "\(error.localizedDescription)"])
-                completion(nil)
             }
         }
     }

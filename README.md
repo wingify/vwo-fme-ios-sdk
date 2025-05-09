@@ -31,7 +31,7 @@ And then run:
 pod install
 ```
 
-### Swift Package Manger
+### Swift Package Manager
 
 To install VWO FME using [Swift Package Manager](https://github.com/swiftlang/swift-package-manager) you can follow the [tutorial published by Apple](https://developer.apple.com/documentation/xcode/adding-package-dependencies-to-your-app) using the URL for the VWO FME repo with the current version:
 
@@ -55,8 +55,8 @@ VWOFme.initialize(options: options) { result in
 
             // for targeting conditions
             let customVariables: [String : Any] = ["key_1": 2, "key_2": 0]
-            // Create VWOContext object
-            let userContext = VWOContext(id: "unique_user_id", customVariables: customVariables)
+            // Create VWOUserContext object
+            let userContext = VWOUserContext(id: "unique_user_id", customVariables: customVariables)
 
             // Get the GetFlag object for the feature key and context
             VWOFme.getFlag(featureKey: "feature_flag_name", context: userContext, completion: { featureFlagObj in
@@ -125,7 +125,7 @@ The following table explains all the parameters in the `context` object:
 
 ```swift
 let customVariables: [String : Any] = ["key_1": 2, "key_2": 0]
-let userContext = VWOContext(id: "unique_user_id", customVariables: customVariables)
+let userContext = VWOUserContext(id: "unique_user_id", customVariables: customVariables)
 ```
 
 ### Basic Feature Flagging
@@ -135,12 +135,12 @@ Feature Flags serve as the foundation for all testing, personalization, and roll
 | **Parameter** | **Description**                                                      | **Required** | **Type** | **Example**          |
 | ------------- | -------------------------------------------------------------------- | ------------ | -------- | -------------------- |
 | `featureKey`  | Unique identifier of the feature flag                                | Yes          | String   | `"new_checkout"`     |
-| `context`     | Object containing user identification and contextual information     | Yes          | VWOContext | `VWOContext(id: "user_123", customVariables: ["key": "value"])` |
+| `context`     | Object containing user identification and contextual information     | Yes          | VWOUserContext | `VWOUserContext(id: "user_123", customVariables: ["key": "value"])` |
 
 Example usage:
 
 ```swift
-let userContext = VWOContext(id: "user_123", customVariables: ["key": "value"])
+let userContext = VWOUserContext(id: "user_123", customVariables: ["key": "value"])
 
 VWOFme.getFlag(featureKey: "feature_flag_name", context: userContext) { featureFlagObj in
     // Check if flag is enabled
@@ -161,14 +161,14 @@ Feature flags can be enhanced with connected metrics to track key performance in
 | **Parameter**     | **Description**                                                            | **Required** | **Type** | **Example**                                      |
 | ----------------- | -------------------------------------------------------------------------- | ------------ | -------- | ------------------------------------------------ |
 | `eventName`       | Name of the event you want to track                                        | Yes          | String   | `"purchase_completed"`                           |
-| `context`         | Object containing user identification and other contextual information     | Yes          | VWOContext | `VWOContext(id: "user_123", customVariables: ["key": "value"])` |
+| `context`         | Object containing user identification and other contextual information     | Yes          | VWOUserContext | `VWOUserContext(id: "user_123", customVariables: ["key": "value"])` |
 | `eventProperties` | Additional properties/metadata associated with the event                   | No           | Dictionary | `["amount": 49.99]`                              |
 
 Example usage:
 
 ```swift
 // Create user context
-let userContext = VWOContext(id: "user_123", customVariables: ["key": "value"])
+let userContext = VWOUserContext(id: "user_123", customVariables: ["key": "value"])
 
 // Track the event for the given event name and context
 let eventProperties: [String: Any] = ["cart_value": 999]
@@ -186,13 +186,13 @@ User attributes provide rich contextual information about users, enabling powerf
 | ---------------- | -------------------------------------------------------------------------- | ------------ | ---------- | ---------------------------------------------------------------------------------------------------- |
 | `attributeKey`   | The unique identifier/name of the attribute you want to set                | Yes          | String     | `"attribute-name"`                                                  |
 | `attributeValue` | The value to be assigned to the attribute                                  | Yes          | String, Number, Boolean        | `"attribute-value-text"`, `7.0, true`                                                                      |
-| `context`        | Object containing user identification and other contextual information     | Yes          | VWOContext | `VWOContext(id: "user_123", customVariables: ["key": "value"])`                                      |
+| `context`        | Object containing user identification and other contextual information     | Yes          | VWOUserContext | `VWOUserContext(id: "user_123", customVariables: ["key": "value"])`                                      |
 
 Example usage:
 
 ```swift
 // Create user context
-let userContext = VWOContext(id: "user_123", customVariables: ["key": "value"])
+let userContext = VWOUserContext(id: "user_123", customVariables: ["key": "value"])
 
 // Send attributes data
 let attributeName1 = "attribute-name-string"
@@ -298,6 +298,25 @@ Example usage:
 // Initialize VWOInitOptions with batch configuration
 let options = VWOInitOptions(sdkKey: SDK_KEY, accountId: ACCOUNT_ID, batchMinSize:10, batchUploadTimeInterval: 300000)
 ```
+
+## Running Tests
+
+To ensure the reliability of our iOS SDK, follow these steps to run tests in Xcode:
+
+1. **Clone the Repository**: 
+   ```bash
+   git clone https://github.com/wingify/vwo-fme-ios-sdk.git
+   cd vwo-fme-ios-sdk
+   ```
+
+2. **Open the Project**: Launch Xcode and open the project.
+
+3. **Choose Target**: Select the test target VWO-FMETests.
+
+4. **Run Tests**: Press `Cmd + U` to execute all tests. Alternatively, you can go to the menu bar and select `Product > Test`.
+
+5. **View Results**: Check the Test Navigator for results and logs.
+
 
 ## Authors
 

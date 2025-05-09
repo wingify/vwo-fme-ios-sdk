@@ -26,7 +26,7 @@ class SegmentOperandEvaluator {
      * @return `true` if the operand matches the user properties, `false` otherwise.
      */
     
-    static func evaluateCustomVariableDSL(_ dslOperandValue: [String: CodableValue], _ properties: [String: Any], _ context: VWOContext?, _ feature: Feature?) -> Bool {
+    static func evaluateCustomVariableDSL(_ dslOperandValue: [String: CodableValue], _ properties: [String: Any], _ context: VWOUserContext?, _ feature: Feature?) -> Bool {
         guard let userId = context?.id else { return false }
         guard let entry = SegmentUtil.getKeyValue(dslOperandValue) else { return false }
         let operandKey = entry.0
@@ -67,7 +67,7 @@ class SegmentOperandEvaluator {
             let operandType = preProcessOperandValue["operandType"] as? SegmentOperandValueEnum
             
             if operandType == .startingEndingStarValue || operandType == .startingStarValue || operandType == .endingStarValue || operandType == .regexValue {
-                let valueForKey = String(describing: processedValues["tagValue"])
+                let valueForKey = "\(processedValues["tagValue"] ?? "")"
                 processedValues["tagValue"] = valueForKey
             }
             tagValue = processedValues["tagValue"] as! String
@@ -125,7 +125,7 @@ class SegmentOperandEvaluator {
      * @param properties The user properties to evaluate against.
      * @return `true` if the operand matches the user properties, `false` otherwise.
      */
-    static func evaluateUserDSL(_ dslOperandValue: String, _ properties: [String: Any], _ context: VWOContext?, _ feature: Feature?) -> Bool {
+    static func evaluateUserDSL(_ dslOperandValue: String, _ properties: [String: Any], _ context: VWOUserContext?, _ feature: Feature?) -> Bool {
         
         guard let userId = context?.id else {
             return false
@@ -164,7 +164,7 @@ class SegmentOperandEvaluator {
      * @param context The user's context containing the user agent information.
      * @return `true` if the operand matches the user agent, `false` otherwise.
      */
-    static func evaluateUserAgentDSL(_ dslOperandValue: String, _ context: VWOContext?) -> Bool {
+    static func evaluateUserAgentDSL(_ dslOperandValue: String, _ context: VWOUserContext?) -> Bool {
         guard let userAgent = context?.userAgent else {
             LoggerService.log(level: .info, message: "To Evaluate UserAgent segmentation, please provide userAgent in context")
             return false
@@ -269,16 +269,29 @@ class SegmentOperandEvaluator {
             }
 
         case .greaterThanValue:
-            return Float(tagValue) ?? 0 > Float(operandValue) ?? 0
+            if let tagFloat = Float(tagValue), let operandFloat = Float(operandValue) {
+                return tagFloat > operandFloat
+            }
+            return false
 
         case .greaterThanEqualToValue:
-            return Float(tagValue) ?? 0 >= Float(operandValue) ?? 0
+            if let tagFloat = Float(tagValue), let operandFloat = Float(operandValue) {
+                return tagFloat >= operandFloat
+            }
+            return false
+
 
         case .lessThanValue:
-            return Float(tagValue) ?? 0 < Float(operandValue) ?? 0
+            if let tagFloat = Float(tagValue), let operandFloat = Float(operandValue) {
+                return tagFloat < operandFloat
+            }
+            return false
 
         case .lessThanEqualToValue:
-            return Float(tagValue) ?? 0 <= Float(operandValue) ?? 0
+            if let tagFloat = Float(tagValue), let operandFloat = Float(operandValue) {
+                return tagFloat <= operandFloat
+            }
+            return false
 
         default:
             return tagValue == operandValue

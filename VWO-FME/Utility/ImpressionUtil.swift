@@ -39,7 +39,7 @@ class ImpressionUtil {
         settings: Settings,
         campaignId: Int,
         variationId: Int,
-        context: VWOContext
+        context: VWOUserContext
     ) {
         // Get base properties for the event
         let properties = NetworkUtil.getEventsBaseProperties(

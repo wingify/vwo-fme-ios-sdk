@@ -37,7 +37,7 @@ class MegUtil {
                                feature: Feature?,
                                groupId: Int,
                                evaluatedFeatureMap: inout [String: Any],
-                               context: VWOContext,
+                               context: VWOUserContext,
                                storageService: StorageService) -> Variation? {
         
         // Initialize variables to track features to skip and campaign mappings
@@ -158,7 +158,7 @@ class MegUtil {
                                                       feature: Feature,
                                                       evaluatedFeatureMap: inout [String: Any],
                                                       featureToSkip: inout [String],
-                                                      context: VWOContext,
+                                                      context: VWOUserContext,
                                                       storageService: StorageService) -> Bool {
         
         // Check if the feature key is available
@@ -227,7 +227,7 @@ class MegUtil {
      *   - storageService: The service used for storage operations.
      * - Returns: A dictionary containing eligible and ineligible campaigns.
      */
-    private static func getEligibleCampaigns(settings: Settings, campaignMap: [String: [Campaign]], context: VWOContext, storageService: StorageService) -> [String: Any] {
+    private static func getEligibleCampaigns(settings: Settings, campaignMap: [String: [Campaign]], context: VWOUserContext, storageService: StorageService) -> [String: Any] {
         
         // Initialize lists for eligible and ineligible campaigns
         var eligibleCampaigns: [Campaign] = []
@@ -293,7 +293,7 @@ class MegUtil {
      *   - storageService: The service used for storage operations.
      * - Returns: The winning variation if found, otherwise nil.
      */
-    private static func findWinnerCampaignAmongEligibleCampaigns(settings: Settings, featureKey: String?, eligibleCampaigns: [Campaign]?, eligibleCampaignsWithStorage: [Campaign]?, groupId: Int, context: VWOContext, storageService: StorageService) -> Variation? {
+    private static func findWinnerCampaignAmongEligibleCampaigns(settings: Settings, featureKey: String?, eligibleCampaigns: [Campaign]?, eligibleCampaignsWithStorage: [Campaign]?, groupId: Int, context: VWOUserContext, storageService: StorageService) -> Variation? {
         
         // Get campaign IDs from the feature key
         let campaignIds = CampaignUtil.getCampaignIdsFromFeatureKey(settings: settings, featureKey: featureKey)
@@ -359,7 +359,7 @@ class MegUtil {
      *   - storageService: The service used for storage operations.
      * - Returns: The winning variation if found, otherwise nil.
      */
-    static func normalizeWeightsAndFindWinningCampaign(shortlistedCampaigns: [Campaign]?, context: VWOContext, calledCampaignIds: [Int]?, groupId: Int, storageService: StorageService) -> Variation? {
+    static func normalizeWeightsAndFindWinningCampaign(shortlistedCampaigns: [Campaign]?, context: VWOUserContext, calledCampaignIds: [Int]?, groupId: Int, storageService: StorageService) -> Variation? {
         do {
             // Use a for loop to modify the weights
             if var campaigns = shortlistedCampaigns {
@@ -434,7 +434,7 @@ class MegUtil {
      *   - storageService: The service used for storage operations.
      * - Returns: The winning variation if found, otherwise nil.
      */
-    private static func getCampaignUsingAdvancedAlgo(settings: Settings, shortlistedCampaigns: [Campaign], context: VWOContext, calledCampaignIds: [Int]?, groupId: Int, storageService: StorageService) -> Variation? {
+    private static func getCampaignUsingAdvancedAlgo(settings: Settings, shortlistedCampaigns: [Campaign], context: VWOUserContext, calledCampaignIds: [Int]?, groupId: Int, storageService: StorageService) -> Variation? {
         var winnerCampaign: Variation?
         var found = false
         

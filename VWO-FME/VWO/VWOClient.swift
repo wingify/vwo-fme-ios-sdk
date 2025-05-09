@@ -44,7 +44,7 @@ class VWOClient {
     }
     
     // Get the flag value for the given feature key
-    func getFlag(featureKey: String?, context: VWOContext, completion: @escaping (GetFlag) -> Void) {
+    func getFlag(featureKey: String?, context: VWOUserContext, completion: @escaping (GetFlag) -> Void) {
         let apiName = "getFlag"
         let getFlag = GetFlag()
         do {
@@ -60,8 +60,7 @@ class VWOClient {
                 throw NSError(domain: "Feature Key is required", code: 0, userInfo: nil)
             }
             
-            guard let procSettings = self.processedSettings, SettingsSchema().isSettingsValid(procSettings) else {
-                LoggerService.log(level: .error, key: "SETTINGS_SCHEMA_INVALID", details: nil)
+            guard let procSettings = self.processedSettings else {
                 getFlag.setIsEnabled(isEnabled: false)
                 completion(getFlag)
                 return
@@ -75,7 +74,7 @@ class VWOClient {
         }
     }
     
-    private func track(eventName: String, context: VWOContext?, eventProperties: [String: Any]) {
+    private func track(eventName: String, context: VWOUserContext?, eventProperties: [String: Any]) {
         let apiName = "trackEvent"
         var resultMap = [String: Bool]()
         do {
@@ -96,8 +95,7 @@ class VWOClient {
                 throw NSError(domain: "VWOClient", code: 400, userInfo: [NSLocalizedDescriptionKey: "User ID is required"])
             }
             
-            guard let pSettings = self.processedSettings, SettingsSchema().isSettingsValid(pSettings) else {
-                LoggerService.log(level: .error, key: "SETTINGS_SCHEMA_INVALID", details: nil)
+            guard let pSettings = self.processedSettings else {
                 resultMap[eventName] = false
                 return
             }
@@ -110,16 +108,16 @@ class VWOClient {
         }
     }
     
-    func trackEvent(eventName: String, context: VWOContext?, eventProperties: [String: Any]) {
+    func trackEvent(eventName: String, context: VWOUserContext?, eventProperties: [String: Any]) {
         track(eventName: eventName, context: context, eventProperties: eventProperties)
     }
     
-    func trackEvent(eventName: String, context: VWOContext?) {
+    func trackEvent(eventName: String, context: VWOUserContext?) {
         track(eventName: eventName, context: context, eventProperties: [:])
     }
     
     // Set attributes for a user in the context provided
-    func setAttribute(attributes: [String: Any], context: VWOContext?) {
+    func setAttribute(attributes: [String: Any], context: VWOUserContext?) {
         let apiName = "setAttribute"
         do {
             LoggerService.log(level: .debug, key: "API_CALLED", details: ["apiName": apiName])
@@ -149,8 +147,7 @@ class VWOClient {
                 throw NSError(domain: "User ID is required", code: 0, userInfo: nil)
             }
             
-            guard let processedSettings = self.processedSettings, SettingsSchema().isSettingsValid(processedSettings) else {
-                LoggerService.log(level: .error, key: "SETTINGS_SCHEMA_INVALID", details: nil)
+            guard let processedSettings = self.processedSettings else {
                 return
             }
             

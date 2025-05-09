@@ -39,9 +39,9 @@ class SegmentationManager {
      * This method sets the contextual data required for segmentation.
      * @param settings  SettingsModel object containing the account settings.
      * @param feature   FeatureModel object containing the feature settings.
-     * @param context   VWOContext object containing the user context.
+     * @param context   VWOUserContext object containing the user context.
      */
-    static func setContextualData(settings: Settings, feature: Feature, context: VWOContext) {
+    static func setContextualData(settings: Settings, feature: Feature, context: VWOUserContext) {
         self.attachEvaluator()
         evaluator?.context = context
         evaluator?.settings = settings

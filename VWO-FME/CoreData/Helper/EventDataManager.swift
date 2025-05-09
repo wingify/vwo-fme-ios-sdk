@@ -83,9 +83,10 @@ class EventDataManager {
         NetworkManager.attachClient()
         NetworkManager.postAsync(request) { result in
             if result.errorMessage != nil {
-                LoggerService.log(level: .error, key: "BATCH_UPLOAD_ERROR", details: ["err": "\(result.errorMessage ?? "")"])
+                LoggerService.log(level: .debug, key: "BATCH_UPLOAD_ERROR", details: ["err": "\(result.errorMessage ?? "")"])
                 completion(false, events)
             } else {
+                UsageStatsUtil.saveUsageStatsInStorage()
                 completion(true, events)
             }
         }

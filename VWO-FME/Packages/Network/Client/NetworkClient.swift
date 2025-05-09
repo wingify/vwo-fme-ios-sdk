@@ -98,7 +98,7 @@ class NetworkClient: NetworkClientInterface {
         return "\(scheme)://\(hostname)\(path)"
     }
     
-    private func performRequestWithRetry(request: URLRequest, completion: @escaping (ResponseModel) -> Void, retryCount: Int = 3, delay: TimeInterval = 1.0) {
+    private func performRequestWithRetry(request: URLRequest, completion: @escaping (ResponseModel) -> Void, retryCount: Int = 4, delay: TimeInterval = 1.0) {
         
         var responseModel = ResponseModel()
         

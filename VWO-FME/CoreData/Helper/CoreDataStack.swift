@@ -156,4 +156,23 @@ class CoreDataStack {
             }
         }
     }
+    
+    /**
+     * Clears all entries in the specified Core Data entity.
+     * This is useful for running test cases in isolation, ensuring a clean state.
+     */
+    func clearCoreData() {
+        coreDataQueue.async {
+            self.countEntries { count , err in
+                let fetchRequest: NSFetchRequest<NSFetchRequestResult> = NSFetchRequest(entityName: self.entityName)
+                let deleteRequest = NSBatchDeleteRequest(fetchRequest: fetchRequest)
+                do {
+                    try self.context.execute(deleteRequest)
+                    try self.context.save()
+                } catch {
+                    print("Error \(error.localizedDescription)")
+                }
+            }
+        }
+    }
 }

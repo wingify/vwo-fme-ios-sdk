@@ -20,13 +20,13 @@ import VWO_FME
 class ViewController: UIViewController {
     
     var featureFlagObj: GetFlag? = nil
-    var context: VWOContext?
+    var context: VWOUserContext?
     var stackView: UIStackView!
     override func viewDidLoad() {
         super.viewDidLoad()
         
         self.addStackView()
-        self.setVWOContext()
+        self.setVWOUserContext()
     }
     
     
@@ -124,12 +124,12 @@ class ViewController: UIViewController {
     
     //MARK: - VWO SDK methods
     
-    func setVWOContext() {
+    func setVWOUserContext() {
         
         let myUserId = "unique_user_id"
         let customVariables = ["key_1":5, "key_2": 0] as [String : Any]
-        self.context = VWOContext(id: myUserId,
-                                  customVariables: customVariables)
+        self.context = VWOUserContext(id: myUserId,
+                                      customVariables: customVariables)
     }
     
     func initVwoSdk() {
@@ -164,7 +164,7 @@ class ViewController: UIViewController {
         }
         
         guard let userContext = self.context else {
-            print("VWOContext is required")
+            print("VWOUserContext is required")
             return
         }
         
@@ -205,7 +205,7 @@ class ViewController: UIViewController {
         }
         
         guard let userContext = self.context else {
-            print("VWOContext is required")
+            print("VWOUserContext is required")
             return
         }
         
@@ -222,7 +222,7 @@ class ViewController: UIViewController {
         }
         
         guard let userContext = self.context else {
-            print("VWOContext is required")
+            print("VWOUserContext is required")
             return
         }
         

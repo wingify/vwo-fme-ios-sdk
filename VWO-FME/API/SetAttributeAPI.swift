@@ -24,7 +24,7 @@ class SetAttributeAPI {
      * @param attributes Dictionary of all the attributes to set.
      * @param context  The user context model containing user-specific data.
      */
-    static func setAttributes(settings: Settings, attributes: [String: Any], context: VWOContext) {
+    static func setAttributes(settings: Settings, attributes: [String: Any], context: VWOUserContext) {
         createAndSendImpressionForSetAttribute(settings: settings, attributes: attributes, context: context)
     }
     
@@ -40,7 +40,7 @@ class SetAttributeAPI {
     private static func createAndSendImpressionForSetAttribute(
         settings: Settings,
         attributes: [String: Any],
-        context: VWOContext
+        context: VWOUserContext
     ) {
         // Get base properties for the event
         let properties = NetworkUtil.getEventsBaseProperties(
