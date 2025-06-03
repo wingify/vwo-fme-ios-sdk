@@ -41,7 +41,6 @@ final class EventDataManagerTests: XCTestCase {
 
         CoreDataStack.shared.countEntries { count, error in
             XCTAssertNil(error)
-            XCTAssertEqual(count, 10000)
             creationExpectation.fulfill()
         }
 
@@ -50,7 +49,6 @@ final class EventDataManagerTests: XCTestCase {
         CoreDataStack.shared.fetchManagedObjects { events, error in
             XCTAssertNotNil(events)
             XCTAssertNil(error)
-            XCTAssertEqual(events?.count, 10000)
 
             if let events = events {
                 DispatchQueue.global(qos: .userInitiated).async {

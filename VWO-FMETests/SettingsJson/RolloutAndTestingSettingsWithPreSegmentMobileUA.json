@@ -1,0 +1,150 @@
+{
+  "campaigns": [
+    {
+      "type": "FLAG_ROLLOUT",
+      "isForcedVariationEnabled": false,
+      "id": 112,
+      "key": "testFlag_rolloutRule1",
+      "segments": {
+
+      },
+      "name": "testFlag : Rollout",
+      "variations": [
+        {
+          "weight": 100,
+          "segments": {
+
+          },
+          "name": "Rollout-rule-1",
+          "id": 1,
+          "variables": [
+            {
+              "value": "string value",
+              "type": "string",
+              "id": 1,
+              "key": "string"
+            },
+            {
+              "value": 10,
+              "type": "integer",
+              "id": 2,
+              "key": "int"
+            },
+            {
+              "value": false,
+              "type": "boolean",
+              "id": 3,
+              "key": "boolean"
+            }
+          ]
+        }
+      ],
+      "status": "RUNNING",
+      "isAlwaysCheckSegment": false
+    },
+    {
+      "type": "FLAG_TESTING",
+      "isForcedVariationEnabled": false,
+      "percentTraffic": 100,
+      "key": "testFlag_testingRule2",
+      "segments": {
+        "or": [
+          {
+            "ua": "wildcard(*iOS*)"
+          }
+        ]
+      },
+      "name": "testFlag : Testing rule 2",
+      "status": "RUNNING",
+      "variations": [
+        {
+          "weight": 50,
+          "name": "Default",
+          "id": 1,
+          "variables": [
+            {
+              "value": "string value",
+              "type": "string",
+              "id": 1,
+              "key": "string"
+            },
+            {
+              "value": 10,
+              "type": "integer",
+              "id": 2,
+              "key": "int"
+            },
+            {
+              "value": false,
+              "type": "boolean",
+              "id": 3,
+              "key": "boolean"
+            }
+          ]
+        },
+        {
+          "weight": 50,
+          "name": "Variation-1",
+          "id": 2,
+          "variables": [
+            {
+              "value": "string value two",
+              "type": "string",
+              "id": 1,
+              "key": "string"
+            },
+            {
+              "value": 11,
+              "type": "integer",
+              "id": 2,
+              "key": "int"
+            },
+            {
+              "value": true,
+              "type": "boolean",
+              "id": 3,
+              "key": "boolean"
+            }
+          ]
+        }
+      ],
+      "isAlwaysCheckSegment": false,
+      "id": 114
+    }
+  ],
+  "features": [
+    {
+      "type": "FEATURE_FLAG",
+      "name": "testFlag",
+      "id": 30,
+      "rules": [
+        {
+          "campaignId": 112,
+          "type": "FLAG_ROLLOUT",
+          "ruleKey": "rolloutRule1",
+          "variationId": 1
+        },
+        {
+          "campaignId": 114,
+          "type": "FLAG_TESTING",
+          "ruleKey": "testingRule2"
+        }
+      ],
+      "key": "testFlag",
+      "impactCampaign": {
+
+      },
+      "status": "ON",
+      "metrics": [
+        {
+          "type": "CUSTOM_GOAL",
+          "id": 1,
+          "identifier": "signUp"
+        }
+      ]
+    }
+  ],
+  "version": 1,
+  "accountId": 12345,
+  "sdkKey": "000000000000_MASKED_000000000000",
+}

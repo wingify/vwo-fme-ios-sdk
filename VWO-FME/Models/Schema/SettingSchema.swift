@@ -40,7 +40,7 @@ class SettingsSchema {
             return false
         }
         
-        guard let campaigns = settings.campaigns, !campaigns.isEmpty else {
+        guard let campaigns = settings.campaigns else {
             return false
         }
         

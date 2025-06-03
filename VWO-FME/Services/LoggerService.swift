@@ -18,11 +18,11 @@ import Foundation
 
 class LoggerService {
     
-    private static var debugMessages: [String: String] = [:]
-    private static var errorMessages: [String: String] = [:]
-    private static var infoMessages: [String: String] = [:]
-    private static var warningMessages: [String: String] = [:]
-    private static var traceMessages: [String: String] = [:]
+    static var debugMessages: [String: String] = [:]
+    static var errorMessages: [String: String] = [:]
+    static var infoMessages: [String: String] = [:]
+    static var warningMessages: [String: String] = [:]
+    static var traceMessages: [String: String] = [:]
     
     init(config: [String: Any], logLevel: LogLevelEnum, logTransport: LogTransport?) {
         // Initialize the LogManager

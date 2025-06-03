@@ -1,0 +1,271 @@
+{
+  "accountId": 12345,
+  "campaigns": [
+    {
+      "type": "FLAG_ROLLOUT",
+      "isForcedVariationEnabled": false,
+      "id": 112,
+      "key": "testFlag16_rolloutRule1",
+      "segments": {
+
+      },
+      "name": "testFlag16 : Rollout",
+      "variations": [
+        {
+          "weight": 100,
+          "segments": {
+
+          },
+          "name": "Rollout-rule-1",
+          "id": 1,
+          "variables": [
+            {
+              "value": "string value",
+              "type": "string",
+              "id": 1,
+              "key": "string"
+            },
+            {
+              "value": 10,
+              "type": "integer",
+              "id": 2,
+              "key": "int"
+            },
+            {
+              "value": false,
+              "type": "boolean",
+              "id": 3,
+              "key": "boolean"
+            }
+          ]
+        }
+      ],
+      "status": "RUNNING",
+      "isAlwaysCheckSegment": false
+    },
+    {
+      "type": "FLAG_TESTING",
+      "isForcedVariationEnabled": false,
+      "percentTraffic": 100,
+      "key": "testFlag16_testingRule3",
+      "segments": {
+        "or": [
+          {
+            "featureId": {
+              "31": "on"
+            }
+          }
+        ]
+      },
+      "name": "testFlag16 : Testing rule 3",
+      "status": "RUNNING",
+      "variations": [
+        {
+          "weight": 50,
+          "name": "Default",
+          "id": 1,
+          "variables": [
+            {
+              "value": "string value",
+              "type": "string",
+              "id": 1,
+              "key": "string"
+            },
+            {
+              "value": 10,
+              "type": "integer",
+              "id": 2,
+              "key": "int"
+            },
+            {
+              "value": false,
+              "type": "boolean",
+              "id": 3,
+              "key": "boolean"
+            }
+          ]
+        },
+        {
+          "weight": 50,
+          "name": "Variation-1",
+          "id": 2,
+          "variables": [
+            {
+              "value": "string value two",
+              "type": "string",
+              "id": 1,
+              "key": "string"
+            },
+            {
+              "value": 11,
+              "type": "integer",
+              "id": 2,
+              "key": "int"
+            },
+            {
+              "value": true,
+              "type": "boolean",
+              "id": 3,
+              "key": "boolean"
+            }
+          ]
+        }
+      ],
+      "isAlwaysCheckSegment": false,
+      "id": 115
+    },
+    {
+      "type": "FLAG_ROLLOUT",
+      "isForcedVariationEnabled": false,
+      "id": 116,
+      "key": "testFlag17_rolloutRule1",
+      "segments": {
+
+      },
+      "name": "testFlag17 : Rollout",
+      "variations": [
+        {
+          "weight": 100,
+          "segments": {
+
+          },
+          "name": "Rollout-rule-1",
+          "id": 1,
+          "variables": [
+            {
+              "value": "string A",
+              "type": "string",
+              "id": 1,
+              "key": "string"
+            },
+            {
+              "value": 10,
+              "type": "integer",
+              "id": 2,
+              "key": "int"
+            }
+          ]
+        }
+      ],
+      "status": "RUNNING",
+      "isAlwaysCheckSegment": false
+    },
+    {
+      "type": "FLAG_TESTING",
+      "isForcedVariationEnabled": false,
+      "percentTraffic": 100,
+      "key": "testFlag17_testingRule1",
+      "segments": {
+
+      },
+      "name": "testFlag17 : Testing rule 1",
+      "status": "RUNNING",
+      "variations": [
+        {
+          "weight": 50,
+          "name": "Default",
+          "id": 1,
+          "variables": [
+            {
+              "value": "string A",
+              "type": "string",
+              "id": 1,
+              "key": "string"
+            },
+            {
+              "value": 10,
+              "type": "integer",
+              "id": 2,
+              "key": "int"
+            }
+          ]
+        },
+        {
+          "weight": 50,
+          "name": "Variation-1",
+          "id": 2,
+          "variables": [
+            {
+              "value": "string B",
+              "type": "string",
+              "id": 1,
+              "key": "string"
+            },
+            {
+              "value": 11,
+              "type": "integer",
+              "id": 2,
+              "key": "int"
+            }
+          ]
+        }
+      ],
+      "isAlwaysCheckSegment": false,
+      "id": 117
+    }
+  ],
+  "features": [
+    {
+      "type": "FEATURE_FLAG",
+      "name": "testFlag17",
+      "metrics": [
+        {
+          "type": "CUSTOM_GOAL",
+          "id": 1,
+          "identifier": "signUp"
+        }
+      ],
+      "rules": [
+        {
+          "campaignId": 116,
+          "type": "FLAG_ROLLOUT",
+          "ruleKey": "rolloutRule1",
+          "variationId": 1
+        },
+        {
+          "campaignId": 117,
+          "type": "FLAG_TESTING",
+          "ruleKey": "testingRule1"
+        }
+      ],
+      "key": "testFlag17",
+      "impactCampaign": {
+
+      },
+      "status": "ON",
+      "id": 31
+    },
+    {
+      "type": "FEATURE_FLAG",
+      "name": "testFlag16",
+      "metrics": [
+        {
+          "type": "CUSTOM_GOAL",
+          "id": 1,
+          "identifier": "signUp"
+        }
+      ],
+      "rules": [
+        {
+          "campaignId": 112,
+          "type": "FLAG_ROLLOUT",
+          "ruleKey": "rolloutRule1",
+          "variationId": 1
+        },
+        {
+          "campaignId": 115,
+          "type": "FLAG_TESTING",
+          "ruleKey": "testingRule3"
+        }
+      ],
+      "key": "testFlag16",
+      "impactCampaign": {
+
+      },
+      "status": "ON",
+      "id": 30
+    }
+  ],
+  "version": 1,
+  "sdkKey": "000000000000_MASKED_000000000000",
+}

@@ -171,7 +171,7 @@ class UsageStatsUtil {
         self.usageStatsDict.removeAll()
     }
     
-    private static func areDictionariesEqual(_ dict1: [String: Any], _ dict2: [String: Any]) -> Bool {
+    static func areDictionariesEqual(_ dict1: [String: Any], _ dict2: [String: Any]) -> Bool {
         guard dict1.count == dict2.count else {
             return false
         }

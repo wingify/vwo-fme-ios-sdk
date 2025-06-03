@@ -369,4 +369,211 @@ final class GetFlagTests: XCTestCase {
         }
         wait(for: [expectation], timeout: 2.0)
     }
+    
+    func testGetFlagWithPresegmentLocationDeviceTypeOSPassWithTestingRule() {
+        storageService.emptyLocalStorageSuite()
+        let featureKey = "testFlag"
+        let expectation = XCTestExpectation(description: "Get flag with presegment location device type & OS, passes rollout and testing rule")
+        let testContext = VWOUserContext(id: "pass_variation_user_id", customVariables: [:])
+        let mockSettings = FlagTestDataLoader.loadTestData(jsonFileName: SettingsTestJson.RolloutAndTestingSettingsWithPreSegmentMobile.jsonFileName)
+        let mockOptions: VWOInitOptions = VWOInitOptions(sdkKey: "sdk-key", accountId: 123456)
+        let mockClient = VWOClient(options: mockOptions, settingObj: mockSettings)
+        let processedMockSetting = mockClient.processedSettings!
+        // response from DACDN for FME iOS SDK
+        let jsonString = """
+        {
+            "location": {
+                "country": "United States",
+                "city": "New York",
+                "region": "New York"
+            },
+            "userAgent": {
+                "os": "iOS",
+                "device": "Other",
+                "device_type": "mobile",
+                "ps": "mobile:true:iOS:17.2:Other::Other",
+                "browser_string": "Other"
+            }
+        }
+        """
+        let jsonData = jsonString.data(using: .utf8)!
+        let gatewayService = try! JSONDecoder().decode(GatewayService.self, from: jsonData)
+        testContext.vwo = gatewayService
+        GetFlagAPI.getFlag(featureKey: featureKey, settings: processedMockSetting, context: testContext, hookManager: mockHookManager) { getFlag in
+            XCTAssertNotNil(getFlag)
+            XCTAssertTrue(getFlag.isEnabled())
+            if getFlag.isEnabled() {
+                if let userDefaultDict = self.storageService.getFeatureFromStorage(featureKey: featureKey, context: testContext) {
+                    do {
+                        let jsonData = try JSONSerialization.data(withJSONObject: userDefaultDict, options: [])
+                        let userDefaultStorageData = try JSONDecoder().decode(StorageDataTestCase.self, from: jsonData)
+                        let expectation = ["rolloutVariationId": 1,
+                                           "rolloutKey": "testFlag_rolloutRule1",
+                                           "experimentKey": "testFlag_testingRule1",
+                                           "experimentVariationId": 2]
+                        
+                        let expectationData = try JSONSerialization.data(withJSONObject: expectation, options: [])
+                        let testCaseStorageData = try! JSONDecoder().decode(StorageDataTestCase.self, from: expectationData)
+                        let areEqual = compareStorageData(userDefaultStorageData, testCaseStorageData)
+                        XCTAssertEqual(areEqual, true, "Storage data is the same as the expected test case")
+                    } catch {
+                        print("Error converting dictionary to StorageData: \(error)")
+
+                    }
+                }
+            }
+            
+            expectation.fulfill()
+        }
+        wait(for: [expectation], timeout: 1.0)
+    }
+    
+    func testGetFlagWithPresegmentLocationDeviceTypeOSPassWithRollout() {
+        storageService.emptyLocalStorageSuite()
+        let featureKey = "testFlag"
+        let expectation = XCTestExpectation(description: "Get flag with presegment location device type & OS, passes rollout but not testing rule")
+        let testContext = VWOUserContext(id: "\(Date().timeIntervalSince1970)_user_id", customVariables: [:])
+        let mockSettings = FlagTestDataLoader.loadTestData(jsonFileName: SettingsTestJson.RolloutAndTestingSettingsWithPreSegmentMobile.jsonFileName)
+        let mockOptions: VWOInitOptions = VWOInitOptions(sdkKey: "sdk-key", accountId: 123456)
+        let mockClient = VWOClient(options: mockOptions, settingObj: mockSettings)
+        let processedMockSetting = mockClient.processedSettings!
+        // response from DACDN for FME iOS SDK
+        let jsonString = """
+        {
+            "location": {
+                "country": "India",
+                "city": "Ludhiana",
+                "region": "Punjab"
+            },
+            "userAgent": {
+                "os": "macOS",
+                "device": "Other",
+                "device_type": "mobile",
+                "ps": "mobile:true:iOS:17.2:Other::Other",
+                "browser_string": "Other"
+            }
+        }
+        """
+        let jsonData = jsonString.data(using: .utf8)!
+        let gatewayService = try! JSONDecoder().decode(GatewayService.self, from: jsonData)
+        testContext.vwo = gatewayService
+        GetFlagAPI.getFlag(featureKey: featureKey, settings: processedMockSetting, context: testContext, hookManager: mockHookManager) { getFlag in
+            XCTAssertNotNil(getFlag)
+            XCTAssertTrue(getFlag.isEnabled())
+            if getFlag.isEnabled() {
+                if let userDefaultDict = self.storageService.getFeatureFromStorage(featureKey: featureKey, context: testContext) {
+                    do {
+                        let jsonData = try JSONSerialization.data(withJSONObject: userDefaultDict, options: [])
+                        let userDefaultStorageData = try JSONDecoder().decode(StorageDataTestCase.self, from: jsonData)
+                        let expectation = ["rolloutVariationId": 1,
+                                                   "rolloutKey": "testFlag_rolloutRule1"]
+                        
+                        let expectationData = try JSONSerialization.data(withJSONObject: expectation, options: [])
+                        let testCaseStorageData = try! JSONDecoder().decode(StorageDataTestCase.self, from: expectationData)
+                        let areEqual = compareStorageData(userDefaultStorageData, testCaseStorageData)
+                        XCTAssertEqual(areEqual, true, "Storage data is the same as the expected test case")
+                    } catch {
+                        print("Error converting dictionary to StorageData: \(error)")
+
+                    }
+                }
+            }
+            expectation.fulfill()
+        }
+        wait(for: [expectation], timeout: 1.0)
+    }
+    
+    func testGetFlagWithPresegmentUA() {
+        storageService.emptyLocalStorageSuite()
+        let featureKey = "testFlag"
+        let expectation = XCTestExpectation(description: "Get flag with presegment UA contains iOS")
+        let testContext = VWOUserContext(id: "\(Date().timeIntervalSince1970)_user_id", customVariables: [:])
+
+        let mockSettings = FlagTestDataLoader.loadTestData(jsonFileName: SettingsTestJson.RolloutAndTestingSettingsWithPreSegmentMobileUA.jsonFileName)
+        let mockOptions: VWOInitOptions = VWOInitOptions(sdkKey: "sdk-key", accountId: 123456)
+        let mockClient = VWOClient(options: mockOptions, settingObj: mockSettings)
+        let processedMockSetting = mockClient.processedSettings!
+        // response from DACDN for FME iOS SDK
+        let jsonString = """
+        {
+            "location": {
+                "country": "United States",
+                "city": "New York",
+                "region": "New York"
+            },
+            "userAgent": {
+                "os": "iOS",
+                "device": "Other",
+                "device_type": "mobile",
+                "ps": "mobile:true:iOS:17.2:Other::Other",
+                "browser_string": "Other"
+            }
+        }
+        """
+        let jsonData = jsonString.data(using: .utf8)!
+        let gatewayService = try! JSONDecoder().decode(GatewayService.self, from: jsonData)
+        testContext.vwo = gatewayService
+        GetFlagAPI.getFlag(featureKey: featureKey, settings: processedMockSetting, context: testContext, hookManager: mockHookManager) { getFlag in
+            XCTAssertNotNil(getFlag)
+            XCTAssertTrue(getFlag.isEnabled())
+            expectation.fulfill()
+        }
+        wait(for: [expectation], timeout: 1.0)
+    }
+    
+    func testGetFlagWithPresegmentFeatureFlagStatus() {
+        
+        let featureKey1 = "testFlag17"
+        let featureKey2 = "testFlag16"
+        let expectation = XCTestExpectation(description: "Get flag with pre-segment option dependent on another flag")
+        storageService.emptyLocalStorageSuite()
+        let mockSettings = FlagTestDataLoader.loadTestData(jsonFileName: SettingsTestJson.RolloutAndTestingSettingsWithPreSegmentFeatureFlagStatus.jsonFileName)
+        let mockOptions: VWOInitOptions = VWOInitOptions(sdkKey: "sdk-key", accountId: 123456)
+        let mockClient = VWOClient(options: mockOptions, settingObj: mockSettings)
+        let processedMockSetting = mockClient.processedSettings!
+        let userContext = VWOUserContext(id: "user-id-feature-flag-status", customVariables: [:])
+        GetFlagAPI.getFlag(featureKey: featureKey1, settings: processedMockSetting, context: userContext, hookManager: mockHookManager) { getFlag1 in
+            XCTAssertNotNil(getFlag1)
+            XCTAssertTrue(getFlag1.isEnabled())
+            GetFlagAPI.getFlag(featureKey: featureKey2, settings: processedMockSetting, context: userContext, hookManager: self.mockHookManager) { getFlag2 in
+                XCTAssertNotNil(getFlag2)
+                XCTAssertTrue(getFlag2.isEnabled())
+                expectation.fulfill()
+            }
+        }
+        wait(for: [expectation], timeout: 2.0)
+    }
+    
+    func testGetFlagWithCustomVariableInlist() {
+        let featureKey = "testFlag16"
+        let listId = "67c858b8b8556:1741183160"
+        storageService.emptyLocalStorageSuite()
+        let mockSettings = FlagTestDataLoader.loadTestData(jsonFileName: SettingsTestJson.RolloutAndTestingSettingsInlist.jsonFileName)
+        let mockOptions: VWOInitOptions = VWOInitOptions(sdkKey: "sdk-key", accountId: 123456)
+        let mockClient = VWOClient(options: mockOptions, settingObj: mockSettings)
+        let processedMockSetting = mockClient.processedSettings!
+        let userContext = VWOUserContext(id: "user-id-inlist", customVariables: ["inlistvar":"user1"])
+        storageService.saveAttributeCheck(featureKey: featureKey, listId: listId, attribute: "user1", result: true, userId: "user-id-inlist", customVariable: true)
+        GetFlagAPI.getFlag(featureKey: featureKey, settings: processedMockSetting, context: userContext, hookManager: mockHookManager) { getFlag in
+            XCTAssertNotNil(getFlag)
+            XCTAssertTrue(getFlag.isEnabled())
+        }
+    }
+    
+    func testGetFlagWithUserIdInlist() {
+        let featureKey = "testFlag16"
+        let userIdForContext = "user1"
+        let listId = "67c858b8b8556:1741183160"
+        storageService.emptyLocalStorageSuite()
+        let mockSettings = FlagTestDataLoader.loadTestData(jsonFileName: SettingsTestJson.RolloutAndTestingSettingsUserInlist.jsonFileName)
+        let mockOptions: VWOInitOptions = VWOInitOptions(sdkKey: "sdk-key", accountId: 123456)
+        let mockClient = VWOClient(options: mockOptions, settingObj: mockSettings)
+        let processedMockSetting = mockClient.processedSettings!
+        let userContext = VWOUserContext(id: userIdForContext, customVariables: [:])
+        storageService.saveAttributeCheck(featureKey: featureKey, listId: listId, attribute: userIdForContext, result: true, userId: userIdForContext, customVariable: false)
+        GetFlagAPI.getFlag(featureKey: featureKey, settings: processedMockSetting, context: userContext, hookManager: mockHookManager) { getFlag in
+            XCTAssertNotNil(getFlag)
+            XCTAssertTrue(getFlag.isEnabled())
+        }
+    }
 }

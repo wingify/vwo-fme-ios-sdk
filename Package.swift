@@ -29,6 +29,11 @@ let package = Package(
             cSettings: [
                 .headerSearchPath("VWO-FME")
             ]
+        ),
+	    .testTarget(
+            name: "VWO-FMETests",
+            dependencies: ["VWO-FME"],
+            path: "VWO-FMETests"
         )
     ],
     swiftLanguageVersions: [.v5]

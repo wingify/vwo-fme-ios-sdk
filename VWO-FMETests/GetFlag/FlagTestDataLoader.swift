@@ -21,6 +21,11 @@ enum SettingsTestJson: String {
     case OnlyRolloutSettings
     case RolloutAndTestingSettings
     case RolloutAndTestingSettingsWithPreSegment
+    case RolloutAndTestingSettingsWithPreSegmentMobile
+    case RolloutAndTestingSettingsWithPreSegmentMobileUA
+    case RolloutAndTestingSettingsWithPreSegmentFeatureFlagStatus
+    case RolloutAndTestingSettingsUserInlist
+    case RolloutAndTestingSettingsInlist
     case MegAdvanceAlgoCampaignSettings
     case MegRandomAlgoCampaignSettings
     case NoRolloutAndOnlyTestingSettings
@@ -28,6 +33,7 @@ enum SettingsTestJson: String {
     case SettingsWithSameSalt
     case SettingsWithWhitelisting
     case UtilitySettings
+    case EmptySettings
 
     var jsonFileName: String {
         return self.rawValue

@@ -134,9 +134,24 @@
 		EB373EC72DB92A13005713D1 /* UsageStatsUtil.swift in Sources */ = {isa = PBXBuildFile; fileRef = EB373EC62DB92A13005713D1 /* UsageStatsUtil.swift */; };
 		EB50927D2C902C5E00A8779A /* VWO_FME.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = EB06C7802C90229B00A25E07 /* VWO_FME.framework */; };
 		EB50927E2C902C5E00A8779A /* VWO_FME.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = EB06C7802C90229B00A25E07 /* VWO_FME.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
+		EB544EFD2DD5DD20006AA817 /* LogManagerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = EB544EFC2DD5DD20006AA817 /* LogManagerTests.swift */; };
+		EB544F012DD5F788006AA817 /* SegmentOperatorValueEnumTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = EB544F002DD5F788006AA817 /* SegmentOperatorValueEnumTests.swift */; };
+		EB544F042DD5FA08006AA817 /* FeatureTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = EB544F032DD5FA08006AA817 /* FeatureTests.swift */; };
+		EB544F072DD5FBA6006AA817 /* EnumTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = EB544F062DD5FBA6006AA817 /* EnumTests.swift */; };
+		EB544F0C2DD60E76006AA817 /* SettingsSchemaTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = EB544F0B2DD60E76006AA817 /* SettingsSchemaTests.swift */; };
+		EB544F0E2DD61176006AA817 /* EmptySettings.json in Resources */ = {isa = PBXBuildFile; fileRef = EB544F0D2DD61176006AA817 /* EmptySettings.json */; };
+		EB544F112DD613D8006AA817 /* UsageStatsTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = EB544F102DD613D8006AA817 /* UsageStatsTests.swift */; };
+		EB544F132DD72851006AA817 /* RolloutAndTestingSettingsWithPreSegmentMobile.json in Resources */ = {isa = PBXBuildFile; fileRef = EB544F122DD7284E006AA817 /* RolloutAndTestingSettingsWithPreSegmentMobile.json */; };
+		EB544F152DD7379A006AA817 /* RolloutAndTestingSettingsWithPreSegmentMobileUA.json in Resources */ = {isa = PBXBuildFile; fileRef = EB544F142DD73758006AA817 /* RolloutAndTestingSettingsWithPreSegmentMobileUA.json */; };
+		EB544F172DD73E28006AA817 /* DataTypeUtilTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = EB544F162DD73E28006AA817 /* DataTypeUtilTests.swift */; };
+		EB544F1B2DD75335006AA817 /* RolloutAndTestingSettingsWithPreSegmentFeatureFlagStatus.json in Resources */ = {isa = PBXBuildFile; fileRef = EB544F1A2DD75275006AA817 /* RolloutAndTestingSettingsWithPreSegmentFeatureFlagStatus.json */; };
+		EB544F1F2DD77D2F006AA817 /* RolloutAndTestingSettingsInlist.json in Resources */ = {isa = PBXBuildFile; fileRef = EB544F1E2DD77D1E006AA817 /* RolloutAndTestingSettingsInlist.json */; };
+		EB544F222DD784A3006AA817 /* SyncManagerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = EB544F212DD784A3006AA817 /* SyncManagerTests.swift */; };
 		EB5500862CA51C3C00A8B729 /* GetFlagAPI.swift in Sources */ = {isa = PBXBuildFile; fileRef = EB5500852CA51C3C00A8B729 /* GetFlagAPI.swift */; };
 		EB5500872CA51C3C00A8B729 /* SetAttributeAPI.swift in Sources */ = {isa = PBXBuildFile; fileRef = EB5500832CA51C3C00A8B729 /* SetAttributeAPI.swift */; };
 		EB5500882CA51C3C00A8B729 /* TrackEventAPI.swift in Sources */ = {isa = PBXBuildFile; fileRef = EB5500842CA51C3C00A8B729 /* TrackEventAPI.swift */; };
+		EB7A73372DDC67190034279F /* CampaignUtilTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = EB7A73362DDC67190034279F /* CampaignUtilTests.swift */; };
+		EB7A73392DDC6DC60034279F /* RolloutAndTestingSettingsUserInlist.json in Resources */ = {isa = PBXBuildFile; fileRef = EB7A73382DDC6DB70034279F /* RolloutAndTestingSettingsUserInlist.json */; };
 		EB7E3D6A2D27D3D3009B572F /* OffineEventData.xcdatamodeld in Sources */ = {isa = PBXBuildFile; fileRef = EB7E3D682D27D3D3009B572F /* OffineEventData.xcdatamodeld */; };
 		EB7E3D712D27D7A8009B572F /* EventData+CoreDataClass.swift in Sources */ = {isa = PBXBuildFile; fileRef = EB7E3D6F2D27D7A8009B572F /* EventData+CoreDataClass.swift */; };
 		EB7E3D722D27D7A8009B572F /* EventData+CoreDataProperties.swift in Sources */ = {isa = PBXBuildFile; fileRef = EB7E3D702D27D7A8009B572F /* EventData+CoreDataProperties.swift */; };
@@ -289,9 +304,24 @@
 		EB373EBF2DAF82A2005713D1 /* EventDataManagerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EventDataManagerTests.swift; sourceTree = "<group>"; };
 		EB373EC22DAFA8A6005713D1 /* DictionaryTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DictionaryTests.swift; sourceTree = "<group>"; };
 		EB373EC62DB92A13005713D1 /* UsageStatsUtil.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UsageStatsUtil.swift; sourceTree = "<group>"; };
+		EB544EFC2DD5DD20006AA817 /* LogManagerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LogManagerTests.swift; sourceTree = "<group>"; };
+		EB544F002DD5F788006AA817 /* SegmentOperatorValueEnumTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SegmentOperatorValueEnumTests.swift; sourceTree = "<group>"; };
+		EB544F032DD5FA08006AA817 /* FeatureTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FeatureTests.swift; sourceTree = "<group>"; };
+		EB544F062DD5FBA6006AA817 /* EnumTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EnumTests.swift; sourceTree = "<group>"; };
+		EB544F0B2DD60E76006AA817 /* SettingsSchemaTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsSchemaTests.swift; sourceTree = "<group>"; };
+		EB544F0D2DD61176006AA817 /* EmptySettings.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = EmptySettings.json; sourceTree = "<group>"; };
+		EB544F102DD613D8006AA817 /* UsageStatsTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UsageStatsTests.swift; sourceTree = "<group>"; };
+		EB544F122DD7284E006AA817 /* RolloutAndTestingSettingsWithPreSegmentMobile.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = RolloutAndTestingSettingsWithPreSegmentMobile.json; sourceTree = "<group>"; };
+		EB544F142DD73758006AA817 /* RolloutAndTestingSettingsWithPreSegmentMobileUA.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = RolloutAndTestingSettingsWithPreSegmentMobileUA.json; sourceTree = "<group>"; };
+		EB544F162DD73E28006AA817 /* DataTypeUtilTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DataTypeUtilTests.swift; sourceTree = "<group>"; };
+		EB544F1A2DD75275006AA817 /* RolloutAndTestingSettingsWithPreSegmentFeatureFlagStatus.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = RolloutAndTestingSettingsWithPreSegmentFeatureFlagStatus.json; sourceTree = "<group>"; };
+		EB544F1E2DD77D1E006AA817 /* RolloutAndTestingSettingsInlist.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = RolloutAndTestingSettingsInlist.json; sourceTree = "<group>"; };
+		EB544F212DD784A3006AA817 /* SyncManagerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SyncManagerTests.swift; sourceTree = "<group>"; };
 		EB5500832CA51C3C00A8B729 /* SetAttributeAPI.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SetAttributeAPI.swift; sourceTree = "<group>"; };
 		EB5500842CA51C3C00A8B729 /* TrackEventAPI.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TrackEventAPI.swift; sourceTree = "<group>"; };
 		EB5500852CA51C3C00A8B729 /* GetFlagAPI.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GetFlagAPI.swift; sourceTree = "<group>"; };
+		EB7A73362DDC67190034279F /* CampaignUtilTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CampaignUtilTests.swift; sourceTree = "<group>"; };
+		EB7A73382DDC6DB70034279F /* RolloutAndTestingSettingsUserInlist.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = RolloutAndTestingSettingsUserInlist.json; sourceTree = "<group>"; };
 		EB7E3D692D27D3D3009B572F /* OffineEventData.xcdatamodel */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcdatamodel; path = OffineEventData.xcdatamodel; sourceTree = "<group>"; };
 		EB7E3D6F2D27D7A8009B572F /* EventData+CoreDataClass.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "EventData+CoreDataClass.swift"; sourceTree = "<group>"; };
 		EB7E3D702D27D7A8009B572F /* EventData+CoreDataProperties.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "EventData+CoreDataProperties.swift"; sourceTree = "<group>"; };
@@ -661,6 +691,12 @@
 		EB373E682D9D2B51005713D1 /* VWO-FMETests */ = {
 			isa = PBXGroup;
 			children = (
+				EB544F202DD78493006AA817 /* SyncManager */,
+				EB544F0F2DD613AE006AA817 /* UsageStats */,
+				EB544F0A2DD60E64006AA817 /* SettingSchema */,
+				EB544F052DD5FB96006AA817 /* Enums */,
+				EB544F022DD5F9DC006AA817 /* Specs */,
+				EB544EFB2DD5DD0E006AA817 /* LogManager */,
 				EB373EC12DAFA892005713D1 /* Dictionary */,
 				EB373EBE2DAF828C005713D1 /* EventDataManager */,
 				EB373EBB2DAE9ADE005713D1 /* FmeConfig */,
@@ -689,6 +725,7 @@
 			children = (
 				EB373E772D9E7E08005713D1 /* SegmentEvaluatorTests.swift */,
 				EB373E792D9E98CA005713D1 /* SegmentEvaluatorTest.json */,
+				EB544F002DD5F788006AA817 /* SegmentOperatorValueEnumTests.swift */,
 			);
 			path = SegmentEvaluator;
 			sourceTree = "<group>";
@@ -709,13 +746,19 @@
 			children = (
 				EB373E902DA65583005713D1 /* OnlyRolloutSettings.json */,
 				EB373E962DA7DCC5005713D1 /* RolloutAndTestingSettings.json */,
+				EB544F1E2DD77D1E006AA817 /* RolloutAndTestingSettingsInlist.json */,
+				EB7A73382DDC6DB70034279F /* RolloutAndTestingSettingsUserInlist.json */,
 				EB373E982DA7DCE9005713D1 /* RolloutAndTestingSettingsWithPreSegment.json */,
+				EB544F122DD7284E006AA817 /* RolloutAndTestingSettingsWithPreSegmentMobile.json */,
+				EB544F142DD73758006AA817 /* RolloutAndTestingSettingsWithPreSegmentMobileUA.json */,
+				EB544F1A2DD75275006AA817 /* RolloutAndTestingSettingsWithPreSegmentFeatureFlagStatus.json */,
 				EB373E9A2DA7DD0E005713D1 /* MegAdvanceAlgoCampaignSettings.json */,
 				EB373E9C2DA7DD20005713D1 /* MegRandomAlgoCampaignSettings.json */,
 				EB373E9E2DA7DD33005713D1 /* NoRolloutAndOnlyTestingSettings.json */,
 				EB373EA02DA7DD47005713D1 /* SettingsWithDifferentSalt.json */,
 				EB373EA22DA7DD57005713D1 /* SettingsWithSameSalt.json */,
 				EB373EA42DA7DD66005713D1 /* SettingsWithWhitelisting.json */,
+				EB544F0D2DD61176006AA817 /* EmptySettings.json */,
 			);
 			path = SettingsJson;
 			sourceTree = "<group>";
@@ -727,6 +770,8 @@
 				EB373EAB2DAE1FC2005713D1 /* UUIDUtilsTests.swift */,
 				EB373EB02DAE69EC005713D1 /* FunctionUtilTests.swift */,
 				EB373EB72DAE8013005713D1 /* SettingUtilTests.swift */,
+				EB544F162DD73E28006AA817 /* DataTypeUtilTests.swift */,
+				EB7A73362DDC67190034279F /* CampaignUtilTests.swift */,
 			);
 			path = Utility;
 			sourceTree = "<group>";
@@ -769,6 +814,54 @@
 				EB373EC22DAFA8A6005713D1 /* DictionaryTests.swift */,
 			);
 			path = Dictionary;
+			sourceTree = "<group>";
+		};
+		EB544EFB2DD5DD0E006AA817 /* LogManager */ = {
+			isa = PBXGroup;
+			children = (
+				EB544EFC2DD5DD20006AA817 /* LogManagerTests.swift */,
+			);
+			path = LogManager;
+			sourceTree = "<group>";
+		};
+		EB544F022DD5F9DC006AA817 /* Specs */ = {
+			isa = PBXGroup;
+			children = (
+				EB544F032DD5FA08006AA817 /* FeatureTests.swift */,
+			);
+			path = Specs;
+			sourceTree = "<group>";
+		};
+		EB544F052DD5FB96006AA817 /* Enums */ = {
+			isa = PBXGroup;
+			children = (
+				EB544F062DD5FBA6006AA817 /* EnumTests.swift */,
+			);
+			path = Enums;
+			sourceTree = "<group>";
+		};
+		EB544F0A2DD60E64006AA817 /* SettingSchema */ = {
+			isa = PBXGroup;
+			children = (
+				EB544F0B2DD60E76006AA817 /* SettingsSchemaTests.swift */,
+			);
+			path = SettingSchema;
+			sourceTree = "<group>";
+		};
+		EB544F0F2DD613AE006AA817 /* UsageStats */ = {
+			isa = PBXGroup;
+			children = (
+				EB544F102DD613D8006AA817 /* UsageStatsTests.swift */,
+			);
+			path = UsageStats;
+			sourceTree = "<group>";
+		};
+		EB544F202DD78493006AA817 /* SyncManager */ = {
+			isa = PBXGroup;
+			children = (
+				EB544F212DD784A3006AA817 /* SyncManagerTests.swift */,
+			);
+			path = SyncManager;
 			sourceTree = "<group>";
 		};
 		EB5500822CA51C3C00A8B729 /* API */ = {
@@ -961,13 +1054,19 @@
 				EB373E9F2DA7DD33005713D1 /* NoRolloutAndOnlyTestingSettings.json in Resources */,
 				EB373EA12DA7DD47005713D1 /* SettingsWithDifferentSalt.json in Resources */,
 				EB373EA32DA7DD57005713D1 /* SettingsWithSameSalt.json in Resources */,
+				EB544F132DD72851006AA817 /* RolloutAndTestingSettingsWithPreSegmentMobile.json in Resources */,
+				EB544F152DD7379A006AA817 /* RolloutAndTestingSettingsWithPreSegmentMobileUA.json in Resources */,
 				EB373E912DA65583005713D1 /* OnlyRolloutSettings.json in Resources */,
 				EB373EBA2DAE825A005713D1 /* UtilitySettings.json in Resources */,
+				EB7A73392DDC6DC60034279F /* RolloutAndTestingSettingsUserInlist.json in Resources */,
 				EB373E9D2DA7DD20005713D1 /* MegRandomAlgoCampaignSettings.json in Resources */,
+				EB544F1B2DD75335006AA817 /* RolloutAndTestingSettingsWithPreSegmentFeatureFlagStatus.json in Resources */,
 				EB373E9B2DA7DD0E005713D1 /* MegAdvanceAlgoCampaignSettings.json in Resources */,
 				EB373E7A2D9E98CA005713D1 /* SegmentEvaluatorTest.json in Resources */,
 				EB373E842DA54B4D005713D1 /* GetFlagTest.json in Resources */,
 				EB373EA52DA7DD66005713D1 /* SettingsWithWhitelisting.json in Resources */,
+				EB544F1F2DD77D2F006AA817 /* RolloutAndTestingSettingsInlist.json in Resources */,
+				EB544F0E2DD61176006AA817 /* EmptySettings.json in Resources */,
 				EB373E972DA7DCC5005713D1 /* RolloutAndTestingSettings.json in Resources */,
 				EB373E992DA7DCE9005713D1 /* RolloutAndTestingSettingsWithPreSegment.json in Resources */,
 			);
@@ -1103,20 +1202,29 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				EB544EFD2DD5DD20006AA817 /* LogManagerTests.swift in Sources */,
 				EB373E7C2D9E99C9005713D1 /* TestDataLoader.swift in Sources */,
 				EB373EB12DAE69EC005713D1 /* FunctionUtilTests.swift in Sources */,
+				EB544F112DD613D8006AA817 /* UsageStatsTests.swift in Sources */,
 				EB373E6A2D9D2B51005713D1 /* VWO_FMETests.swift in Sources */,
 				EB373E752D9D484C005713D1 /* DecisionMakerTests.swift in Sources */,
+				EB544F072DD5FBA6006AA817 /* EnumTests.swift in Sources */,
 				EB373E782D9E7E08005713D1 /* SegmentEvaluatorTests.swift in Sources */,
 				EB373E8A2DA637C2005713D1 /* MockHookManager.swift in Sources */,
+				EB544F042DD5FA08006AA817 /* FeatureTests.swift in Sources */,
 				EB373EAF2DAE4344005713D1 /* TrackEventTests.swift in Sources */,
+				EB7A73372DDC67190034279F /* CampaignUtilTests.swift in Sources */,
 				EB373E8E2DA649DA005713D1 /* FlagTestDataLoader.swift in Sources */,
+				EB544F012DD5F788006AA817 /* SegmentOperatorValueEnumTests.swift in Sources */,
 				EB373EBD2DAE9AF5005713D1 /* FmeConfigTests.swift in Sources */,
+				EB544F0C2DD60E76006AA817 /* SettingsSchemaTests.swift in Sources */,
+				EB544F172DD73E28006AA817 /* DataTypeUtilTests.swift in Sources */,
 				EB373EC32DAFA8A6005713D1 /* DictionaryTests.swift in Sources */,
 				EB373EC02DAF82A2005713D1 /* EventDataManagerTests.swift in Sources */,
 				EB373EB82DAE8013005713D1 /* SettingUtilTests.swift in Sources */,
 				EB373EAC2DAE1FC2005713D1 /* UUIDUtilsTests.swift in Sources */,
 				EB373E862DA54B77005713D1 /* GetFlagTests.swift in Sources */,
+				EB544F222DD784A3006AA817 /* SyncManagerTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

@@ -178,7 +178,7 @@ class VWOBuilder {
         }
     }
     
-    private func findDifference(localSettings: Settings, apiSettings: Settings) -> Bool {
+    func findDifference(localSettings: Settings, apiSettings: Settings) -> Bool {
         var differences = [String]()
         
         let sortedLocalSettingFeatures = localSettings.features.sortedById()

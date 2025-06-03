@@ -1,0 +1,176 @@
+{
+  "features": [
+    {
+      "type": "FEATURE_FLAG",
+      "name": "testFlag",
+      "rules": [
+        {
+          "variationId": 1,
+          "campaignId": 112,
+          "type": "FLAG_ROLLOUT",
+          "ruleKey": "rolloutRule1"
+        },
+        {
+          "ruleKey": "testingRule1",
+          "type": "FLAG_TESTING",
+          "campaignId": 113
+        }
+      ],
+      "id": 30,
+      "metrics": [
+        {
+          "identifier": "signUp",
+          "type": "CUSTOM_GOAL",
+          "id": 1
+        }
+      ],
+      "impactCampaign": {
+
+      },
+      "status": "ON",
+      "key": "testFlag"
+    }
+  ],
+  "accountId": 12345,
+  "sdkKey": "000000000000_MASKED_000000000000",
+  "campaigns": [
+    {
+      "type": "FLAG_ROLLOUT",
+      "name": "testFlag : Rollout",
+      "id": 112,
+      "key": "testFlag_rolloutRule1",
+      "segments": {
+
+      },
+      "isAlwaysCheckSegment": false,
+      "variations": [
+        {
+          "weight": 100,
+          "name": "Rollout-rule-1",
+          "segments": {
+
+          },
+          "variables": [
+            {
+              "value": "string value",
+              "type": "string",
+              "id": 1,
+              "key": "string"
+            },
+            {
+              "value": 10,
+              "type": "integer",
+              "id": 2,
+              "key": "int"
+            },
+            {
+              "value": false,
+              "type": "boolean",
+              "id": 3,
+              "key": "boolean"
+            }
+          ],
+          "id": 1
+        }
+      ],
+      "status": "RUNNING",
+      "isForcedVariationEnabled": false
+    },
+    {
+      "type": "FLAG_TESTING",
+      "name": "testFlag : Testing rule 1",
+      "percentTraffic": 100,
+      "id": 113,
+      "key": "testFlag_testingRule1",
+      "segments": {
+        "and": [
+          {
+            "or": [
+              {
+                "and": [
+                  {
+                    "country": "United States"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "and": [
+              {
+                "or": [
+                  {
+                    "device_type": "wildcard(*mobile*)"
+                  }
+                ]
+              },
+              {
+                "or": [
+                  {
+                    "os": "iOS"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "variations": [
+        {
+          "weight": 50,
+          "variables": [
+            {
+              "value": "string value",
+              "type": "string",
+              "id": 1,
+              "key": "string"
+            },
+            {
+              "value": 10,
+              "type": "integer",
+              "id": 2,
+              "key": "int"
+            },
+            {
+              "value": false,
+              "type": "boolean",
+              "id": 3,
+              "key": "boolean"
+            }
+          ],
+          "id": 1,
+          "name": "Default"
+        },
+        {
+          "weight": 50,
+          "variables": [
+            {
+              "value": "string value two",
+              "type": "string",
+              "id": 1,
+              "key": "string"
+            },
+            {
+              "value": 11,
+              "type": "integer",
+              "id": 2,
+              "key": "int"
+            },
+            {
+              "value": true,
+              "type": "boolean",
+              "id": 3,
+              "key": "boolean"
+            }
+          ],
+          "id": 2,
+          "name": "Variation-1"
+        }
+      ],
+      "isAlwaysCheckSegment": false,
+      "status": "RUNNING",
+      "isForcedVariationEnabled": false
+    }
+  ],
+  "version": 1,
+}
