@@ -1,6 +1,9 @@
 # VWO Feature Management and Experimentation SDK for iOS
 
-[![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](http://www.apache.org/licenses/LICENSE-2.0)
+[![pod version](https://img.shields.io/cocoapods/v/VWO-FME?style=for-the-badge&color=grey)](https://github.com/wingify/vwo-fme-ios-sdk)
+[![License](https://img.shields.io/github/license/wingify/vwo-fme-ios-sdk?style=for-the-badge&color=blue)](http://www.apache.org/licenses/LICENSE-2.0)
+
+[![CI](https://img.shields.io/github/actions/workflow/status/wingify/vwo-fme-ios-sdk/main.yml?style=for-the-badge&logo=github)](https://github.com/wingify/vwo-fme-ios-sdk/actions?query=workflow%3ACI)
 
 ## Overview
 
