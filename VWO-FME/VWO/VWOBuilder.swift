@@ -221,6 +221,7 @@ class VWOBuilder {
      * Starts network monitoring.
      * @return The instance of this builder.
      */
+    @available(macOS 10.14, *)
     func setNetworkMonitoring() -> VWOBuilder {
         NetworkMonitor.shared.startMonitoring()
         return self

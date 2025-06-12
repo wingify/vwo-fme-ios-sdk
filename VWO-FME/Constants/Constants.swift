@@ -15,12 +15,11 @@
  */
 
 import Foundation
-import UIKit
 
 struct Constants {
     static let defaultString: String = ""
     static let PLATFORM: String = "ios"
-    static let SDK_VERSION: String = "1.6.0"
+    static let SDK_VERSION: String = "1.7.0"
 
     static let MAX_TRAFFIC_PERCENT: Int = 100
     static let MAX_TRAFFIC_VALUE: Int = 10000
@@ -51,7 +50,7 @@ struct Constants {
     static let LOCATION_EXPIRY: Int64 = 60 * 60 * 1000 // 60 minutes in milliseconds
     static let LIST_ATTRIBUTE_EXPIRY: Int64 = 60 * 60 * 1000 // 60 minutes in milliseconds
 
-    static let USER_AGENT_VALUE: String = "VWO-FME (iOS \(UIDevice.current.systemVersion))"
+    static let USER_AGENT_VALUE: String = "VWO-FME (\(PlatformInfo.name) \(PlatformInfo.systemVersion))"
 
 }
 

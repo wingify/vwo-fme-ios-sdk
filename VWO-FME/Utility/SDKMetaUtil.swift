@@ -15,6 +15,13 @@
  */
 
 import Foundation
+#if canImport(UIKit)
+import UIKit
+#endif
+#if canImport(WatchKit)
+import WatchKit
+#endif
+
 
 /// Utility struct for SDK metadata operations.
 ///
@@ -36,4 +43,22 @@ class SDKMetaUtil {
     
     static var name = ""
     static var version = ""
+}
+
+struct PlatformInfo {
+#if os(iOS) || os(tvOS)
+    static let name =  UIDevice.current.systemName
+    static let systemVersion = UIDevice.current.systemVersion
+#elseif os(watchOS)
+    static let name = WKInterfaceDevice.current().systemName
+    static let systemVersion = WKInterfaceDevice.current().systemVersion
+#elseif os(macOS)
+    static let name = "macOS"
+    static let systemVersion = "\(ProcessInfo.processInfo.operatingSystemVersion.majorVersion)." +
+                               "\(ProcessInfo.processInfo.operatingSystemVersion.minorVersion)." +
+                               "\(ProcessInfo.processInfo.operatingSystemVersion.patchVersion)"
+#else
+    static let name = "unknown"
+    static let systemVersion = "unknown"
+#endif
 }

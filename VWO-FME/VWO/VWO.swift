@@ -30,6 +30,7 @@ public class VWOFme {
     private init() {}
     
     // Initializes the VWO instance
+    @available(macOS 10.14, *)
     public static func initialize(options: VWOInitOptions, completion: @escaping VWOInitCompletionHandler) {
         DispatchQueue.global(qos: .background).async {
             guard let sdkKey = options.sdkKey, !sdkKey.isEmpty else {

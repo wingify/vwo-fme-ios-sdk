@@ -21,6 +21,7 @@ import Network
  * NetworkMonitor is a singleton class responsible for monitoring network connectivity changes.
  * It uses NWPathMonitor to observe network status and performs actions when the network becomes available.
  */
+@available(macOS 10.14, *)
 class NetworkMonitor {
     static let shared = NetworkMonitor()
     private let monitor = NWPathMonitor()

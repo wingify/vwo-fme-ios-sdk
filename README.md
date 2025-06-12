@@ -7,12 +7,17 @@
 
 ## Overview
 
-The **VWO Feature Management and Experimentation SDK** (VWO FME iOS SDK) enables iOS developers to integrate feature flagging and experimentation into their applications. This SDK provides full control over feature rollout, A/B testing, and event tracking, allowing teams to manage features dynamically and gain insights into user behavior.
+The **VWO Feature Management and Experimentation SDK** (VWO FME iOS SDK) enables developers to integrate feature flagging and experimentation into their applications across Apple platforms. This SDK provides full control over feature rollout, A/B testing, and event tracking, allowing teams to manage features dynamically and gain insights into user behavior.
 
 
-## iOS Version Support
+## Supported Platforms
 
-This SDK supports iOS version 12.0 and above.
+The SDK is compatible with the following Apple platforms and minimum OS versions:
+
+- iOS 12.0 and later
+- watchOS 7.0 and later
+- tvOS 12.0 and later
+- macOS 10.14 and later
 
 
 ## Installation

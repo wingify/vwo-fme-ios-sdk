@@ -15,7 +15,6 @@
  */
 
 import Foundation
-import UIKit
 
 struct UsageStatsKeys {
     static let logLevel = "ll"
@@ -62,8 +61,8 @@ struct UsageStatsValues {
         }
     }
     
-    static let platform = "ios"
-    static let sdkNameNative = "ios"
+    static let platform = PlatformInfo.name
+    static let systemVersion = PlatformInfo.systemVersion
     static let packageManagerCocoapods = "cp"
     static let packageManagerSPM = "spm"
 }
@@ -116,7 +115,7 @@ class UsageStatsUtil {
   
         }
         usageStatsDict[UsageStatsKeys.platform] = UsageStatsValues.platform
-        usageStatsDict[UsageStatsKeys.osVersion] = UIDevice.current.systemVersion
+        usageStatsDict[UsageStatsKeys.osVersion] = UsageStatsValues.systemVersion
         
         if let infoDictionary = Bundle.main.infoDictionary {
             if let version = infoDictionary["CFBundleShortVersionString"] as? String {

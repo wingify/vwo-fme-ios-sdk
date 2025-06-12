@@ -6,7 +6,10 @@ import PackageDescription
 let package = Package(
     name: "VWO-FME",
     platforms: [
-        .iOS(.v12)
+        .iOS(.v12),
+        .tvOS(.v12),
+        .macOS(.v10_14),
+        .watchOS(.v7)
     ],
     products: [
         .library(
