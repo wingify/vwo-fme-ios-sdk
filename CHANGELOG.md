@@ -9,7 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- Platform support for ``tvOS`, `macOS`, anf `watchOS`.
+- Platform support for `tvOS`, `macOS`, and `watchOS`.
 
 ## [1.6.1] - 2025-06-03
 
