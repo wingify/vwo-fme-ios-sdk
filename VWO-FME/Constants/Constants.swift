@@ -19,12 +19,12 @@ import Foundation
 struct Constants {
     static let defaultString: String = ""
     static let PLATFORM: String = "ios"
-    static let SDK_VERSION: String = "1.7.0"
+    static let SDK_VERSION: String = "1.8.0"
 
     static let MAX_TRAFFIC_PERCENT: Int = 100
     static let MAX_TRAFFIC_VALUE: Int = 10000
     static let STATUS_RUNNING: String = "RUNNING"
-    
+
     static let SEED_VALUE: Int = 1
     static let MAX_EVENTS_PER_REQUEST: Int = 5000
     static let DEFAULT_REQUEST_TIME_INTERVAL: TimeInterval = 600 // 10 * 60(secs) = 600 secs i.e. 10 minutes
@@ -32,21 +32,21 @@ struct Constants {
     static let SDK_NAME: String = "vwo-fme-ios-sdk"
     static let SETTINGS_EXPIRY: Int64 = 0 // default time for cached setting expiry
     static let SETTINGS_TIMEOUT: Int = 30
-    
+
     static let HOST_NAME: String = "dev.visualwebsiteoptimizer.com"
     static let SETTINGS_ENDPOINT: String = "/server-side/v2-settings"
     static let EVENT_BATCH_ENDPOINT: String = "/server-side/batch-events-v2"
-    
+
     static let VWO_FS_ENVIRONMENT: String = "vwo_fs_environment"
     static let HTTPS_PROTOCOL: String = "https"
-    
+
     static let RANDOM_ALGO: Int = 1
-    
+
     static let SDK_USERDEFAULT_SUITE = "com.vwo.fme.userdefault.suite"
     static let VWO_META_MEG_KEY = "_vwo_meta_meg_"
-    
+
     static let DEFAULT_BATCH_UPLOAD_INTERVAL: Int64 = 3 * 60 * 1000 // 3 minutes in milliseconds
-    
+
     static let LOCATION_EXPIRY: Int64 = 60 * 60 * 1000 // 60 minutes in milliseconds
     static let LIST_ATTRIBUTE_EXPIRY: Int64 = 60 * 60 * 1000 // 60 minutes in milliseconds
 

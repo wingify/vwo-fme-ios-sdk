@@ -41,8 +41,9 @@ class ViewController: UIViewController {
         let button3 = createButton(title: "Get variable", action: #selector(button3Tapped))
         let button4 = createButton(title: "Track event", action: #selector(button4Tapped))
         let button5 = createButton(title: "Set attribute", action: #selector(button5Tapped))
+        let button6 = createButton(title: "Check Storage", action: #selector(button6Tapped))
         
-        let stackView = UIStackView(arrangedSubviews: [myLabel, button1, button2, button3, button4, button5])
+        let stackView = UIStackView(arrangedSubviews: [myLabel, button1, button2, button3, button4, button5, button6])
         stackView.axis = .vertical
         stackView.spacing = 15
         stackView.alignment = .fill
@@ -122,6 +123,10 @@ class ViewController: UIViewController {
         self.setAttribute()
     }
     
+    @objc private func button6Tapped() {
+        
+        self.checkStorageConnector()
+    }
     //MARK: - VWO SDK methods
     
     func setVWOUserContext() {
@@ -142,7 +147,8 @@ class ViewController: UIViewController {
                                      logLevel: .trace,
                                      integrations: integrationss,
                                      cachedSettingsExpiryTime: 2 * 60 * 1000, // in milliseconds
-                                     pollInterval: nil)
+                                     pollInterval: nil,
+                                     storage: CoreDataStorageConnector.shared)
         
         VWOFme.initialize(options: options) { result in
             switch result {
@@ -244,6 +250,11 @@ class ViewController: UIViewController {
                                             attributeName4: attributeValue4]
         
         VWOFme.setAttribute(attributes: attributeDict, context: userContext)
+    }
+    
+    func checkStorageConnector(){
+        let documentsPath = NSSearchPathForDirectoriesInDomains(.documentDirectory, .userDomainMask, true)[0] as NSString
+        NSLog("Document Path: %@", documentsPath)
     }
 }
 

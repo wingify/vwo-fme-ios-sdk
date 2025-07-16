@@ -42,6 +42,7 @@ public class VWOInitOptions {
     var logTransport: LogTransport?
     var isUsageStatsDisabled: Bool = false
     var vwoMeta: [String: Any] = [:]
+    var storageConnector: VWOStorageConnector? = nil
     /**
      * Initializes a new instance of VWOInitOptions.
      *
@@ -56,6 +57,7 @@ public class VWOInitOptions {
      *   - pollInterval: Interval for polling updates in milliseconds.
      *   - batchMinSize: Minimum size of batch to upload.
      *   - batchUploadTimeInterval: Batch upload time interval in milliseconds. Please specify at least few minutes.
+     *   - storageConnector: Connect user storage with SDK
      */
     public init(sdkKey: String? = nil,
                 accountId: Int? = nil,
@@ -71,7 +73,8 @@ public class VWOInitOptions {
                 sdkVersion: String? = nil,
                 logTransport: LogTransport? = nil,
                 isUsageStatsDisabled: Bool = false,
-                vwoMeta: [String: Any] = [:]) {
+                vwoMeta: [String: Any] = [:],
+                storage: VWOStorageConnector? = nil ) {
         
         // Assigning the SDK key
         self.sdkKey = sdkKey
@@ -123,6 +126,10 @@ public class VWOInitOptions {
         } else {
             self.sdkVersion = Constants.SDK_VERSION
             SDKMetaUtil.version = Constants.SDK_VERSION
+        }
+        
+        if let storageConnector = storage {
+            self.storageConnector = storageConnector
         }
         
         self.logTransport = logTransport

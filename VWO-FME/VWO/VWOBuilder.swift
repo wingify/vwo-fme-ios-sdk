@@ -34,6 +34,16 @@ class VWOBuilder {
     }
 
     /**
+     * Configures the shared StorageConnectorProvider instance.
+     * This should be one of the first steps.
+     * @return The VWOBuilder instance.
+     */
+    func setStorage() -> VWOBuilder {
+        StorageConnectorProvider.configure(with: options?.storageConnector)
+        return self
+    }
+    
+    /**
      * Sets the network manager with the provided client and development mode options.
      * @return The VWOBuilder instance.
      */

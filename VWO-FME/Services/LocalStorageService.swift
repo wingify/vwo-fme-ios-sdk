@@ -411,10 +411,18 @@ class StorageService {
         guard let userId = context.id else { return nil }
         
         let storageKey = "\(featureKey)_\(userId)"
-        if let data = userDefaults.dictionary(forKey: storageKey) {
-            return data
-        } else {
-            return nil
+        if let connector = StorageConnectorProvider.shared.getStorageConnector() {
+            if let data = connector.get(forKey:storageKey) {
+                return data
+            } else {
+                return nil
+            }
+        }else{
+            if let data = userDefaults.dictionary(forKey: storageKey) {
+                return data
+            } else {
+                return nil
+            }
         }
     }
     
@@ -445,7 +453,11 @@ class StorageService {
         }
         
         let storageKey = "\(featureKey)_\(userId)"
-        userDefaults.set(data, forKey: storageKey)
+        if let connector = StorageConnectorProvider.shared.getStorageConnector() {
+            connector.set( data, forKey: storageKey)
+        }else{
+            userDefaults.set(data, forKey: storageKey)
+        }
     }
        
     /**

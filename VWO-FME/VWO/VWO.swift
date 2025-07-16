@@ -50,6 +50,7 @@ public class VWOFme {
             let vwoBuilder = options.vwoBuilder ?? VWOBuilder(options: options)
             vwoBuilder.setLogger()
                 .setSettingsManager()
+                .setStorage()
                 .setNetworkManager()
                 .setNetworkMonitoring()
                 .setSegmentation()

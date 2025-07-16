@@ -5,6 +5,48 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.8.0] - 2025-07-16
+
+### Added
+
+- Added support for using custom storage instead of built-in App storage.
+
+```swift
+   import VWO_FME
+
+    let options = VWOInitOptions(sdkKey: SDK_KEY,
+                             accountId: ACCOUNT_ID,
+                             gatewayService: ["url": "REPLACE_WITH_GATEWAY_URL"],
+                             cachedSettingsExpiryTime: 10 * 60 * 1000, // in milliseconds
+                             pollInterval: nil,
+                             storage: CustomStorage.shared)
+
+    VWOFme.initialize(options: options) { result in
+        switch result {
+            case .success(let message):
+                print("VWO init success")
+
+            case .failure(let error):
+                print("VWO init failed")
+        }
+    }
+
+    class CustomStorage : VWOStorageConnector {
+
+        static let shared = CustomStorage()
+        private init() {}
+
+        func set(_ value: Any?, forKey key: String) {
+            // Use key and value to store
+        }
+
+        func getData(forKey key: String) -> Data? {
+            // Use key to retrieve data
+        }
+
+    }
+```
+
 ## [1.7.0] - 2025-06-12
 
 ### Added

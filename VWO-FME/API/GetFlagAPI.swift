@@ -171,7 +171,9 @@ class GetFlagAPI {
                     }
                 }
             } else {
-                LoggerService.log(level: .debug, key: "EXPERIMENTS_EVALUATION_WHEN_NO_ROLLOUT_PRESENT", details: nil)
+                if rollOutRules.isEmpty{
+                     LoggerService.log(level: .debug, key: "EXPERIMENTS_EVALUATION_WHEN_NO_ROLLOUT_PRESENT", details: nil)
+                  }
                 shouldCheckForExperimentsRules = true
             }
             
