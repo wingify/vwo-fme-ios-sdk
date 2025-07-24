@@ -123,6 +123,10 @@ class SettingsManager {
         if NetworkManager.config?.developmentMode != true {
             options["s"] = "prod"
         }
+        
+        options["sn"] = SDKMetaUtil.name
+        options["sv"] = SDKMetaUtil.version
+        
         let request = RequestModel(url: hostname,
                                    method: HTTPMethod.get.rawValue,
                                    path: Constants.SETTINGS_ENDPOINT,
