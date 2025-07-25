@@ -24,7 +24,9 @@ class EventBatchQueryParams {
         self.queryParams = [
             "i": i,
             "env": env,
-            "a": a
+            "a": a,
+            "sn": SDKMetaUtil.name,
+            "sv": SDKMetaUtil.version
         ]
     }
 }

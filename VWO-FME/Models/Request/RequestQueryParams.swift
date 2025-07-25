@@ -33,6 +33,9 @@ class RequestQueryParams {
     private let random: Double
     private let p: String = "FS"
     
+    private let sv: String
+    private let sn: String
+    
     /**
      * A dictionary containing the query parameters.
      * This dictionary is lazily initialized.
@@ -48,6 +51,9 @@ class RequestQueryParams {
         path["visitor_ua"] = visitorUa
         path["visitor_ip"] = visitorIp
         path["url"] = url
+        path["sv"] = SDKMetaUtil.version
+        path["sn"] = SDKMetaUtil.name
+        
         return path
     }()
     
@@ -72,5 +78,8 @@ class RequestQueryParams {
         
         self.eTime = Date().currentTimeMillis()
         self.random = Double.random(in: 0...1)
+        
+        self.sv = SDKMetaUtil.version
+        self.sn = SDKMetaUtil.name
     }
 }

@@ -282,6 +282,7 @@ class NetworkUtil {
         NetworkManager.attachClient()
         
         let headers = createHeaders(userAgent: userAgent, ipAddress: ipAddress)
+    
         let request = RequestModel(url: UrlService.baseUrl, method: HTTPMethod.post.rawValue, path: UrlEnum.events.rawValue, query: properties, body: payload, headers: headers, scheme: Constants.HTTPS_PROTOCOL, port: SettingsManager.instance?.port ?? 0)
         
         NetworkManager.postAsync(request) { result in

@@ -158,6 +158,6 @@ class EventBatchQueryParamsTests: XCTestCase {
         XCTAssertEqual(eventBatchQueryParams.queryParams["i"], i, "The 'i' parameter should be correctly set.")
         XCTAssertEqual(eventBatchQueryParams.queryParams["env"], env, "The 'env' parameter should be correctly set.")
         XCTAssertEqual(eventBatchQueryParams.queryParams["a"], a, "The 'a' parameter should be correctly set.")
-        XCTAssertEqual(eventBatchQueryParams.queryParams.count, 3, "There should be exactly three query parameters.")
+        XCTAssertEqual(eventBatchQueryParams.queryParams.count, 5, "There should be exactly five query parameters(sdkName and sdkVersion are automatically added).")
     }
 }
