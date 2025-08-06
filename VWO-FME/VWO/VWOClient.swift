@@ -20,6 +20,9 @@ class VWOClient {
     var processedSettings: Settings?
     var options: VWOInitOptions?
     
+    var isSettingsValid = false
+    var settingsFetchTime: Int64 = 0
+    
     // Initialize the VWOClient with settings and options
     
     init(options: VWOInitOptions?, settingObj: Settings?) {

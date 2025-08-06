@@ -46,6 +46,7 @@ public class VWOFme {
                 }
                 return
             }
+            let sdkStartTime = Date().currentTimeMillis()
             
             let vwoBuilder = options.vwoBuilder ?? VWOBuilder(options: options)
             vwoBuilder.setLogger()
@@ -64,8 +65,10 @@ public class VWOFme {
                     return
                 }
                 
-                self.vwoClient = VWOClient(options: options, settingObj: settingObj)
-                vwoBuilder.setVWOClient(self.vwoClient!)
+                    self.vwoClient = VWOClient(options: options, settingObj: settingObj)
+                    self.vwoClient?.isSettingsValid = vwoBuilder.isSettingsValid
+                    self.vwoClient?.settingsFetchTime = vwoBuilder.settingsFetchTime
+                    vwoBuilder.setVWOClient(self.vwoClient!)
                 
                 guard self.vwoClient != nil else {
                     DispatchQueue.main.async {
@@ -76,10 +79,42 @@ public class VWOFme {
                 vwoBuilder.setVWOClient(self.vwoClient!)
                 vwoBuilder.initSyncManager()
                 self.isInitialized = true
+                    
+                let sdkEndTime = Date().currentTimeMillis()
+                let sdkInitTime = sdkEndTime - sdkStartTime
+                    
+                if options.sdkName == Constants.SDK_NAME {  // Don't call sendSdkInitEvent for hybrid SDKs
+                    sendSdkInitEvent(sdkInitTime: sdkInitTime)
+                }
+                    
                 DispatchQueue.main.async {
                     completion(.success(VWOInitSuccess.initializationSuccess.rawValue))
                 }
             }
+        }
+    }
+    
+    
+    /**
+         * Sends an SDK initialization event.
+         *
+         * This function checks if the VWO instance is valid, if its settings have been processed,
+         * and critically, if the SDK has not been marked as initialized previously in the current
+         * session or from cached settings. If all conditions are true, it proceeds to send
+         * an "SDK initialized" tracking event, including the time it took for settings to be fetched
+         * and the time it took for the SDK to complete its initialization process.
+         *
+         * This helps in tracking the initial setup performance and ensuring that the
+         * initialization event is sent only once per effective SDK start.
+         *
+         * @param sdkInitTime The timestamp (in milliseconds) marking the completion of the SDK's initialization process.
+         */
+    
+    public static func sendSdkInitEvent(sdkInitTime: Int64) {
+        let wasInitializedEarlier =  VWOFme.vwoClient?.processedSettings?.sdkMetaInfo?.wasInitializedEarlier
+        
+        if (VWOFme.vwoClient?.isSettingsValid == true && (wasInitializedEarlier == false || wasInitializedEarlier == nil)) {
+            EventsUtils().sendSdkInitEvent(settingsFetchTime: VWOFme.vwoClient?.settingsFetchTime, sdkInitTime: sdkInitTime)
         }
     }
     

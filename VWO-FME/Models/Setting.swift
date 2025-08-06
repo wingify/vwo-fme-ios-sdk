@@ -32,6 +32,7 @@ struct Settings: Codable, Equatable {
     var sdkKey: String?
     var version: Int?
     var collectionPrefix: String?
+    var sdkMetaInfo:  SdkMetaInfo?
     
     enum CodingKeys: String, CodingKey {
         case features
@@ -44,6 +45,7 @@ struct Settings: Codable, Equatable {
         case sdkKey
         case version
         case collectionPrefix
+        case sdkMetaInfo
     }
     
     init(from decoder: Decoder) throws {
@@ -66,5 +68,6 @@ struct Settings: Codable, Equatable {
         sdkKey = try container.decodeIfPresent(String.self, forKey: .sdkKey)
         version = try container.decodeIfPresent(Int.self, forKey: .version)
         collectionPrefix = try container.decodeIfPresent(String.self, forKey: .collectionPrefix)
+        sdkMetaInfo = try container.decodeIfPresent(SdkMetaInfo.self, forKey: .sdkMetaInfo)
     }
 }

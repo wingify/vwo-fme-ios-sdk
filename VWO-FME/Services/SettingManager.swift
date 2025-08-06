@@ -28,6 +28,8 @@ class SettingsManager {
     private let cachedSettingsExpiryInterval: Int64
     private let networkTimeout: Int
     var hostname: String
+    var isSettingsValid = false
+    var settingsFetchTime : Int64 = 0
     var port: Int = 0
     var protocolType: String = "https"
     var isSettingsFetchInProgress = false
@@ -95,8 +97,8 @@ class SettingsManager {
      */
     private func fetchFromCacheOrServer(completion: @escaping (Settings?) -> Void) {
         if self.canUseCachedSettings(), let settingObj = self.getSettingFromUserDefaults() {
-            LoggerService.log(level: .info, key: "SETTINGS_FETCH_SUCCESS", details: [:])
-            completion(settingObj)
+                LoggerService.log(level: .info, key: "SETTINGS_FETCH_SUCCESS", details: [:])
+                completion(settingObj)
         } else {
             self.fetchAndCacheServerSettings(completion: completion)
         }
@@ -124,6 +126,8 @@ class SettingsManager {
             options["s"] = "prod"
         }
         
+        let startTime = Date().currentTimeMillis()
+        
         options["sn"] = SDKMetaUtil.name
         options["sv"] = SDKMetaUtil.version
         
@@ -147,6 +151,8 @@ class SettingsManager {
                     LoggerService.log(level: .info, key: "SETTINGS_FETCH_SUCCESS", details: [:])
                     self.saveSettingInUserDefaults(settingObj: settingsObj)
                     self.saveSettingExpiryInUserDefault()
+                    self.settingsFetchTime = Date().currentTimeMillis() - startTime
+                    self.isSettingsValid = true
                     completion(settingsObj)
                 } else {
                     LoggerService.log(level: .error, key: "SETTINGS_SCHEMA_INVALID", details: nil)
@@ -156,6 +162,8 @@ class SettingsManager {
                 if result.error == .noNetwork {
                     if let cachedSetting = self.getSettingFromUserDefaults() {
                         LoggerService.log(level: .info, key: "SETTINGS_FETCH_SUCCESS", details: [:])
+                        self.settingsFetchTime = Date().currentTimeMillis() - startTime
+                        self.isSettingsValid = true
                         completion(cachedSetting)
                     } else {
                         LoggerService.log(level: .error, key: "SETTINGS_FETCH_ERROR", details: ["err": "\(result.errorMessage ?? "Unknown error")"])

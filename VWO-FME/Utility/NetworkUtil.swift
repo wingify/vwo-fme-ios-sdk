@@ -88,8 +88,14 @@ class NetworkUtil {
         let settingManager = SettingsManager.instance
         let accountIdString = "\(SettingsManager.instance?.accountId ?? 0)"
         let sdkKey = "\(settingManager?.sdkKey ?? "")"
-        let requestQueryParams = RequestQueryParams(en: eventName, a: accountIdString, env: sdkKey, visitorUa: visitorUserAgent!, visitorIp: ipAddress ?? "", url: generateEventUrl())
-        return requestQueryParams.queryParams
+        if let visitorUserAgent = visitorUserAgent {
+            let requestQueryParams = RequestQueryParams(en: eventName, a: accountIdString, env: sdkKey, visitorUa: visitorUserAgent, visitorIp: ipAddress ?? "", url: generateEventUrl())
+            return requestQueryParams.queryParams
+        }else{
+            let requestQueryParams = RequestQueryParams(en: eventName, a: accountIdString, env: sdkKey, visitorUa: "", visitorIp: ipAddress ?? "", url: generateEventUrl())
+            return requestQueryParams.queryParams
+        }
+        
     }
     
     static func getBatchEventsBaseProperties() -> [String:String] {
@@ -257,6 +263,38 @@ class NetworkUtil {
         return cleanedPayload
     }
     
+
+    static func getSDKInitEventPayload(eventName: String, settingsFetchTime: Int64? = nil, sdkInitTime: Int64? = nil) -> [String: Any] {
+        let settingsManager = SettingsManager.instance
+        guard let accountId = settingsManager?.accountId, let sdkKey = settingsManager?.sdkKey else {
+            return [:] // Return an empty dictionary if either accountId or sdkKey is nil
+        }
+        
+        let uniqueKey = "\(accountId)_\(sdkKey)"
+        var properties = NetworkUtil.getEventBasePayload(userId: uniqueKey, eventName: eventName, visitorUserAgent: nil, ipAddress: nil)
+        
+        // Set the required fields as specified
+        properties.d?.event?.props?.additionalProperties = [Constants.VWO_FS_ENVIRONMENT: sdkKey]
+        properties.d?.event?.props?.product = "fme"
+        
+        
+        var data: [String: Any] = ["isSDKInitialized": true]
+        if let settingsFetchTime = settingsFetchTime {
+            data["settingsFetchTime"] = settingsFetchTime
+        }
+        if let sdkInitTime = sdkInitTime {
+            data["sdkInitTime"] = sdkInitTime
+        }
+        
+        properties.d?.event?.props?.data = data
+        
+        // Convert properties to dictionary, removing null values
+        let payloadDict = properties.toDictionary()
+        let payload = NetworkUtil.removeNullValues(originalMap:payloadDict)
+        return payload
+    }
+
+    
     // Sends a messaging event to DACDN
     static func sendMessagingEvent(properties: [String: String], payload: [String: Any]) {
         
@@ -273,6 +311,27 @@ class NetworkUtil {
             
             if let error = result.errorMessage {
                 LoggerService.log(level: .debug, key: "NETWORK_CALL_FAILED", details: ["method": "POST", "err": "\(error)"])
+            }
+        }
+    }
+    
+    
+    // Sends a messaging event to DACDN
+    static func sendGatewayEvent(properties: [String: String], payload: [String: Any]) {
+        let settingsManager = SettingsManager.instance
+        let request = RequestModel(url: UrlService.baseUrl,
+                                   method: HTTPMethod.post.rawValue,
+                                   path: UrlEnum.events.rawValue,
+                                   query: properties,
+                                   body: payload,
+                                   headers: nil,
+                                   scheme: settingsManager?.protocolType ?? "https",
+                                   port: settingsManager?.port ?? 0)
+        
+        NetworkManager.postAsync(request) { result in
+            
+            if let error = result.errorMessage {
+                LoggerService.log(level: .error, key: "NETWORK_CALL_FAILED", details: ["method": "POST", "err": "\(error)"])
             }
         }
     }

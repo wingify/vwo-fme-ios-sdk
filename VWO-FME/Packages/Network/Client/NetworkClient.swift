@@ -119,6 +119,7 @@ class NetworkClient: NetworkClientInterface {
             if retryCount > 0 {
                 let newDelay = delay * 2
                 DispatchQueue.global().asyncAfter(deadline: .now() + delay) {
+                    LoggerService.log(level: .info, message: "Attempt \(4-retryCount+1)/4 rety network request in \(newDelay) seconds")
                     self.performRequestWithRetry(request: request, completion: completion, retryCount: retryCount - 1, delay: newDelay)
                 }
             } else {
@@ -152,6 +153,7 @@ class NetworkClient: NetworkClientInterface {
             if retryCount > 0 {
                 let newDelay = delay * 2
                 DispatchQueue.global().asyncAfter(deadline: .now() + delay) {
+                    LoggerService.log(level: .info, message: "Attempt \(4-retryCount+1)/4 retry network request in \(newDelay) seconds")
                     self.performRequestWithRetry(request: request, completion: completion, retryCount: retryCount - 1, delay: newDelay)
                 }
             } else {

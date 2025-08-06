@@ -22,6 +22,8 @@ class VWOBuilder {
     private var settingFileManager: SettingsManager?
     private var originalSettings: Settings? = nil
     private var timer: Timer?
+    var isSettingsValid = false
+    var settingsFetchTime : Int64 = 0
 
     init(options: VWOInitOptions?) {
         self.options = options
@@ -77,7 +79,11 @@ class VWOBuilder {
      */
     private func fetchSettings(forceFetch: Bool, completion: @escaping (Settings?) -> Void) {
         guard let settingMangager = settingFileManager else { return }
+        
         settingMangager.getSettings(forceFetch: forceFetch) { settingObj in
+            
+            self.isSettingsValid = settingMangager.isSettingsValid
+            self.settingsFetchTime = settingMangager.settingsFetchTime
             if let setting = settingObj {
                 self.originalSettings = setting
             }

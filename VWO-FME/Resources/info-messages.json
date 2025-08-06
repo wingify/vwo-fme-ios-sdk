@@ -30,5 +30,5 @@
   "MEG_WINNER_CAMPAIGN": "MEG: Campaign {campaignKey} is the winner for group {groupId} for user ID:{userId} {algo}",
   "BATCH_PROCESSING_STARTED": "Batch: Starting to upload events, triggered by {name}.",
   "BATCH_PROCESSING_FINISHED": "Batch: Finished uploading events with status: {status}, triggered by {name}",
-  "ONLINE_BATCH_PROCESSING_STATUS": "Batch: Events batching is {status} when device is online."
+  "ONLINE_BATCH_PROCESSING_STATUS": "Batch: Events batching is {status} when device is online.",
 }

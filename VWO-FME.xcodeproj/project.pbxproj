@@ -21,6 +21,8 @@
 /* End PBXAggregateTarget section */
 
 /* Begin PBXBuildFile section */
+		BA5DD5E52E321FED00D3A127 /* SdkMetaInfo.swift in Sources */ = {isa = PBXBuildFile; fileRef = BA5DD5E42E321FDF00D3A127 /* SdkMetaInfo.swift */; };
+		BA5DD5E72E3225DC00D3A127 /* EventsUtils.swift in Sources */ = {isa = PBXBuildFile; fileRef = BA5DD5E62E3225D200D3A127 /* EventsUtils.swift */; };
 		BAD427462E12763800C5C011 /* VWOStorageConnector.swift in Sources */ = {isa = PBXBuildFile; fileRef = BAD427452E12763800C5C011 /* VWOStorageConnector.swift */; };
 		BAD427492E12766100C5C011 /* StorageConnectorProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = BAD427472E12766100C5C011 /* StorageConnectorProvider.swift */; };
 		EB06C7842C90229B00A25E07 /* VWO_FME.h in Headers */ = {isa = PBXBuildFile; fileRef = EB06C7832C90229B00A25E07 /* VWO_FME.h */; settings = {ATTRIBUTES = (Public, ); }; };
@@ -169,6 +171,8 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
+		BA5DD5E42E321FDF00D3A127 /* SdkMetaInfo.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SdkMetaInfo.swift; sourceTree = "<group>"; };
+		BA5DD5E62E3225D200D3A127 /* EventsUtils.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EventsUtils.swift; sourceTree = "<group>"; };
 		BAD427452E12763800C5C011 /* VWOStorageConnector.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VWOStorageConnector.swift; sourceTree = "<group>"; };
 		BAD427472E12766100C5C011 /* StorageConnectorProvider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StorageConnectorProvider.swift; sourceTree = "<group>"; };
 		EB06C7802C90229B00A25E07 /* VWO_FME.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = VWO_FME.framework; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -397,6 +401,7 @@
 		EB06C79C2C9023C200A25E07 /* Models */ = {
 			isa = PBXGroup;
 			children = (
+				BA5DD5E42E321FDF00D3A127 /* SdkMetaInfo.swift */,
 				EB06C7B22C9023DA00A25E07 /* Campaign.swift */,
 				EB06C7AF2C9023DA00A25E07 /* Feature.swift */,
 				EB06C7B42C9023DA00A25E07 /* Group.swift */,
@@ -470,6 +475,7 @@
 		EB06C7C72C90242600A25E07 /* Utility */ = {
 			isa = PBXGroup;
 			children = (
+				BA5DD5E62E3225D200D3A127 /* EventsUtils.swift */,
 				EB06C7CD2C90242F00A25E07 /* CampaignUtil.swift */,
 				EB06C7C82C90242F00A25E07 /* DataTypeUtil.swift */,
 				EB06C7CC2C90242F00A25E07 /* DecisionUtil.swift */,
@@ -1026,6 +1032,7 @@
 			files = (
 				EB06C8982C9026FB00A25E07 /* SegmentUtil.swift in Sources */,
 				EB06C7FC2C90247600A25E07 /* SettingManager.swift in Sources */,
+				BA5DD5E72E3225DC00D3A127 /* EventsUtils.swift in Sources */,
 				EB06C7BE2C9023EB00A25E07 /* Setting.swift in Sources */,
 				EB06C7FA2C90247600A25E07 /* CampaignDecisionService.swift in Sources */,
 				EB06C7BA2C9023E500A25E07 /* Feature.swift in Sources */,
@@ -1081,6 +1088,7 @@
 				EB7E3D772D27FAE5009B572F /* SyncManager.swift in Sources */,
 				EB06C89A2C90273500A25E07 /* GatewayService.swift in Sources */,
 				EB22C9DA2C946A8C00381E34 /* LocalStorageService.swift in Sources */,
+				BA5DD5E52E321FED00D3A127 /* SdkMetaInfo.swift in Sources */,
 				EB06C8952C9026F400A25E07 /* SegmentEvaluator.swift in Sources */,
 				EB06C8A02C90274C00A25E07 /* EventArchPayload.swift in Sources */,
 				EB06C7B92C9023E500A25E07 /* Metric.swift in Sources */,
