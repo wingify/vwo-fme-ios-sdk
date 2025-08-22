@@ -49,16 +49,26 @@ struct PlatformInfo {
 #if os(iOS) || os(tvOS)
     static let name =  UIDevice.current.systemName
     static let systemVersion = UIDevice.current.systemVersion
+    static let  deviceModel = UIDevice.current.model
 #elseif os(watchOS)
     static let name = WKInterfaceDevice.current().systemName
     static let systemVersion = WKInterfaceDevice.current().systemVersion
+    static let  deviceModel = WKInterfaceDevice.current().model
 #elseif os(macOS)
     static let name = "macOS"
     static let systemVersion = "\(ProcessInfo.processInfo.operatingSystemVersion.majorVersion)." +
                                "\(ProcessInfo.processInfo.operatingSystemVersion.minorVersion)." +
                                "\(ProcessInfo.processInfo.operatingSystemVersion.patchVersion)"
+    static let deviceModel: String = {
+        var size = 0
+        sysctlbyname("hw.model", nil, &size, nil, 0)
+        var model = [CChar](repeating: 0, count: size)
+        sysctlbyname("hw.model", &model, &size, nil, 0)
+        return String(cString: model)
+    }()
 #else
     static let name = "unknown"
     static let systemVersion = "unknown"
+    static let  deviceModel = "unknown"
 #endif
 }
