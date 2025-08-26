@@ -21,7 +21,7 @@ import Foundation
  *
  * This class serves as a container for various settings and configurations used by the VWO SDK.
  */
-struct Settings: Codable, Equatable {
+public struct Settings: Codable, Equatable {
     var features: [Feature] = []
     var accountId: Int?
     var groups: [String: Groups]?
@@ -48,7 +48,7 @@ struct Settings: Codable, Equatable {
         case sdkMetaInfo
     }
     
-    init(from decoder: Decoder) throws {
+    public init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
         if let featuresArray = try? container.decodeIfPresent([Feature].self, forKey: .features) {
             features = featuresArray

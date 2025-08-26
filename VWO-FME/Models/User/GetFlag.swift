@@ -22,7 +22,7 @@ import Foundation
  * This class encapsulates information about a feature flag, including its enabled status and a
  * list of variables with their values.
  */
-public class GetFlag {
+@objc public class GetFlag: NSObject {
     private var isFlagEnabled: Bool = false
     private var variables: [Variable] = []
     
@@ -39,7 +39,7 @@ public class GetFlag {
         return variables
     }
     
-    public func isEnabled() -> Bool {
+    @objc public func isEnabled() -> Bool {
         return isFlagEnabled
     }
     
@@ -55,7 +55,7 @@ public class GetFlag {
      *   - defaultValue: The default value to return if the variable is not found or its value is nil.
      * - Returns: The value of the variable if found, otherwise the default value.
      */
-    public func getVariable(key: String?, defaultValue: Any) -> Any {
+    @objc public func getVariable(key: String?, defaultValue: Any) -> Any {
         for variable in variablesValue {
             if variable.key == key {
                 return variable.value?.toJSONCompatible() ?? defaultValue
@@ -69,7 +69,7 @@ public class GetFlag {
      *
      * - Returns: The list of variables, where each variable is represented as a dictionary with keys "key", "value", "type", and "id".
      */
-    public func getVariables() -> [[String: Any]] {
+    @objc public func getVariables() -> [[String: Any]] {
         return variablesValue.map { convertVariableModelToDict($0) }
     }
     

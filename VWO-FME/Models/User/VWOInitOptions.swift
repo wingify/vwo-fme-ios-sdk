@@ -22,7 +22,7 @@ import Foundation
  * This class provides configuration options for initializing the VWO SDK, including SDK key, account ID,
  * logging preferences, network client interface, and other settings.
  */
-public class VWOInitOptions {
+@objc public class VWOInitOptions: NSObject {
     var sdkKey: String?
     var accountId: Int?
     var integrations: IntegrationCallback?

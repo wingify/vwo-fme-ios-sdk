@@ -17,17 +17,17 @@
 import Foundation
 
 // Define a protocol for the initialization callback
-protocol IVwoInitCallback {
+@objc protocol IVwoInitCallback {
     func vwoInitSuccess(_ vwo: VWOFme, message: String)
     func vwoInitFailed(_ message: String)
 }
 
-public class VWOFme {
+@objc public class VWOFme: NSObject {
     private static var vwoClient: VWOClient? = nil
     private static let shared = VWOFme()
-    public static var isInitialized: Bool = false
+    @objc public static var isInitialized: Bool = false
 
-    private init() {}
+    private override init() {}
     
     // Initializes the VWO instance
     @available(macOS 10.14, *)
@@ -110,7 +110,7 @@ public class VWOFme {
          * @param sdkInitTime The timestamp (in milliseconds) marking the completion of the SDK's initialization process.
          */
     
-    public static func sendSdkInitEvent(sdkInitTime: Int64) {
+     public static func sendSdkInitEvent(sdkInitTime: Int64) {
         let wasInitializedEarlier =  VWOFme.vwoClient?.processedSettings?.sdkMetaInfo?.wasInitializedEarlier
         
         if (VWOFme.vwoClient?.isSettingsValid == true && (wasInitializedEarlier == false || wasInitializedEarlier == nil)) {
@@ -119,7 +119,7 @@ public class VWOFme {
     }
     
     // Updates the settings
-    static func updateSettings(_ newSettings: Settings) {
+   public static func updateSettings(_ newSettings: Settings) {
         VWOFme.vwoClient?.updateSettings(newSettings: newSettings)
     }
     
