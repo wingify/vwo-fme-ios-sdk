@@ -43,4 +43,9 @@ enum EventEnum: String {
      * FME sdk init event
      */
     case VWO_INIT_CALLED = "vwo_fmeSdkInit"
+    
+    /**
+     * FME sdk usage stat even
+     t*/
+    case VWO_USAGE_STATS = "vwo_sdkUsageStats"
 }

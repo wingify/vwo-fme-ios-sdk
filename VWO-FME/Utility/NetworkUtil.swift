@@ -84,15 +84,26 @@ class NetworkUtil {
     }
     
     // Creates the base properties for the event arch APIs
-    static func getEventsBaseProperties(eventName: String, visitorUserAgent: String?, ipAddress: String?) -> [String: String] {
+    static func getEventsBaseProperties(eventName: String, visitorUserAgent: String?, ipAddress: String?, isUsageStatsEvent: Bool? = false, usageStatsAccountId: Int? = 0) -> [String: String] {
         let settingManager = SettingsManager.instance
         let accountIdString = "\(SettingsManager.instance?.accountId ?? 0)"
         let sdkKey = "\(settingManager?.sdkKey ?? "")"
         if let visitorUserAgent = visitorUserAgent {
-            let requestQueryParams = RequestQueryParams(en: eventName, a: accountIdString, env: sdkKey, visitorUa: visitorUserAgent, visitorIp: ipAddress ?? "", url: generateEventUrl())
+            var requestQueryParams = RequestQueryParams(en: eventName, a: accountIdString, env: sdkKey, visitorUa: visitorUserAgent, visitorIp: ipAddress ?? "", url: generateEventUrl())
+            if (isUsageStatsEvent ?? false) {
+                requestQueryParams.env = nil
+                requestQueryParams.a = "\(usageStatsAccountId)"
+            }
             return requestQueryParams.queryParams
         }else{
             let requestQueryParams = RequestQueryParams(en: eventName, a: accountIdString, env: sdkKey, visitorUa: "", visitorIp: ipAddress ?? "", url: generateEventUrl())
+            if (isUsageStatsEvent ?? false) {
+                requestQueryParams.env = nil
+                if let usageStatsAccountId = usageStatsAccountId {
+                    requestQueryParams.a = "\(usageStatsAccountId)"
+                }
+                
+            }
             return requestQueryParams.queryParams
         }
         
@@ -107,10 +118,17 @@ class NetworkUtil {
     }
     
     // Creates the base payload for the event arch APIs
-    static func getEventBasePayload(userId: String?, eventName: String, visitorUserAgent: String?, ipAddress: String?) -> EventArchPayload {
+    static func getEventBasePayload(userId: String?, eventName: String, visitorUserAgent: String?, ipAddress: String?, isUsageStatsEvent: Bool? = false, usageStatsAccountId: Int? = 0) -> EventArchPayload {
         
-        let settingManager = SettingsManager.instance
-        let stringAccountId = "\(settingManager?.accountId ?? 0)"
+        var stringAccountId : String
+        
+        if (isUsageStatsEvent ?? false) {
+            stringAccountId = "\(usageStatsAccountId)"
+        } else {
+            let settingManager = SettingsManager.instance
+            stringAccountId = "\(settingManager?.accountId ?? 0)"
+        }
+        
         let uuid = UUIDUtils.getUUID(userId: userId, accountId: stringAccountId)
 
         var eventArchData = EventArchData()
@@ -126,21 +144,23 @@ class NetworkUtil {
             eventArchData.visitorIpAddress = ipAddress
         }
         
-        let event = NetworkUtil.createEvent(eventName: eventName)
+        let event = NetworkUtil.createEvent(eventName: eventName, isUsageStatsEvent: isUsageStatsEvent)
         eventArchData.event = event
         
-        let visitor = NetworkUtil.createVisitor()
-        eventArchData.visitor = visitor
-        
+        if !(isUsageStatsEvent ?? false){
+            let visitor = NetworkUtil.createVisitor(isUsageStatsEvent: isUsageStatsEvent)
+            eventArchData.visitor = visitor
+        }
+    
         var eventArchPayload = EventArchPayload()
         eventArchPayload.d = eventArchData
         return eventArchPayload
     }
     
     // Creates the event model for the event arch APIs
-    private static func createEvent(eventName: String) -> Event {
+    private static func createEvent(eventName: String, isUsageStatsEvent: Bool? = false) -> Event {
         var event = Event()
-        let props = createProps()
+        let props = createProps(isUsageStatsEvent: isUsageStatsEvent)
         event.props = props
         event.name = eventName
         event.time = Date().currentTimeMillis()
@@ -148,18 +168,22 @@ class NetworkUtil {
     }
     
     // Creates the props model for the event arch APIs
-    private static func createProps() -> Props {
+    private static func createProps(isUsageStatsEvent: Bool? = false) -> Props {
         var props = Props()
         props.vwoSdkName = SDKMetaUtil.name
         props.vwoSdkVersion = SDKMetaUtil.version
-        props.vwoEnvKey = SettingsManager.instance?.sdkKey ?? nil
+        if (!(isUsageStatsEvent ?? false)) {
+            props.vwoEnvKey = SettingsManager.instance?.sdkKey ?? nil
+        }
         return props
     }
     
     // Creates the visitor model for the event arch APIs
-    private static func createVisitor() -> Visitor {
+    private static func createVisitor(isUsageStatsEvent: Bool? = false) -> Visitor {
         var visitorProps: [String: Any] = [:]
-        visitorProps[Constants.VWO_FS_ENVIRONMENT] = SettingsManager.instance?.sdkKey ?? Constants.defaultString
+        if (!(isUsageStatsEvent ?? false)) {
+            visitorProps[Constants.VWO_FS_ENVIRONMENT] = SettingsManager.instance?.sdkKey ?? Constants.defaultString
+        }
         let visitor = Visitor(props: visitorProps)
         return visitor
     }
@@ -173,19 +197,6 @@ class NetworkUtil {
         properties.d?.event?.props?.isFirst = 1
         
         if eventName == EventEnum.vwoVariationShown.rawValue {
-            
-            let canSend = UsageStatsUtil.canSendStats()
-            if canSend {
-                let stats = UsageStatsUtil.getUsageStatsDict()
-                let cleanedStats = UsageStatsUtil.removeFalseValues(dict: stats)
-                if !cleanedStats.isEmpty {
-                    // Set properties if stats are available and can be sent (comparing for change)
-                    properties.d?.event?.props?.vwoMeta = cleanedStats
-                }
-            } else {
-                // no change in usage stats so removing collected stats at time of init
-                UsageStatsUtil.emptyUsageStats()
-            }
             
             // for FME<>MI integration
             // isMII flag is set to true for vwoVariationShown event
@@ -247,7 +258,7 @@ class NetworkUtil {
         
         let userId = stringAccountId + "_" + sdkKey
         var properties = NetworkUtil.getEventBasePayload(userId: userId, eventName: eventName, visitorUserAgent: nil, ipAddress: nil)
-        properties.d?.event?.props?.setProduct("fme")
+        properties.d?.event?.props?.setProduct(Constants.PRODUCT_NAME)
         
         var data = [String: Any]()
         data["type"] = messageType
@@ -275,7 +286,7 @@ class NetworkUtil {
         
         // Set the required fields as specified
         properties.d?.event?.props?.additionalProperties = [Constants.VWO_FS_ENVIRONMENT: sdkKey]
-        properties.d?.event?.props?.product = "fme"
+        properties.d?.event?.props?.product = Constants.PRODUCT_NAME
         
         
         var data: [String: Any] = ["isSDKInitialized": true]
@@ -317,12 +328,12 @@ class NetworkUtil {
     
     
     // Sends a messaging event to DACDN
-    static func sendGatewayEvent(properties: [String: String], payload: [String: Any]) {
+    static func sendGatewayEvent(queryParams: [String: String], payload: [String: Any]) {
         let settingsManager = SettingsManager.instance
         let request = RequestModel(url: UrlService.baseUrl,
                                    method: HTTPMethod.post.rawValue,
                                    path: UrlEnum.events.rawValue,
-                                   query: properties,
+                                   query: queryParams,
                                    body: payload,
                                    headers: nil,
                                    scheme: settingsManager?.protocolType ?? "https",
@@ -353,4 +364,43 @@ class NetworkUtil {
             }
         }
     }
+    
+    /// Constructs the payload for an SDK usage statistics event.
+    ///
+    /// This function generates a dictionary representing the data payload that will be sent
+    /// to track SDK usage. It incorporates essential information such as the
+    /// event type, account identifiers, and collected usage statistics.
+    ///
+    /// - Parameters:
+    ///   - event: The type of SDK usage event being tracked (enum `EventEnum`).
+    ///   - usageStatsAccountId: The account ID specifically designated for tracking usage statistics.
+    ///                          This might be different from the main VWO account ID.
+    /// - Returns: A dictionary containing the non-nil key-value pairs representing the payload
+    ///            for the SDK usage statistics event. This dictionary is ready to be serialized
+    ///            (e.g., to JSON) and sent to the server.
+    static func getSDKUsageStatsEventPayload(event: EventEnum, usageStatsAccountId: Int) -> [String: Any] {
+        let settingsManager = SettingsManager.instance
+        guard let accountId = settingsManager?.accountId, let sdkKey = settingsManager?.sdkKey else {
+            return [:] // Return an empty dictionary if either accountId or sdkKey is nil
+        }
+       
+        let userId = "\(accountId ?? 0)_\(sdkKey ?? "")"
+        
+        var properties = NetworkUtil.getEventBasePayload(userId: userId, eventName: event.rawValue, visitorUserAgent: nil, ipAddress: nil,isUsageStatsEvent: true,usageStatsAccountId: usageStatsAccountId)
+        
+        properties.d?.event?.props?.product = Constants.PRODUCT_NAME
+        
+       
+        let stats = UsageStatsUtil.getUsageStatsDict()
+        let cleanedStats = UsageStatsUtil.removeFalseValues(dict: stats)
+        if !cleanedStats.isEmpty {
+            properties.d?.event?.props?.vwoMeta = cleanedStats
+        }
+                    
+        let payloadDict = properties.toDictionary()
+        let payload = NetworkUtil.removeNullValues(originalMap:payloadDict)
+        
+        return payload
+    }
+
 }

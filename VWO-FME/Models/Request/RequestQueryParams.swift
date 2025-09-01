@@ -23,8 +23,8 @@ import Foundation
  */
 class RequestQueryParams {
     private let en: String
-    private let a: String
-    private let env: String
+    var a: String
+    var env: String?
     private let visitorUa: String
     private let visitorIp: String
     private let url: String

@@ -34,6 +34,8 @@ struct UsageStatsKeys {
     static let languageVersion = "lv"
     static let exampleApp = "_ea"
     static let gatewayService = "gs"
+    static let KEY_ACCOUNT_ID = "a"
+    static let KEY_ENVIRONMENT = "env"
 }
 
 struct UsageStatsValues {
@@ -78,6 +80,8 @@ class UsageStatsUtil {
         guard let options = options else { return }
         if options.isUsageStatsDisabled { return }
         
+        usageStatsDict[UsageStatsKeys.KEY_ACCOUNT_ID] = options.accountId
+        usageStatsDict[UsageStatsKeys.KEY_ENVIRONMENT] = options.sdkKey
         usageStatsDict[UsageStatsKeys.logLevel] = options.logLevel.level
         usageStatsDict[UsageStatsKeys.integrations] = (options.integrations != nil).toIntForDictValue()
         usageStatsDict[UsageStatsKeys.storage] = 1

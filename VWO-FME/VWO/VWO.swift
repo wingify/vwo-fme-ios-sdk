@@ -57,58 +57,58 @@ import Foundation
                 .setSegmentation()
                 .initPolling()
                 .getSettings(forceFetch: false) { result in
-                
-                guard let settingObj = result else {
-                    DispatchQueue.main.async {
-                        completion(.failure(VWOInitError.initializationFailed))
+                    
+                    guard let settingObj = result else {
+                        DispatchQueue.main.async {
+                            completion(.failure(VWOInitError.initializationFailed))
+                        }
+                        return
                     }
-                    return
-                }
-                
+                    
                     self.vwoClient = VWOClient(options: options, settingObj: settingObj)
                     self.vwoClient?.isSettingsValid = vwoBuilder.isSettingsValid
                     self.vwoClient?.settingsFetchTime = vwoBuilder.settingsFetchTime
                     vwoBuilder.setVWOClient(self.vwoClient!)
-                
-                guard self.vwoClient != nil else {
-                    DispatchQueue.main.async {
-                        completion(.failure(VWOInitError.initializationFailed))
+                    
+                    guard self.vwoClient != nil else {
+                        DispatchQueue.main.async {
+                            completion(.failure(VWOInitError.initializationFailed))
+                        }
+                        return
                     }
-                    return
-                }
-                vwoBuilder.setVWOClient(self.vwoClient!)
-                vwoBuilder.initSyncManager()
-                self.isInitialized = true
+                    vwoBuilder.setVWOClient(self.vwoClient!)
+                    vwoBuilder.initSyncManager()
+                    self.isInitialized = true
                     
-                let sdkEndTime = Date().currentTimeMillis()
-                let sdkInitTime = sdkEndTime - sdkStartTime
+                    let sdkEndTime = Date().currentTimeMillis()
+                    let sdkInitTime = sdkEndTime - sdkStartTime
                     
-                if options.sdkName == Constants.SDK_NAME {  // Don't call sendSdkInitEvent for hybrid SDKs
-                    sendSdkInitEvent(sdkInitTime: sdkInitTime)
+                    if options.sdkName == Constants.SDK_NAME {  // Don't call sendSdkInitEvent for hybrid SDKs
+                        sendSdkInitEvent(sdkInitTime: sdkInitTime)
+                    }
+                    sendUsageStats()
+                    DispatchQueue.main.async {
+                        completion(.success(VWOInitSuccess.initializationSuccess.rawValue))
+                    }
                 }
-                    
-                DispatchQueue.main.async {
-                    completion(.success(VWOInitSuccess.initializationSuccess.rawValue))
-                }
-            }
         }
     }
     
     
     /**
-         * Sends an SDK initialization event.
-         *
-         * This function checks if the VWO instance is valid, if its settings have been processed,
-         * and critically, if the SDK has not been marked as initialized previously in the current
-         * session or from cached settings. If all conditions are true, it proceeds to send
-         * an "SDK initialized" tracking event, including the time it took for settings to be fetched
-         * and the time it took for the SDK to complete its initialization process.
-         *
-         * This helps in tracking the initial setup performance and ensuring that the
-         * initialization event is sent only once per effective SDK start.
-         *
-         * @param sdkInitTime The timestamp (in milliseconds) marking the completion of the SDK's initialization process.
-         */
+     * Sends an SDK initialization event.
+     *
+     * This function checks if the VWO instance is valid, if its settings have been processed,
+     * and critically, if the SDK has not been marked as initialized previously in the current
+     * session or from cached settings. If all conditions are true, it proceeds to send
+     * an "SDK initialized" tracking event, including the time it took for settings to be fetched
+     * and the time it took for the SDK to complete its initialization process.
+     *
+     * This helps in tracking the initial setup performance and ensuring that the
+     * initialization event is sent only once per effective SDK start.
+     *
+     * @param sdkInitTime The timestamp (in milliseconds) marking the completion of the SDK's initialization process.
+     */
     
      public static func sendSdkInitEvent(sdkInitTime: Int64) {
         let wasInitializedEarlier =  VWOFme.vwoClient?.processedSettings?.sdkMetaInfo?.wasInitializedEarlier
@@ -148,4 +148,22 @@ import Foundation
     public static func performEventSync() {
         SyncManager.shared.syncSavedEvents(manually: true, ignoreThreshold: true)
     }
+    
+    /** Sends SDK usage statistics.
+     *
+     * This function retrieves the usage statistics account ID from settings.
+     * If the account ID is found, it triggers an event to send SDK usage statistics.
+     * This helps in understanding how the SDK is being utilized.
+     * If the `usageStatsAccountId` is not available in the settings, the function will return early
+     * and no event will be sent.
+     */
+    private static func sendUsageStats() {
+        // Get usage stats account id from settings
+        guard let usageStatsAccountId = VWOFme.vwoClient?.processedSettings?.usageStatsAccountId else {
+            return
+        }
+        
+        EventsUtils().sendSDKUsageStatsEvent(usageStatsAccountId: usageStatsAccountId)
+    }
+    
 }

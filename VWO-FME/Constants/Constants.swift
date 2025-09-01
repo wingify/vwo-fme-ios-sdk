@@ -19,8 +19,9 @@ import Foundation
 struct Constants {
     static let defaultString: String = ""
     static let PLATFORM: String = "ios"
-    static let SDK_VERSION: String = "1.9.2"
 
+    static let SDK_VERSION: String = "1.10.0"
+    
     static let MAX_TRAFFIC_PERCENT: Int = 100
     static let MAX_TRAFFIC_VALUE: Int = 10000
     static let STATUS_RUNNING: String = "RUNNING"
@@ -30,6 +31,7 @@ struct Constants {
     static let DEFAULT_REQUEST_TIME_INTERVAL: TimeInterval = 600 // 10 * 60(secs) = 600 secs i.e. 10 minutes
     static let DEFAULT_EVENTS_PER_REQUEST: Int = 100
     static let SDK_NAME: String = "vwo-fme-ios-sdk"
+    static let PRODUCT_NAME: String = "fme"
     static let SETTINGS_EXPIRY: Int64 = 0 // default time for cached setting expiry
     static let SETTINGS_TIMEOUT: Int = 30
 
