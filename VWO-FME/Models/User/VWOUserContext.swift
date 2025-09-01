@@ -23,7 +23,7 @@ import Foundation
  * and any custom or variation targeting variables. It also maintains a reference to the
  * VWO gateway service.
  */
-public class VWOUserContext {
+@objc public class VWOUserContext:NSObject {
     var id: String?
     var userAgent: String = Constants.USER_AGENT_VALUE
     var ipAddress: String = ""
