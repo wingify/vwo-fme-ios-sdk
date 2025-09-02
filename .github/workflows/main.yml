@@ -2,7 +2,7 @@ name: CI
 
 on:
   push:
-    branches: [ "master", "github-action-test" ]
+    branches: [ "master" ]
   pull_request:
     branches: [ "master" ]
 
@@ -18,12 +18,15 @@ jobs:
           - os: macos-15
             xcode-version: '16.4'
             swift-version: '6.0'
+            destination: 'platform=iOS Simulator,name=iPhone 16,OS=18.5'
           - os: macos-14
             xcode-version: '15.4'
             swift-version: '5.10'
+            destination: 'platform=iOS Simulator,name=iPhone 15,OS=17.2'
           - os: macos-14
             xcode-version: '15.2'
             swift-version: '5.9'
+            destination: 'platform=iOS Simulator,name=iPhone 15,OS=17.2'
 
     steps:
     - uses: actions/checkout@v4
@@ -34,11 +37,8 @@ jobs:
     - name: Select Xcode Version
       run: sudo xcode-select -s /Applications/Xcode_${{ matrix.xcode-version }}.app
 
-    - name: Find available iOS Simulator
-      id: simulator
-      run: |
-        AVAILABLE=$(xcrun simctl list devices available | grep -m1 "iPhone" | awk -F '[()]' '{print $2}')
-        echo "udid=$AVAILABLE" >> $GITHUB_OUTPUT
+    - name: List available simulators
+      run: xcrun simctl list
 
     - name: Build
       run: |
@@ -51,7 +51,7 @@ jobs:
       run: |
         xcodebuild test \
           -scheme VWO-FMETests \
-          -destination "id=${{ steps.simulator.outputs.udid }}" \
+          -destination '${{ matrix.destination }}' \
           -sdk iphonesimulator \
           -configuration Debug \
           -enableCodeCoverage YES \
