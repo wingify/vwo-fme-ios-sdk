@@ -18,6 +18,12 @@ import Foundation
 
 class SegmentOperandEvaluator {
 
+    static private var OPERAND_VALUE = "operandValue"
+
+    static private var OPERAND_TYPE = "operandType"
+
+    static private var TAG_VALUE = "tagValue"
+    
     /**
      * Evaluates a custom variable DSL operand against user properties.
      *
@@ -64,13 +70,13 @@ class SegmentOperandEvaluator {
 
             
             // Convert numeric values to strings if processing wildcard pattern
-            let operandType = preProcessOperandValue["operandType"] as? SegmentOperandValueEnum
+            let operandType = preProcessOperandValue[OPERAND_TYPE] as? SegmentOperandValueEnum
             
             if operandType == .startingEndingStarValue || operandType == .startingStarValue || operandType == .endingStarValue || operandType == .regexValue {
-                let valueForKey = "\(processedValues["tagValue"] ?? "")"
-                processedValues["tagValue"] = valueForKey
+                let valueForKey = "\(processedValues[TAG_VALUE] ?? "")"
+                processedValues[TAG_VALUE] = valueForKey
             }
-            tagValue = processedValues["tagValue"] as! String
+            tagValue = processedValues[TAG_VALUE] as! String
             return extractResult(operandType, processedValues["operandValue"] as! String, tagValue as! String)
         }
     }
@@ -115,7 +121,7 @@ class SegmentOperandEvaluator {
             operandValue = operand
         }
 
-        return ["operandType": operandType, "operandValue": operandValue]
+        return [OPERAND_TYPE: operandType, OPERAND_VALUE: operandValue]
     }
 
     /**
@@ -157,6 +163,40 @@ class SegmentOperandEvaluator {
         }
     }
 
+    /// Evaluates a given string tag value against a DSL operand value.
+    /// - Parameters:
+    ///   - dslOperandValue: The DSL operand string (e.g., "contains(\"value\")").
+    ///   - value: The tag value to evaluate.
+    /// - Returns: `true` if tag value matches DSL operand criteria, `false` otherwise.
+   static func evaluateStringOperandDSL(dslOperandValue: String, value: String) -> Bool {
+       var tagValue = String(describing:value).trimmingCharacters(in: .whitespacesAndNewlines)
+       tagValue = convertValue(tagValue)
+        // Pre-process the DSL operand string to extract type and value.
+        let preProcessedOperand = preProcessOperandValue(dslOperandValue)
+
+        // Ensure OPERAND_VALUE exists and convert it.
+        guard let operandRawValue = preProcessedOperand[OPERAND_VALUE] else {
+            return false
+        }
+
+        var processedValues: [String: Any] = [:]
+        processedValues[OPERAND_VALUE] = convertValue(operandRawValue!)
+
+        // Extract the operand type (assuming it's castable to SegmentOperandValueEnum)
+        let operandType = preProcessedOperand[OPERAND_TYPE] as? SegmentOperandValueEnum
+
+        let cleanConvertedOperand = String(describing: processedValues[OPERAND_VALUE] ?? "")
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+
+        // Evaluate and return result
+        return extractResult(
+             operandType,
+             cleanConvertedOperand,
+             tagValue
+        )
+    }
+
+    
     /**
      * Evaluates a user agent DSL operand against the user's context.
      *
@@ -172,11 +212,11 @@ class SegmentOperandEvaluator {
         var tagValue = userAgent.removingPercentEncoding ?? ""
         
         let preProcessOperandValue = preProcessOperandValue(dslOperandValue)
-        let processedValues = processValues(preProcessOperandValue["operandValue"] as! String, tagValue)
+        let processedValues = processValues(preProcessOperandValue[OPERAND_VALUE] as! String, tagValue)
 
-        tagValue = processedValues["tagValue"] as! String
-        let operandType = preProcessOperandValue["operandType"] as? SegmentOperandValueEnum
-        return extractResult(operandType, processedValues["operandValue"] as! String, tagValue)
+        tagValue = processedValues[TAG_VALUE] as! String
+        let operandType = preProcessOperandValue[OPERAND_TYPE] as? SegmentOperandValueEnum
+        return extractResult(operandType, processedValues[OPERAND_VALUE] as! String, tagValue)
     }
 
     /**
@@ -203,10 +243,10 @@ class SegmentOperandEvaluator {
     static private func processValues(_ operandValue: String, _ tagValue: String) -> [String: Any] {
         var result = [String: Any]()
         // Process operandValue
-        result["operandValue"] = convertValue(operandValue)
+        result[OPERAND_VALUE] = convertValue(operandValue)
 
         // Process tagValue
-        result["tagValue"] = convertValue(tagValue)
+        result[TAG_VALUE] = convertValue(tagValue)
 
         return result
     }
@@ -239,6 +279,41 @@ class SegmentOperandEvaluator {
     }
 
     /**
+     * Compares two version strings using semantic versioning rules.
+     * @param version1 The first version string.
+     * @param version2 The second version string.
+     * @return Comparison result: -1 if version1 < version2, 0 if equal, 1 if version1 > version2.
+     */
+    static func compareVersions(_ version1: String, _ version2: String) -> Int {
+        let components1 = version1.split(separator: ".").compactMap { Int($0) }
+        let components2 = version2.split(separator: ".").compactMap { Int($0) }
+        
+        let maxLength = max(components1.count, components2.count)
+        
+        for i in 0..<maxLength {
+            let comp1 = i < components1.count ? components1[i] : 0
+            let comp2 = i < components2.count ? components2[i] : 0
+            
+            if comp1 < comp2 {
+                return -1
+            } else if comp1 > comp2 {
+                return 1
+            }
+        }
+        
+        return 0
+    }
+    
+    /**
+     * Checks if a string looks like a version number (contains dots).
+     * @param value The string to check.
+     * @return True if the string appears to be a version number.
+     */
+    static func isVersionString(_ value: String) -> Bool {
+        return value.contains(".")
+    }
+    
+    /**
      * Extracts the result of the evaluation based on the operand type and values.
      * @param operandType The type of the operand.
      * @param operandValue The value of the operand.
@@ -269,32 +344,51 @@ class SegmentOperandEvaluator {
             }
 
         case .greaterThanValue:
+            // Check if both values look like version numbers
+            if isVersionString(tagValue) && isVersionString(operandValue) {
+                return compareVersions(tagValue, operandValue) > 0
+            }
+            // Fall back to numeric comparison for non-version strings
             if let tagFloat = Float(tagValue), let operandFloat = Float(operandValue) {
                 return tagFloat > operandFloat
             }
             return false
 
         case .greaterThanEqualToValue:
+            // Check if both values look like version numbers
+            if isVersionString(tagValue) && isVersionString(operandValue) {
+                return compareVersions(tagValue, operandValue) >= 0
+            }
+            // Fall back to numeric comparison for non-version strings
             if let tagFloat = Float(tagValue), let operandFloat = Float(operandValue) {
                 return tagFloat >= operandFloat
             }
             return false
 
-
         case .lessThanValue:
+            // Check if both values look like version numbers
+            if isVersionString(tagValue) && isVersionString(operandValue) {
+                return compareVersions(tagValue, operandValue) < 0
+            }
+            // Fall back to numeric comparison for non-version strings
             if let tagFloat = Float(tagValue), let operandFloat = Float(operandValue) {
                 return tagFloat < operandFloat
             }
             return false
 
         case .lessThanEqualToValue:
+            // Check if both values look like version numbers
+            if isVersionString(tagValue) && isVersionString(operandValue) {
+                return compareVersions(tagValue, operandValue) <= 0
+            }
+            // Fall back to numeric comparison for non-version strings
             if let tagFloat = Float(tagValue), let operandFloat = Float(operandValue) {
                 return tagFloat <= operandFloat
             }
             return false
 
         default:
-            return tagValue == operandValue
+            return tagValue.lowercased() == operandValue.lowercased()
         }
     }
 

@@ -31,15 +31,19 @@ import Foundation
     var variationTargetingVariables: [String: Any] = [:]
     var vwo: GatewayService?
     
+    var postSegmentationVariables: [String]? = nil
+
     /**
      * Initializes a new instance of VWOUserContext.
      *
      * - Parameters:
      *   - id: The unique identifier for the user.
      *   - customVariables: A dictionary of custom variables associated with the user.
+     *   - postSegmentationVariables: A list of Key variables that addes customVariable for postSegmentaion.
      */
-    public init(id: String?, customVariables: [String: Any]) {
+    public init(id: String?, customVariables: [String: Any], postSegmentationVariables: [String]? = nil) {
         self.id = id
         self.customVariables = customVariables
+        self.postSegmentationVariables = postSegmentationVariables
     }
 }

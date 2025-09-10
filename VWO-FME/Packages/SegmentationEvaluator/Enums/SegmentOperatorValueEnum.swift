@@ -36,7 +36,12 @@ enum SegmentOperatorValueEnum: String {
     case ua = "ua"
     case device = "device"
     case featureId = "featureId"
-
+    case manufacturer = "manufacturer"
+    case device_model = "device_model"
+    case locale = "locale"
+    case app_version = "app_version"
+    case os_version = "os_version"
+    
     /**
      * Retrieves the enum constant for the given value.
      *

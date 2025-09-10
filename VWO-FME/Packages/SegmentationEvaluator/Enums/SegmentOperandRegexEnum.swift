@@ -31,8 +31,8 @@ enum SegmentOperandRegexEnum: String {
     case regexMatch = "^regex\\((.*)\\)"
     case startingStar = "^\\*"
     case endingStar = "\\*$"
-    case greaterThanMatch = "^gt\\((\\d+\\.?\\d*|\\.\\d+)\\)"
-    case greaterThanEqualToMatch = "^gte\\((\\d+\\.?\\d*|\\.\\d+)\\)"
-    case lessThanMatch = "^lt\\((\\d+\\.?\\d*|\\.\\d+)\\)"
-    case lessThanEqualToMatch = "^lte\\((\\d+\\.?\\d*|\\.\\d+)\\)"
+    case greaterThanMatch = "^gt\\(([\\d.]+)\\)"
+    case greaterThanEqualToMatch = "^gte\\(([\\d.]+)\\)"
+    case lessThanMatch = "^lt\\(([\\d.]+)\\)"
+    case lessThanEqualToMatch = "^lte\\(([\\d.]+)\\)"
 }

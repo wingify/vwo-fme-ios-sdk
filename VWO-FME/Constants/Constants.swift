@@ -20,7 +20,7 @@ struct Constants {
     static let defaultString: String = ""
     static let PLATFORM: String = "ios"
 
-    static let SDK_VERSION: String = "1.10.0"
+    static let SDK_VERSION: String = "1.11.0"
     
     static let MAX_TRAFFIC_PERCENT: Int = 100
     static let MAX_TRAFFIC_VALUE: Int = 10000
@@ -54,6 +54,12 @@ struct Constants {
 
     static let USER_AGENT_VALUE: String = "VWO FME \(PlatformInfo.name) \(SDK_VERSION) (\(PlatformInfo.deviceModel)/\(PlatformInfo.systemVersion))"
 
+    
+    static let APP_VERSION = "vwo_av"
+    static let OS_VERSION = "vwo_osv"
+    static let MANUFACTURER = "vwo_mfr"
+    static let DEVICE_MODEL = "vwo_dm"
+    static let LOCALE = "vwo_loc"
 }
 
 public typealias VWOInitCompletionHandler = (Result<String, Error>) -> Void

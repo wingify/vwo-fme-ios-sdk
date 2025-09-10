@@ -188,8 +188,57 @@ class NetworkUtil {
         return visitor
     }
     
+    /**
+     Adds custom variables to visitor props based on postSegmentationVariables.
+     - Parameters:
+        - properties: The payload data for the event.
+        - context: The user context containing customVariables and postSegmentationVariables.
+     */
+    private static func addCustomVariablesToVisitorProps(
+        properties: inout EventArchPayload,
+        context: VWOUserContext?
+    ) {
+        // A temporary dictionary to hold all custom variables and device info to be added.
+        var variablesToAdd = [String: Any]()
+
+        // Check if the context has both post-segmentation keys and custom variables.
+        if let postSegmentationVariables = context?.postSegmentationVariables ,let customVariables = context?.customVariables,
+           !customVariables.isEmpty {
+            
+            // Iterate through the keys specified for post-segmentation.
+            for key in postSegmentationVariables {
+                // If a post-segmentation key exists in the custom variables dictionary,
+                // add it to our temporary dictionary.
+                if let value = customVariables[key] {
+                    variablesToAdd[key] = value
+                }
+            }
+        }
+
+         let deviceInfo = DeviceUtil().getAllDeviceDetails()
+            // Add all gathered device info to our temporary dictionary.
+            for (key, value) in deviceInfo {
+                variablesToAdd[key] = value
+            }
+        
+
+        // Check if there are any variables to add to prevent unnecessary operations.
+        if !variablesToAdd.isEmpty {
+            var existingProps = properties.d?.visitor?.props ?? [String: Any]()
+
+            // Merge the new variables (custom variables + device info) into the existing properties.
+            for (key, value) in variablesToAdd {
+                existingProps[key] = value
+            }
+
+            // Set the updated properties dictionary back into the event payload's visitor object.
+            properties.d?.visitor?.props = existingProps
+        }
+    }
+
+    
     // Returns the payload data for the track user API
-    class func getTrackUserPayloadData(settings: Settings, userId: String?, eventName: String, campaignId: Int, variationId: Int, visitorUserAgent: String?, ipAddress: String?) -> [String: Any] {
+    class func getTrackUserPayloadData(settings: Settings, userId: String?, eventName: String, campaignId: Int, variationId: Int, visitorUserAgent: String?, ipAddress: String?, context: VWOUserContext) -> [String: Any] {
         var properties = NetworkUtil.getEventBasePayload(userId: userId, eventName: eventName, visitorUserAgent: visitorUserAgent, ipAddress: ipAddress)
         
         properties.d?.event?.props?.id = campaignId
@@ -201,6 +250,9 @@ class NetworkUtil {
             // for FME<>MI integration
             // isMII flag is set to true for vwoVariationShown event
             properties.d?.event?.props?.isMII = FmeConfig.checkIsMILinked()
+            
+            // Add custom variables to visitor props for VWO_VARIATION_SHOWN events
+            NetworkUtil.addCustomVariablesToVisitorProps(properties: &properties, context: context)
         }
 
         LoggerService.log(level: .debug, 
