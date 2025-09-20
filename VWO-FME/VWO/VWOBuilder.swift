@@ -27,7 +27,7 @@ class VWOBuilder {
 
     init(options: VWOInitOptions?) {
         self.options = options
-        UsageStatsUtil.setUsageStats(options: options)
+        UsageStatsUtil.shared.setUsageStats(options: options)
     }
 
     // Set VWOClient instance
@@ -108,7 +108,11 @@ class VWOBuilder {
         if options == nil {
             return self
         }
-        settingFileManager = SettingsManager(options: options!)
+        
+        // Use thread-safe method to prevent race conditions
+        // This will return immediately if instance exists, or create one if needed
+        settingFileManager = SettingsManager.createInstance(options: options!)
+        
         return self
     }
 
@@ -119,9 +123,9 @@ class VWOBuilder {
     func setLogger() -> VWOBuilder {
         
         if let options = options, !options.logger.isEmpty {
-            _ = LoggerService(config: options.logger, logLevel: options.logLevel, logTransport: options.logTransport)
+            _ = LoggerService.createInstance(config: options.logger, logLevel: options.logLevel, logTransport: options.logTransport)
         } else {
-            _ = LoggerService(config: [:], logLevel: .error, logTransport: nil)
+            _ = LoggerService.createInstance(config: [:], logLevel: .error, logTransport: nil)
         }
         LoggerService.log(level: .debug, key: "SERVICE_INITIALIZED", details: ["service": "Logger"])
         return self
@@ -170,7 +174,8 @@ class VWOBuilder {
 
     @objc private func checkSettingUpdates() {
         let pollingQueue = DispatchQueue(label: "com.vwo.fme.polling", qos: .background)
-        pollingQueue.async { [unowned self] in
+        pollingQueue.async { [weak self] in
+            guard let self = self else { return }
             guard let settingMangager = self.settingFileManager else { return }
             settingMangager.getSettings(forceFetch: true) { settingObj in
                 

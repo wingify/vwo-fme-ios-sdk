@@ -412,7 +412,7 @@ class NetworkUtil {
             if result.errorMessage != nil {
                 LoggerService.log(level: .debug, key: "NETWORK_CALL_FAILED", details: ["method": "POST", "err": "\(result.errorMessage ?? "")"])
             } else {
-                UsageStatsUtil.saveUsageStatsInStorage()
+                UsageStatsUtil.shared.saveUsageStatsInStorage()
             }
         }
     }
@@ -443,8 +443,8 @@ class NetworkUtil {
         properties.d?.event?.props?.product = Constants.PRODUCT_NAME
         
        
-        let stats = UsageStatsUtil.getUsageStatsDict()
-        let cleanedStats = UsageStatsUtil.removeFalseValues(dict: stats)
+        let stats = UsageStatsUtil.shared.getUsageStatsDict()
+        let cleanedStats = UsageStatsUtil.shared.removeFalseValues(dict: stats)
         if !cleanedStats.isEmpty {
             properties.d?.event?.props?.vwoMeta = cleanedStats
         }

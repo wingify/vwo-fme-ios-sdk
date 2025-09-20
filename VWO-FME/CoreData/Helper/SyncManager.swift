@@ -36,6 +36,7 @@ class SyncManager {
     private let backgroundQueue = DispatchQueue(label: "com.vwo.fme.timer.syncManager", qos: .background, attributes: .concurrent)
     private let coreDataStack = CoreDataStack.shared
     private let eventManager = EventDataManager.shared
+    private let initLock = NSLock()
     
     var isOngoing: Bool = false
 
@@ -49,6 +50,9 @@ class SyncManager {
      *   - timeInterval: Time interval for periodic syncs in milliseconds.
      */
     func initialize(minBatchSize: Int?, timeInterval: Int64?) {
+        initLock.lock()
+        defer { initLock.unlock() }
+        
         self.isOnlineBatchingAllowed = self.checkOnlineBatchingAllowed(batchSize: minBatchSize, batchUploadInterval: timeInterval)
         self.minimumEventCount = minBatchSize ?? 0
         self.timeInterval = timeInterval ?? (isOnlineBatchingAllowed ? Constants.DEFAULT_BATCH_UPLOAD_INTERVAL : 0)
@@ -61,9 +65,24 @@ class SyncManager {
      * Starts the periodic syncing of events.
      */
     func startSyncing() {
+        // Stop any existing timer first
+        stopSyncing()
+        
+        // Validate timeInterval before proceeding
+        guard self.timeInterval > 0 else {
+            print("SyncManager: Invalid timeInterval (\(self.timeInterval)), skipping startSyncing")
+            return
+        }
+        
         let intervalInMilliseconds = self.timeInterval
         // Convert milliseconds to seconds
         let timeIntervalSeconds = TimeInterval(intervalInMilliseconds) / 1000.0
+        
+        // Additional validation for timeIntervalSeconds
+        guard timeIntervalSeconds > 0 else {
+            print("SyncManager: Invalid timeIntervalSeconds (\(timeIntervalSeconds)), skipping startSyncing")
+            return
+        }
                 
         self.timerNextFireDate = Date().addingTimeInterval(timeIntervalSeconds)
         self.dispatchTimer = DispatchSource.makeTimerSource(queue: self.backgroundQueue)

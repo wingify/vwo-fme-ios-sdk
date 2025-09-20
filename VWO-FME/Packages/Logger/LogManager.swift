@@ -25,8 +25,7 @@ import os
  */
 
 internal class LogManager {
-    
-    static var instance: LogManager?
+
     
     let dateTimeForm: DateFormatter
     var level: LogLevelEnum
@@ -35,6 +34,56 @@ internal class LogManager {
     private let logTransport: LogTransport?
     private var sentMessages: Set<String> = []
 
+    
+    // Thread-safe singleton implementation
+    private static var _instance: LogManager?
+    private static let lock = NSLock()
+    
+    static var instance: LogManager? {
+        get {
+            return _instance
+        }
+        set {
+            _instance = newValue
+        }
+    }
+    
+    /// Creates or returns the existing singleton instance of `LogManager`.
+    ///
+    /// This is a **thread-safe** method used to initialize or retrieve a shared instance of the `LogManager`
+    /// responsible for handling SDK logging. It ensures that only one instance is created throughout
+    /// the application's lifecycle, even in multi-threaded environments.
+    ///
+    /// - Parameters:
+    ///   - config: A dictionary containing configuration settings required for logger initialization.
+    ///   - logLevel: The logging level to be used (e.g., `.debug`, `.info`, `.error`).
+    ///   - logTransport: An optional transport handler for sending logs to external systems (e.g., file, network).
+    ///
+    /// - Returns: A shared `LogManager` instance configured with the provided settings.
+    ///
+    /// - Note:
+    ///   This method uses double-checked locking to optimize performance by avoiding unnecessary locking
+    ///   after the instance has been initialized.
+    static func createInstance(config: [String: Any], logLevel: LogLevelEnum, logTransport: LogTransport?) -> LogManager {
+        // Quick check without lock first
+        if let existing = _instance {
+            return existing
+        }
+        
+        // Only lock when we need to create
+        lock.lock()
+        defer { lock.unlock() }
+        
+        // Check again after acquiring lock
+        if let existing = _instance {
+            return existing
+        }
+        
+        // Create and store the instance
+        _instance = LogManager(config: config, logLevel: logLevel, logTransport: logTransport)
+        return _instance!
+    }
+    
     /**
      * Initializes a new instance of LogManager.
      *
