@@ -24,7 +24,7 @@ class UsageStatsTests: XCTestCase {
     override func setUp() {
         super.setUp()
         storageService = StorageService()
-        UsageStatsUtil.emptyUsageStats()
+        UsageStatsUtil.shared.emptyUsageStats()
     }
     
     override func tearDown() {
@@ -45,8 +45,8 @@ class UsageStatsTests: XCTestCase {
                                      logTransport: nil,
                                      vwoMeta: ["_ea": 1])
         
-        UsageStatsUtil.setUsageStats(options: options)
-        let statsDict = UsageStatsUtil.getUsageStatsDict()
+        UsageStatsUtil.shared.setUsageStats(options: options)
+        let statsDict = UsageStatsUtil.shared.getUsageStatsDict()
         
         
         XCTAssertEqual(statsDict[UsageStatsKeys.logLevel] as? Int, 1)
@@ -72,14 +72,14 @@ class UsageStatsTests: XCTestCase {
                                      logTransport: nil,
                                      vwoMeta: ["_ea": 1])
         
-        UsageStatsUtil.setUsageStats(options: options)
-        UsageStatsUtil.saveUsageStatsInStorage()
-        XCTAssertTrue(UsageStatsUtil.canSendStats())
+        UsageStatsUtil.shared.setUsageStats(options: options)
+        UsageStatsUtil.shared.saveUsageStatsInStorage()
+        XCTAssertTrue(UsageStatsUtil.shared.canSendStats())
     }
     
     func testRemoveFalseValues() {
         let dict = ["key1": 0, "key2": 1, "key3": 2]
-        let filteredDict = UsageStatsUtil.removeFalseValues(dict: dict)
+        let filteredDict = UsageStatsUtil.shared.removeFalseValues(dict: dict)
         XCTAssertNil(filteredDict["key1"])
         XCTAssertEqual(filteredDict["key2"] as? Int, 1)
         XCTAssertEqual(filteredDict["key3"] as? Int, 2)
@@ -96,9 +96,9 @@ class UsageStatsTests: XCTestCase {
                                      batchUploadTimeInterval: nil,
                                      logTransport: nil,
                                      vwoMeta: ["_ea": 1])
-        UsageStatsUtil.setUsageStats(options: options)
-        UsageStatsUtil.emptyUsageStats()
-        let statsDict = UsageStatsUtil.getUsageStatsDict()
+        UsageStatsUtil.shared.setUsageStats(options: options)
+        UsageStatsUtil.shared.emptyUsageStats()
+        let statsDict = UsageStatsUtil.shared.getUsageStatsDict()
         XCTAssertTrue(statsDict.isEmpty)
     }
     
@@ -117,7 +117,7 @@ class UsageStatsTests: XCTestCase {
             "key4": ["subKey1": 1, "subKey2": "subValue"]
         ]
         
-        XCTAssertTrue(UsageStatsUtil.areDictionariesEqual(dict1, dict2))
+        XCTAssertTrue(UsageStatsUtil.shared.areDictionariesEqual(dict1, dict2))
     }
     
     func testAreDictionariesEqualWhenDictionariesAreNotEqualShouldReturnFalse() {
@@ -133,7 +133,7 @@ class UsageStatsTests: XCTestCase {
             "key3": true
         ]
         
-        XCTAssertFalse(UsageStatsUtil.areDictionariesEqual(dict1, dict2))
+        XCTAssertFalse(UsageStatsUtil.shared.areDictionariesEqual(dict1, dict2))
     }
     
     func testAreDictionariesEqualWhenDictionariesHaveDifferentKeysShouldReturnFalse() {
@@ -147,7 +147,7 @@ class UsageStatsTests: XCTestCase {
             "key3": "value"
         ]
         
-        XCTAssertFalse(UsageStatsUtil.areDictionariesEqual(dict1, dict2))
+        XCTAssertFalse(UsageStatsUtil.shared.areDictionariesEqual(dict1, dict2))
     }
     
     func testAreDictionariesEqualWhenNestedDictionariesAreEqualShouldReturnTrue() {
@@ -159,7 +159,7 @@ class UsageStatsTests: XCTestCase {
             "key1": ["subKey1": 1, "subKey2": "subValue"]
         ]
         
-        XCTAssertTrue(UsageStatsUtil.areDictionariesEqual(dict1, dict2))
+        XCTAssertTrue(UsageStatsUtil.shared.areDictionariesEqual(dict1, dict2))
     }
     
     func testAreDictionariesEqualWhenNestedDictionariesAreNotEqualShouldReturnFalse() {
@@ -171,6 +171,6 @@ class UsageStatsTests: XCTestCase {
             "key1": ["subKey1": 1, "subKey2": "differentSubValue"]
         ]
         
-        XCTAssertFalse(UsageStatsUtil.areDictionariesEqual(dict1, dict2))
+        XCTAssertFalse(UsageStatsUtil.shared.areDictionariesEqual(dict1, dict2))
     }
 }

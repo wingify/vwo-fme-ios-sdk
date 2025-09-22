@@ -18,22 +18,101 @@ import Foundation
 
 class LoggerService {
     
-    static var debugMessages: [String: String] = [:]
-    static var errorMessages: [String: String] = [:]
-    static var infoMessages: [String: String] = [:]
-    static var warningMessages: [String: String] = [:]
-    static var traceMessages: [String: String] = [:]
+    // Thread-safe static message dictionaries
+    private static let messageLock = NSLock()
+    private static var _debugMessages: [String: String] = [:]
+    private static var _errorMessages: [String: String] = [:]
+    private static var _infoMessages: [String: String] = [:]
+    private static var _warningMessages: [String: String] = [:]
+    private static var _traceMessages: [String: String] = [:]
+    
+    static var debugMessages: [String: String] {
+        get {
+            messageLock.lock()
+            defer { messageLock.unlock() }
+            return _debugMessages
+        }
+        set {
+            messageLock.lock()
+            defer { messageLock.unlock() }
+            _debugMessages = newValue
+        }
+    }
+    
+    static var errorMessages: [String: String] {
+        get {
+            messageLock.lock()
+            defer { messageLock.unlock() }
+            return _errorMessages
+        }
+        set {
+            messageLock.lock()
+            defer { messageLock.unlock() }
+            _errorMessages = newValue
+        }
+    }
+    
+    static var infoMessages: [String: String] {
+        get {
+            messageLock.lock()
+            defer { messageLock.unlock() }
+            return _infoMessages
+        }
+        set {
+            messageLock.lock()
+            defer { messageLock.unlock() }
+            _infoMessages = newValue
+        }
+    }
+    
+    static var warningMessages: [String: String] {
+        get {
+            messageLock.lock()
+            defer { messageLock.unlock() }
+            return _warningMessages
+        }
+        set {
+            messageLock.lock()
+            defer { messageLock.unlock() }
+            _warningMessages = newValue
+        }
+    }
+    
+    static var traceMessages: [String: String] {
+        get {
+            messageLock.lock()
+            defer { messageLock.unlock() }
+            return _traceMessages
+        }
+        set {
+            messageLock.lock()
+            defer { messageLock.unlock() }
+            _traceMessages = newValue
+        }
+    }
     
     init(config: [String: Any], logLevel: LogLevelEnum, logTransport: LogTransport?) {
-        // Initialize the LogManager
-        _ = LogManager(config: config, logLevel: logLevel, logTransport: logTransport)
+        // Initialize the LogManager using thread-safe method
+        _ = LogManager.createInstance(config: config, logLevel: logLevel, logTransport: logTransport)
         
-        // Read the log files
-        LoggerService.debugMessages = readLogFiles(fileName: "debug-messages.json")
-        LoggerService.infoMessages = readLogFiles(fileName: "info-messages.json")
-        LoggerService.errorMessages = readLogFiles(fileName: "error-messages.json")
-        LoggerService.warningMessages = readLogFiles(fileName: "warn-messages.json")
-        LoggerService.traceMessages = readLogFiles(fileName: "trace-messages.json")
+        // Read the log files (only once) - thread-safe
+        LoggerService.messageLock.lock()
+        defer { LoggerService.messageLock.unlock() }
+        
+        if LoggerService._debugMessages.isEmpty {
+            LoggerService._debugMessages = readLogFiles(fileName: "debug-messages.json")
+            LoggerService._infoMessages = readLogFiles(fileName: "info-messages.json")
+            LoggerService._errorMessages = readLogFiles(fileName: "error-messages.json")
+            LoggerService._warningMessages = readLogFiles(fileName: "warn-messages.json")
+            LoggerService._traceMessages = readLogFiles(fileName: "trace-messages.json")
+        }
+    }
+    
+    /**
+     * Thread-safe method to create LoggerService instance
+     */
+    static func createInstance(config: [String: Any], logLevel: LogLevelEnum, logTransport: LogTransport?) -> LoggerService {
+        return LoggerService(config: config, logLevel: logLevel, logTransport: logTransport)
     }
     
     /**

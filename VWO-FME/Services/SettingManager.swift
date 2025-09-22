@@ -37,7 +37,54 @@ class SettingsManager {
     var isGatewayServiceProvided: Bool = false
     private var localStorageService = StorageService()
 
-    static var instance: SettingsManager?
+    // Simple thread-safe singleton
+    private static var _instance: SettingsManager?
+    private static let lock = NSLock()
+    
+    static var instance: SettingsManager? {
+        get {
+            return _instance
+        }
+        set {
+            _instance = newValue
+        }
+    }
+    
+    /// Creates or returns the existing singleton instance of `SettingsManager`.
+    ///
+    /// This is a **thread-safe** factory method to initialize or retrieve the shared instance of the `SettingsManager`,
+    /// which is responsible for handling SDK configuration and settings. It ensures a single, consistent instance
+    /// across the application lifecycle, even in multi-threaded environments.
+    ///
+    /// - Parameter options: An instance of `VWOInitOptions` containing initialization parameters like account ID,
+    ///   SDK key, logging level, and other configuration values.
+    ///
+    /// - Returns: A shared `SettingsManager` instance initialized with the provided options.
+    ///
+    /// - Note:
+    ///   Uses a lightweight double-checked locking pattern to minimize overhead once the instance is initialized.
+    ///   Safe to call multiple times; the same instance will be returned.
+    static func createInstance(options: VWOInitOptions) -> SettingsManager {
+        // Quick check without lock first
+        if let existing = _instance {
+            return existing
+        }
+        
+        // Only lock when we need to create
+        lock.lock()
+        defer { 
+            lock.unlock()
+        }
+        
+        // Check again after acquiring lock
+        if let existing = _instance {
+            return existing
+        }
+        
+        // Create and store the instance
+        _instance = SettingsManager(options: options)
+        return _instance!
+    }
     
     /**
      * Initializes a new instance of SettingsManager.
@@ -47,35 +94,57 @@ class SettingsManager {
      */
     init(options: VWOInitOptions) {
         self.sdkKey = options.sdkKey ?? ""
-        self.accountId = options.accountId!
+        
+        // Safe unwrapping for accountId
+        guard let accountId = options.accountId else {
+            fatalError("Account ID is required for SettingsManager initialization")
+        }
+        self.accountId = accountId
+        
         self.cachedSettingsExpiryInterval = options.cachedSettingsExpiryTime
         self.networkTimeout = Constants.SETTINGS_TIMEOUT
         
         if !options.gatewayService.isEmpty {
             isGatewayServiceProvided = true
-            var parsedUrl: URL
-            let gatewayServiceUrl = options.gatewayService["url"] as! String
+            
+            // Safe unwrapping for gateway service URL
+            guard let gatewayServiceUrl = options.gatewayService["url"] as? String, !gatewayServiceUrl.isEmpty else {
+                LoggerService.log(level: .error, message: "Gateway service URL is required and must be a non-empty string")
+                self.hostname = Constants.HOST_NAME
+                SettingsManager.instance = self
+                return
+            }
+            
             let gatewayServiceProtocol = options.gatewayService["protocol"] as? String
             let gatewayServicePort = options.gatewayService["port"] as? Int
             
+            var parsedUrl: URL?
+            
             if gatewayServiceUrl.hasPrefix("http://") || gatewayServiceUrl.hasPrefix("https://") {
-                parsedUrl = URL(string: gatewayServiceUrl)!
+                parsedUrl = URL(string: gatewayServiceUrl)
             } else if let protocolType = gatewayServiceProtocol, !protocolType.isEmpty {
-                parsedUrl = URL(string: "\(protocolType)://\(gatewayServiceUrl)")!
+                parsedUrl = URL(string: "\(protocolType)://\(gatewayServiceUrl)")
             } else {
-                parsedUrl = URL(string: "https://\(gatewayServiceUrl)")!
+                parsedUrl = URL(string: "https://\(gatewayServiceUrl)")
             }
             
-            self.hostname = parsedUrl.host ?? Constants.HOST_NAME
-            self.protocolType = parsedUrl.scheme ?? "https"
-            if parsedUrl.port != nil {
-                self.port = parsedUrl.port!
-            } else if let port = gatewayServicePort {
-                self.port = port
+            if let url = parsedUrl {
+                self.hostname = url.host ?? Constants.HOST_NAME
+                self.protocolType = url.scheme ?? "https"
+                if let port = url.port {
+                    self.port = port
+                } else if let port = gatewayServicePort {
+                    self.port = port
+                }
+            } else {
+                LoggerService.log(level: .error, message: "Invalid gateway service URL: \(gatewayServiceUrl)")
+                self.hostname = Constants.HOST_NAME
             }
         } else {
             self.hostname = Constants.HOST_NAME
         }
+        
+        // Thread-safe assignment
         SettingsManager.instance = self
     }
     

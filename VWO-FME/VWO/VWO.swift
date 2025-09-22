@@ -26,14 +26,35 @@ import Foundation
     private static var vwoClient: VWOClient? = nil
     private static let shared = VWOFme()
     @objc public static var isInitialized: Bool = false
+    private static var isInitializing: Bool = false
 
     private override init() {}
     
     // Initializes the VWO instance
     @available(macOS 10.14, *)
     public static func initialize(options: VWOInitOptions, completion: @escaping VWOInitCompletionHandler) {
+        // Check if already initialized and return existing client
+        if isInitialized, vwoClient != nil {
+            DispatchQueue.main.async {
+                completion(.success(VWOInitSuccess.allreadyInitialized.rawValue))
+            }
+            return
+        }
+        
+        // Check if initialization is already in progress
+        if isInitializing {
+            DispatchQueue.main.async {
+                completion(.success(VWOInitSuccess.initializationInProgress.rawValue))
+            }
+            return
+        }
+        
+        // Set initialization flag
+        isInitializing = true
+        
         DispatchQueue.global(qos: .background).async {
             guard let sdkKey = options.sdkKey, !sdkKey.isEmpty else {
+                isInitializing = false
                 DispatchQueue.main.async {
                     completion(.failure(VWOInitError.missingSDKKey))
                 }
@@ -41,6 +62,7 @@ import Foundation
             }
             
             guard let _ = options.accountId else {
+                isInitializing = false
                 DispatchQueue.main.async {
                     completion(.failure(VWOInitError.missingAccountId))
                 }
@@ -59,6 +81,7 @@ import Foundation
                 .getSettings(forceFetch: false) { result in
                     
                     guard let settingObj = result else {
+                        isInitializing = false
                         DispatchQueue.main.async {
                             completion(.failure(VWOInitError.initializationFailed))
                         }
@@ -71,6 +94,7 @@ import Foundation
                     vwoBuilder.setVWOClient(self.vwoClient!)
                     
                     guard self.vwoClient != nil else {
+                        isInitializing = false
                         DispatchQueue.main.async {
                             completion(.failure(VWOInitError.initializationFailed))
                         }
@@ -87,6 +111,7 @@ import Foundation
                         sendSdkInitEvent(sdkInitTime: sdkInitTime)
                     }
                     sendUsageStats()
+                    isInitializing = false
                     DispatchQueue.main.async {
                         completion(.success(VWOInitSuccess.initializationSuccess.rawValue))
                     }
@@ -111,11 +136,13 @@ import Foundation
      */
     
      public static func sendSdkInitEvent(sdkInitTime: Int64) {
-        let wasInitializedEarlier =  VWOFme.vwoClient?.processedSettings?.sdkMetaInfo?.wasInitializedEarlier
-        
-        if (VWOFme.vwoClient?.isSettingsValid == true && (wasInitializedEarlier == false || wasInitializedEarlier == nil)) {
-            EventsUtils().sendSdkInitEvent(settingsFetchTime: VWOFme.vwoClient?.settingsFetchTime, sdkInitTime: sdkInitTime)
-        }
+         if isInitialized{
+             let wasInitializedEarlier =  VWOFme.vwoClient?.processedSettings?.sdkMetaInfo?.wasInitializedEarlier
+             
+             if (VWOFme.vwoClient?.isSettingsValid == true && (wasInitializedEarlier == false || wasInitializedEarlier == nil)) {
+                 EventsUtils().sendSdkInitEvent(settingsFetchTime: VWOFme.vwoClient?.settingsFetchTime, sdkInitTime: sdkInitTime)
+             }
+         }
     }
     
     // Updates the settings
