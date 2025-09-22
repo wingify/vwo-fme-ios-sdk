@@ -23,8 +23,8 @@ import Foundation
  */
 class RequestQueryParams {
     private let en: String
-    private let a: String
-    private let env: String
+    var a: String
+    var env: String?
     private let visitorUa: String
     private let visitorIp: String
     private let url: String
@@ -32,6 +32,9 @@ class RequestQueryParams {
     private let eTime: Int64
     private let random: Double
     private let p: String = "FS"
+    
+    private let sv: String
+    private let sn: String
     
     /**
      * A dictionary containing the query parameters.
@@ -48,6 +51,9 @@ class RequestQueryParams {
         path["visitor_ua"] = visitorUa
         path["visitor_ip"] = visitorIp
         path["url"] = url
+        path["sv"] = SDKMetaUtil.version
+        path["sn"] = SDKMetaUtil.name
+        
         return path
     }()
     
@@ -72,5 +78,8 @@ class RequestQueryParams {
         
         self.eTime = Date().currentTimeMillis()
         self.random = Double.random(in: 0...1)
+        
+        self.sv = SDKMetaUtil.version
+        self.sn = SDKMetaUtil.name
     }
 }

@@ -56,7 +56,8 @@ class ImpressionUtil {
             campaignId: campaignId,
             variationId: variationId,
             visitorUserAgent: context.userAgent,
-            ipAddress: context.ipAddress
+            ipAddress: context.ipAddress,
+            context: context
         )
         
         // Send the constructed properties and payload as a POST request

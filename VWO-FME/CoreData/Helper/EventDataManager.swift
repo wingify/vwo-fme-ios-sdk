@@ -86,7 +86,7 @@ class EventDataManager {
                 LoggerService.log(level: .debug, key: "BATCH_UPLOAD_ERROR", details: ["err": "\(result.errorMessage ?? "")"])
                 completion(false, events)
             } else {
-                UsageStatsUtil.saveUsageStatsInStorage()
+                UsageStatsUtil.shared.saveUsageStatsInStorage()
                 completion(true, events)
             }
         }

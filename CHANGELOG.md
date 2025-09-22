@@ -5,6 +5,56 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+
+## [1.11.1] - 2025-09-21
+
+### Fixed
+
+- Added support for multiple VWO FME initialization with proper concurrency handling to prevent crashes.
+
+## [1.11.0] - 2025-09-10
+
+### Added
+
+-  Smarter Segmentation: Attribute Support for Pre/Post Custom Variables
+
+## [1.10.0] - 2025-09-01
+
+### Added
+
+- Sends usage statistics to VWO servers automatically during SDK initialization
+
+- Added compatibility with Objective-C projects.
+
+
+## [1.9.1] - 2025-08-22
+
+### Added
+
+- Update UserAgent to support Device Type.
+
+
+## [1.9.0] - 2025-08-06
+
+### Added
+
+- Added support for sending a one-time SDK initialization event to VWO server as part of health-check milestones.
+
+
+## [1.8.2] - 2025-07-25
+
+### Added
+
+- Send the SDK name and version in the events and batching call to VWO as query parameters.
+
+
+## [1.8.1] - 2025-07-24
+
+### Added
+
+- Added the SDK name and version in the settings call to VWO as query parameters.
+
+
 ## [1.8.0] - 2025-07-16
 
 ### Added

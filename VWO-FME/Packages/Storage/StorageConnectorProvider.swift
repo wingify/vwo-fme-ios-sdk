@@ -73,9 +73,9 @@ class StorageConnectorProvider{
     static func configure(with storageConnector: VWOStorageConnector?) {
         shared = StorageConnectorProvider(storageConnector: storageConnector)
         if storageConnector != nil {
-            print("StorageService configured with a custom storage connector.")
+            LoggerService.log(level:.debug, message: "StorageService configured with a custom storage connector.")
         } else {
-            print("StorageService configured with default UserDefaults.")
+            LoggerService.log(level:.debug, message: "StorageService configured with default UserDefaults.")
         }
     }
     

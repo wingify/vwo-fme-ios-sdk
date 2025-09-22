@@ -21,7 +21,7 @@ import Foundation
  *
  * This class serves as a container for various settings and configurations used by the VWO SDK.
  */
-struct Settings: Codable, Equatable {
+public struct Settings: Codable, Equatable {
     var features: [Feature] = []
     var accountId: Int?
     var groups: [String: Groups]?
@@ -32,6 +32,8 @@ struct Settings: Codable, Equatable {
     var sdkKey: String?
     var version: Int?
     var collectionPrefix: String?
+    var sdkMetaInfo:  SdkMetaInfo?
+    var usageStatsAccountId : Int?
     
     enum CodingKeys: String, CodingKey {
         case features
@@ -44,9 +46,11 @@ struct Settings: Codable, Equatable {
         case sdkKey
         case version
         case collectionPrefix
+        case sdkMetaInfo
+        case usageStatsAccountId
     }
     
-    init(from decoder: Decoder) throws {
+    public init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
         if let featuresArray = try? container.decodeIfPresent([Feature].self, forKey: .features) {
             features = featuresArray
@@ -66,5 +70,7 @@ struct Settings: Codable, Equatable {
         sdkKey = try container.decodeIfPresent(String.self, forKey: .sdkKey)
         version = try container.decodeIfPresent(Int.self, forKey: .version)
         collectionPrefix = try container.decodeIfPresent(String.self, forKey: .collectionPrefix)
+        sdkMetaInfo = try container.decodeIfPresent(SdkMetaInfo.self, forKey: .sdkMetaInfo)
+        usageStatsAccountId = try container.decodeIfPresent(Int.self, forKey: .usageStatsAccountId)
     }
 }

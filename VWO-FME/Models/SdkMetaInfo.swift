@@ -16,17 +16,6 @@
 
 import Foundation
 
-class EventBatchQueryParams {
-    
-    let queryParams: [String: String]
-    
-    init(i: String, env: String, a: String) {
-        self.queryParams = [
-            "i": i,
-            "env": env,
-            "a": a,
-            "sn": SDKMetaUtil.name,
-            "sv": SDKMetaUtil.version
-        ]
-    }
+struct SdkMetaInfo: Codable, Equatable  {
+    var wasInitializedEarlier = false
 }

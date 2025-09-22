@@ -21,9 +21,13 @@
 /* End PBXAggregateTarget section */
 
 /* Begin PBXBuildFile section */
+		BA5DD5E52E321FED00D3A127 /* SdkMetaInfo.swift in Sources */ = {isa = PBXBuildFile; fileRef = BA5DD5E42E321FDF00D3A127 /* SdkMetaInfo.swift */; };
+		BA5DD5E72E3225DC00D3A127 /* EventsUtils.swift in Sources */ = {isa = PBXBuildFile; fileRef = BA5DD5E62E3225D200D3A127 /* EventsUtils.swift */; };
+		BA6CF04F2E431F9E00FE5740 /* DeviceUtil.swift in Sources */ = {isa = PBXBuildFile; fileRef = BA6CF04D2E431E8700FE5740 /* DeviceUtil.swift */; };
 		BAD427462E12763800C5C011 /* VWOStorageConnector.swift in Sources */ = {isa = PBXBuildFile; fileRef = BAD427452E12763800C5C011 /* VWOStorageConnector.swift */; };
 		BAD427492E12766100C5C011 /* StorageConnectorProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = BAD427472E12766100C5C011 /* StorageConnectorProvider.swift */; };
-		BAD4274B2E1277CD00C5C011 /* CoreDataStorageConnector.swift in Sources */ = {isa = PBXBuildFile; fileRef = BAD4274A2E1277CD00C5C011 /* CoreDataStorageConnector.swift */; };
+		BAE6CFE72E4384880041118A /* SegmentOperandEvaluatorTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = BAE6CFE62E4384880041118A /* SegmentOperandEvaluatorTests.swift */; };
+		BAE6CFE92E4396360041118A /* DeviceUtilTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = BAE6CFE82E4396360041118A /* DeviceUtilTests.swift */; };
 		EB06C7842C90229B00A25E07 /* VWO_FME.h in Headers */ = {isa = PBXBuildFile; fileRef = EB06C7832C90229B00A25E07 /* VWO_FME.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		EB06C7902C90234F00A25E07 /* info-messages.json in Resources */ = {isa = PBXBuildFile; fileRef = EB06C78F2C90233600A25E07 /* info-messages.json */; };
 		EB06C7912C90234F00A25E07 /* warn-messages.json in Resources */ = {isa = PBXBuildFile; fileRef = EB06C78C2C90233600A25E07 /* warn-messages.json */; };
@@ -99,13 +103,6 @@
 		EB06C8A12C90274C00A25E07 /* RequestQueryParams.swift in Sources */ = {isa = PBXBuildFile; fileRef = EB06C7A92C9023DA00A25E07 /* RequestQueryParams.swift */; };
 		EB06C8A22C90274C00A25E07 /* SettingsQueryParams.swift in Sources */ = {isa = PBXBuildFile; fileRef = EB06C7AD2C9023DA00A25E07 /* SettingsQueryParams.swift */; };
 		EB06C8A32C90274C00A25E07 /* Event.swift in Sources */ = {isa = PBXBuildFile; fileRef = EB06C7AA2C9023DA00A25E07 /* Event.swift */; };
-		EB06C8AB2C9028B100A25E07 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = EB06C8AA2C9028B100A25E07 /* AppDelegate.swift */; };
-		EB06C8AD2C9028B100A25E07 /* SceneDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = EB06C8AC2C9028B100A25E07 /* SceneDelegate.swift */; };
-		EB06C8AF2C9028B100A25E07 /* ViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = EB06C8AE2C9028B100A25E07 /* ViewController.swift */; };
-		EB06C8B22C9028B100A25E07 /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = EB06C8B02C9028B100A25E07 /* Main.storyboard */; };
-		EB06C8B52C9028B100A25E07 /* VWO_FME_Demo.xcdatamodeld in Sources */ = {isa = PBXBuildFile; fileRef = EB06C8B32C9028B100A25E07 /* VWO_FME_Demo.xcdatamodeld */; };
-		EB06C8B72C9028B300A25E07 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = EB06C8B62C9028B300A25E07 /* Assets.xcassets */; };
-		EB06C8BA2C9028B300A25E07 /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = EB06C8B82C9028B300A25E07 /* LaunchScreen.storyboard */; };
 		EB22C9DA2C946A8C00381E34 /* LocalStorageService.swift in Sources */ = {isa = PBXBuildFile; fileRef = EB22C9D92C946A8C00381E34 /* LocalStorageService.swift */; };
 		EB373E6A2D9D2B51005713D1 /* VWO_FMETests.swift in Sources */ = {isa = PBXBuildFile; fileRef = EB373E692D9D2B51005713D1 /* VWO_FMETests.swift */; };
 		EB373E6B2D9D2B51005713D1 /* VWO_FME.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = EB06C7802C90229B00A25E07 /* VWO_FME.framework */; };
@@ -135,8 +132,6 @@
 		EB373EC02DAF82A2005713D1 /* EventDataManagerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = EB373EBF2DAF82A2005713D1 /* EventDataManagerTests.swift */; };
 		EB373EC32DAFA8A6005713D1 /* DictionaryTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = EB373EC22DAFA8A6005713D1 /* DictionaryTests.swift */; };
 		EB373EC72DB92A13005713D1 /* UsageStatsUtil.swift in Sources */ = {isa = PBXBuildFile; fileRef = EB373EC62DB92A13005713D1 /* UsageStatsUtil.swift */; };
-		EB50927D2C902C5E00A8779A /* VWO_FME.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = EB06C7802C90229B00A25E07 /* VWO_FME.framework */; };
-		EB50927E2C902C5E00A8779A /* VWO_FME.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = EB06C7802C90229B00A25E07 /* VWO_FME.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
 		EB544EFD2DD5DD20006AA817 /* LogManagerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = EB544EFC2DD5DD20006AA817 /* LogManagerTests.swift */; };
 		EB544F012DD5F788006AA817 /* SegmentOperatorValueEnumTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = EB544F002DD5F788006AA817 /* SegmentOperatorValueEnumTests.swift */; };
 		EB544F042DD5FA08006AA817 /* FeatureTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = EB544F032DD5FA08006AA817 /* FeatureTests.swift */; };
@@ -178,24 +173,14 @@
 		};
 /* End PBXContainerItemProxy section */
 
-/* Begin PBXCopyFilesBuildPhase section */
-		EB50927F2C902C5E00A8779A /* Embed Frameworks */ = {
-			isa = PBXCopyFilesBuildPhase;
-			buildActionMask = 2147483647;
-			dstPath = "";
-			dstSubfolderSpec = 10;
-			files = (
-				EB50927E2C902C5E00A8779A /* VWO_FME.framework in Embed Frameworks */,
-			);
-			name = "Embed Frameworks";
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-/* End PBXCopyFilesBuildPhase section */
-
 /* Begin PBXFileReference section */
+		BA5DD5E42E321FDF00D3A127 /* SdkMetaInfo.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SdkMetaInfo.swift; sourceTree = "<group>"; };
+		BA5DD5E62E3225D200D3A127 /* EventsUtils.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EventsUtils.swift; sourceTree = "<group>"; };
+		BA6CF04D2E431E8700FE5740 /* DeviceUtil.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeviceUtil.swift; sourceTree = "<group>"; };
 		BAD427452E12763800C5C011 /* VWOStorageConnector.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VWOStorageConnector.swift; sourceTree = "<group>"; };
 		BAD427472E12766100C5C011 /* StorageConnectorProvider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StorageConnectorProvider.swift; sourceTree = "<group>"; };
-		BAD4274A2E1277CD00C5C011 /* CoreDataStorageConnector.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CoreDataStorageConnector.swift; sourceTree = "<group>"; };
+		BAE6CFE62E4384880041118A /* SegmentOperandEvaluatorTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SegmentOperandEvaluatorTests.swift; sourceTree = "<group>"; };
+		BAE6CFE82E4396360041118A /* DeviceUtilTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeviceUtilTests.swift; sourceTree = "<group>"; };
 		EB06C7802C90229B00A25E07 /* VWO_FME.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = VWO_FME.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		EB06C7832C90229B00A25E07 /* VWO_FME.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = VWO_FME.h; sourceTree = "<group>"; };
 		EB06C78B2C90233600A25E07 /* trace-messages.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = "trace-messages.json"; sourceTree = "<group>"; };
@@ -272,15 +257,6 @@
 		EB06C8932C9026F100A25E07 /* SegmentEvaluator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SegmentEvaluator.swift; sourceTree = "<group>"; };
 		EB06C8942C9026F100A25E07 /* SegmentOperandEvaluator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SegmentOperandEvaluator.swift; sourceTree = "<group>"; };
 		EB06C8972C9026F800A25E07 /* SegmentUtil.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SegmentUtil.swift; sourceTree = "<group>"; };
-		EB06C8A82C9028B100A25E07 /* VWO FME Demo.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "VWO FME Demo.app"; sourceTree = BUILT_PRODUCTS_DIR; };
-		EB06C8AA2C9028B100A25E07 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
-		EB06C8AC2C9028B100A25E07 /* SceneDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SceneDelegate.swift; sourceTree = "<group>"; };
-		EB06C8AE2C9028B100A25E07 /* ViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ViewController.swift; sourceTree = "<group>"; };
-		EB06C8B12C9028B100A25E07 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/Main.storyboard; sourceTree = "<group>"; };
-		EB06C8B42C9028B100A25E07 /* VWO_FME_Demo.xcdatamodel */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcdatamodel; path = VWO_FME_Demo.xcdatamodel; sourceTree = "<group>"; };
-		EB06C8B62C9028B300A25E07 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
-		EB06C8B92C9028B300A25E07 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/LaunchScreen.storyboard; sourceTree = "<group>"; };
-		EB06C8BB2C9028B300A25E07 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		EB22C9D92C946A8C00381E34 /* LocalStorageService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocalStorageService.swift; sourceTree = "<group>"; };
 		EB373E672D9D2B51005713D1 /* VWO-FMETests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "VWO-FMETests.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
 		EB373E692D9D2B51005713D1 /* VWO_FMETests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VWO_FMETests.swift; sourceTree = "<group>"; };
@@ -349,14 +325,6 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
-		EB06C8A52C9028B100A25E07 /* Frameworks */ = {
-			isa = PBXFrameworksBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-				EB50927D2C902C5E00A8779A /* VWO_FME.framework in Frameworks */,
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
 		EB373E642D9D2B51005713D1 /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
@@ -381,7 +349,6 @@
 			isa = PBXGroup;
 			children = (
 				EB06C7822C90229B00A25E07 /* VWO-FME */,
-				EB06C8A92C9028B100A25E07 /* VWO FME Demo */,
 				EB373E682D9D2B51005713D1 /* VWO-FMETests */,
 				EB06C7812C90229B00A25E07 /* Products */,
 				EB06C8BF2C9028D200A25E07 /* Frameworks */,
@@ -392,7 +359,6 @@
 			isa = PBXGroup;
 			children = (
 				EB06C7802C90229B00A25E07 /* VWO_FME.framework */,
-				EB06C8A82C9028B100A25E07 /* VWO FME Demo.app */,
 				EB373E672D9D2B51005713D1 /* VWO-FMETests.xctest */,
 			);
 			name = Products;
@@ -441,6 +407,7 @@
 		EB06C79C2C9023C200A25E07 /* Models */ = {
 			isa = PBXGroup;
 			children = (
+				BA5DD5E42E321FDF00D3A127 /* SdkMetaInfo.swift */,
 				EB06C7B22C9023DA00A25E07 /* Campaign.swift */,
 				EB06C7AF2C9023DA00A25E07 /* Feature.swift */,
 				EB06C7B42C9023DA00A25E07 /* Group.swift */,
@@ -514,6 +481,9 @@
 		EB06C7C72C90242600A25E07 /* Utility */ = {
 			isa = PBXGroup;
 			children = (
+				BA6CF04D2E431E8700FE5740 /* DeviceUtil.swift */,
+				EB06C7D42C90243000A25E07 /* MegUtil.swift */,
+				BA5DD5E62E3225D200D3A127 /* EventsUtils.swift */,
 				EB06C7CD2C90242F00A25E07 /* CampaignUtil.swift */,
 				EB06C7C82C90242F00A25E07 /* DataTypeUtil.swift */,
 				EB06C7CC2C90242F00A25E07 /* DecisionUtil.swift */,
@@ -521,7 +491,6 @@
 				EB06C7CF2C90243000A25E07 /* GatewayServiceUtil.swift */,
 				EB06C7CB2C90242F00A25E07 /* ImpressionUtil.swift */,
 				EB06C7CE2C90243000A25E07 /* LogMessageUtil.swift */,
-				EB06C7D42C90243000A25E07 /* MegUtil.swift */,
 				EB06C7D32C90243000A25E07 /* NetworkUtil.swift */,
 				EB06C7D22C90243000A25E07 /* RuleEvaluationUtil.swift */,
 				EB06C7D12C90243000A25E07 /* SDKMetaUtil.swift */,
@@ -682,22 +651,6 @@
 			path = Core;
 			sourceTree = "<group>";
 		};
-		EB06C8A92C9028B100A25E07 /* VWO FME Demo */ = {
-			isa = PBXGroup;
-			children = (
-				EB06C8AA2C9028B100A25E07 /* AppDelegate.swift */,
-				EB06C8AC2C9028B100A25E07 /* SceneDelegate.swift */,
-				EB06C8AE2C9028B100A25E07 /* ViewController.swift */,
-				BAD4274A2E1277CD00C5C011 /* CoreDataStorageConnector.swift */,
-				EB06C8B02C9028B100A25E07 /* Main.storyboard */,
-				EB06C8B62C9028B300A25E07 /* Assets.xcassets */,
-				EB06C8B82C9028B300A25E07 /* LaunchScreen.storyboard */,
-				EB06C8BB2C9028B300A25E07 /* Info.plist */,
-				EB06C8B32C9028B100A25E07 /* VWO_FME_Demo.xcdatamodeld */,
-			);
-			path = "VWO FME Demo";
-			sourceTree = "<group>";
-		};
 		EB06C8BF2C9028D200A25E07 /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
@@ -740,6 +693,7 @@
 		EB373E762D9E7DF4005713D1 /* SegmentEvaluator */ = {
 			isa = PBXGroup;
 			children = (
+				BAE6CFE62E4384880041118A /* SegmentOperandEvaluatorTests.swift */,
 				EB373E772D9E7E08005713D1 /* SegmentEvaluatorTests.swift */,
 				EB373E792D9E98CA005713D1 /* SegmentEvaluatorTest.json */,
 				EB544F002DD5F788006AA817 /* SegmentOperatorValueEnumTests.swift */,
@@ -785,6 +739,7 @@
 			children = (
 				EB373EB22DAE7566005713D1 /* TestJson */,
 				EB373EAB2DAE1FC2005713D1 /* UUIDUtilsTests.swift */,
+				BAE6CFE82E4396360041118A /* DeviceUtilTests.swift */,
 				EB373EB02DAE69EC005713D1 /* FunctionUtilTests.swift */,
 				EB373EB72DAE8013005713D1 /* SettingUtilTests.swift */,
 				EB544F162DD73E28006AA817 /* DataTypeUtilTests.swift */,
@@ -960,24 +915,6 @@
 			productReference = EB06C7802C90229B00A25E07 /* VWO_FME.framework */;
 			productType = "com.apple.product-type.framework";
 		};
-		EB06C8A72C9028B100A25E07 /* VWO FME Demo */ = {
-			isa = PBXNativeTarget;
-			buildConfigurationList = EB06C8BC2C9028B300A25E07 /* Build configuration list for PBXNativeTarget "VWO FME Demo" */;
-			buildPhases = (
-				EB06C8A42C9028B100A25E07 /* Sources */,
-				EB06C8A52C9028B100A25E07 /* Frameworks */,
-				EB06C8A62C9028B100A25E07 /* Resources */,
-				EB50927F2C902C5E00A8779A /* Embed Frameworks */,
-			);
-			buildRules = (
-			);
-			dependencies = (
-			);
-			name = "VWO FME Demo";
-			productName = "VWO FME Demo";
-			productReference = EB06C8A82C9028B100A25E07 /* VWO FME Demo.app */;
-			productType = "com.apple.product-type.application";
-		};
 		EB373E662D9D2B51005713D1 /* VWO-FMETests */ = {
 			isa = PBXNativeTarget;
 			buildConfigurationList = EB373E702D9D2B51005713D1 /* Build configuration list for PBXNativeTarget "VWO-FMETests" */;
@@ -1009,9 +946,6 @@
 					EB06C77F2C90229B00A25E07 = {
 						CreatedOnToolsVersion = 15.2;
 					};
-					EB06C8A72C9028B100A25E07 = {
-						CreatedOnToolsVersion = 15.2;
-					};
 					EB373E662D9D2B51005713D1 = {
 						CreatedOnToolsVersion = 15.2;
 					};
@@ -1034,7 +968,6 @@
 			projectRoot = "";
 			targets = (
 				EB06C77F2C90229B00A25E07 /* VWO-FME */,
-				EB06C8A72C9028B100A25E07 /* VWO FME Demo */,
 				EB8B06392C918FC500592B9C /* Universal-VWO-FME */,
 				EB373E662D9D2B51005713D1 /* VWO-FMETests */,
 			);
@@ -1051,16 +984,6 @@
 				EB06C7912C90234F00A25E07 /* warn-messages.json in Resources */,
 				EB06C7932C90234F00A25E07 /* error-messages.json in Resources */,
 				EB06C7922C90234F00A25E07 /* debug-messages.json in Resources */,
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		EB06C8A62C9028B100A25E07 /* Resources */ = {
-			isa = PBXResourcesBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-				EB06C8BA2C9028B300A25E07 /* LaunchScreen.storyboard in Resources */,
-				EB06C8B72C9028B300A25E07 /* Assets.xcassets in Resources */,
-				EB06C8B22C9028B100A25E07 /* Main.storyboard in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -1118,6 +1041,7 @@
 			files = (
 				EB06C8982C9026FB00A25E07 /* SegmentUtil.swift in Sources */,
 				EB06C7FC2C90247600A25E07 /* SettingManager.swift in Sources */,
+				BA5DD5E72E3225DC00D3A127 /* EventsUtils.swift in Sources */,
 				EB06C7BE2C9023EB00A25E07 /* Setting.swift in Sources */,
 				EB06C7FA2C90247600A25E07 /* CampaignDecisionService.swift in Sources */,
 				EB06C7BA2C9023E500A25E07 /* Feature.swift in Sources */,
@@ -1173,6 +1097,7 @@
 				EB7E3D772D27FAE5009B572F /* SyncManager.swift in Sources */,
 				EB06C89A2C90273500A25E07 /* GatewayService.swift in Sources */,
 				EB22C9DA2C946A8C00381E34 /* LocalStorageService.swift in Sources */,
+				BA5DD5E52E321FED00D3A127 /* SdkMetaInfo.swift in Sources */,
 				EB06C8952C9026F400A25E07 /* SegmentEvaluator.swift in Sources */,
 				EB06C8A02C90274C00A25E07 /* EventArchPayload.swift in Sources */,
 				EB06C7B92C9023E500A25E07 /* Metric.swift in Sources */,
@@ -1181,6 +1106,7 @@
 				EB06C87F2C90269F00A25E07 /* GlobalRequestModel.swift in Sources */,
 				EB5500862CA51C3C00A8B729 /* GetFlagAPI.swift in Sources */,
 				EB06C7BF2C9023EB00A25E07 /* SegmentDslModel.swift in Sources */,
+				BA6CF04F2E431F9E00FE5740 /* DeviceUtil.swift in Sources */,
 				EB06C8A22C90274C00A25E07 /* SettingsQueryParams.swift in Sources */,
 				EB373EC72DB92A13005713D1 /* UsageStatsUtil.swift in Sources */,
 				EB06C86F2C90264A00A25E07 /* DecisionMaker.swift in Sources */,
@@ -1206,18 +1132,6 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
-		EB06C8A42C9028B100A25E07 /* Sources */ = {
-			isa = PBXSourcesBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-				BAD4274B2E1277CD00C5C011 /* CoreDataStorageConnector.swift in Sources */,
-				EB06C8B52C9028B100A25E07 /* VWO_FME_Demo.xcdatamodeld in Sources */,
-				EB06C8AF2C9028B100A25E07 /* ViewController.swift in Sources */,
-				EB06C8AB2C9028B100A25E07 /* AppDelegate.swift in Sources */,
-				EB06C8AD2C9028B100A25E07 /* SceneDelegate.swift in Sources */,
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
 		EB373E632D9D2B51005713D1 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -1227,12 +1141,14 @@
 				EB373EB12DAE69EC005713D1 /* FunctionUtilTests.swift in Sources */,
 				EB544F112DD613D8006AA817 /* UsageStatsTests.swift in Sources */,
 				EB373E6A2D9D2B51005713D1 /* VWO_FMETests.swift in Sources */,
+				BAE6CFE92E4396360041118A /* DeviceUtilTests.swift in Sources */,
 				EB373E752D9D484C005713D1 /* DecisionMakerTests.swift in Sources */,
 				EB544F072DD5FBA6006AA817 /* EnumTests.swift in Sources */,
 				EB373E782D9E7E08005713D1 /* SegmentEvaluatorTests.swift in Sources */,
 				EB373E8A2DA637C2005713D1 /* MockHookManager.swift in Sources */,
 				EB544F042DD5FA08006AA817 /* FeatureTests.swift in Sources */,
 				EB373EAF2DAE4344005713D1 /* TrackEventTests.swift in Sources */,
+				BAE6CFE72E4384880041118A /* SegmentOperandEvaluatorTests.swift in Sources */,
 				EB7A73372DDC67190034279F /* CampaignUtilTests.swift in Sources */,
 				EB373E8E2DA649DA005713D1 /* FlagTestDataLoader.swift in Sources */,
 				EB544F012DD5F788006AA817 /* SegmentOperatorValueEnumTests.swift in Sources */,
@@ -1257,25 +1173,6 @@
 			targetProxy = EB373E6C2D9D2B51005713D1 /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
-
-/* Begin PBXVariantGroup section */
-		EB06C8B02C9028B100A25E07 /* Main.storyboard */ = {
-			isa = PBXVariantGroup;
-			children = (
-				EB06C8B12C9028B100A25E07 /* Base */,
-			);
-			name = Main.storyboard;
-			sourceTree = "<group>";
-		};
-		EB06C8B82C9028B300A25E07 /* LaunchScreen.storyboard */ = {
-			isa = PBXVariantGroup;
-			children = (
-				EB06C8B92C9028B300A25E07 /* Base */,
-			);
-			name = LaunchScreen.storyboard;
-			sourceTree = "<group>";
-		};
-/* End PBXVariantGroup section */
 
 /* Begin XCBuildConfiguration section */
 		EB06C7852C90229B00A25E07 /* Debug */ = {
@@ -1475,64 +1372,6 @@
 			};
 			name = Release;
 		};
-		EB06C8BD2C9028B300A25E07 /* Debug */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
-				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
-				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = DBN26NC8KE;
-				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_FILE = "VWO FME Demo/Info.plist";
-				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
-				INFOPLIST_KEY_UILaunchStoryboardName = LaunchScreen;
-				INFOPLIST_KEY_UIMainStoryboardFile = Main;
-				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
-				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
-				IPHONEOS_DEPLOYMENT_TARGET = 13.0;
-				LD_RUNPATH_SEARCH_PATHS = (
-					"$(inherited)",
-					"@executable_path/Frameworks",
-				);
-				MARKETING_VERSION = 2.0;
-				PRODUCT_BUNDLE_IDENTIFIER = "com.wingify.VWO-FME-Demo";
-				PRODUCT_NAME = "$(TARGET_NAME)";
-				SWIFT_EMIT_LOC_STRINGS = YES;
-				SWIFT_VERSION = 5.0;
-				TARGETED_DEVICE_FAMILY = "1,2";
-			};
-			name = Debug;
-		};
-		EB06C8BE2C9028B300A25E07 /* Release */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
-				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
-				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = DBN26NC8KE;
-				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_FILE = "VWO FME Demo/Info.plist";
-				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
-				INFOPLIST_KEY_UILaunchStoryboardName = LaunchScreen;
-				INFOPLIST_KEY_UIMainStoryboardFile = Main;
-				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
-				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
-				IPHONEOS_DEPLOYMENT_TARGET = 13.0;
-				LD_RUNPATH_SEARCH_PATHS = (
-					"$(inherited)",
-					"@executable_path/Frameworks",
-				);
-				MARKETING_VERSION = 2.0;
-				PRODUCT_BUNDLE_IDENTIFIER = "com.wingify.VWO-FME-Demo";
-				PRODUCT_NAME = "$(TARGET_NAME)";
-				SWIFT_EMIT_LOC_STRINGS = YES;
-				SWIFT_VERSION = 5.0;
-				TARGETED_DEVICE_FAMILY = "1,2";
-			};
-			name = Release;
-		};
 		EB373E6E2D9D2B51005713D1 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
@@ -1610,15 +1449,6 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		EB06C8BC2C9028B300A25E07 /* Build configuration list for PBXNativeTarget "VWO FME Demo" */ = {
-			isa = XCConfigurationList;
-			buildConfigurations = (
-				EB06C8BD2C9028B300A25E07 /* Debug */,
-				EB06C8BE2C9028B300A25E07 /* Release */,
-			);
-			defaultConfigurationIsVisible = 0;
-			defaultConfigurationName = Release;
-		};
 		EB373E702D9D2B51005713D1 /* Build configuration list for PBXNativeTarget "VWO-FMETests" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
@@ -1640,16 +1470,6 @@
 /* End XCConfigurationList section */
 
 /* Begin XCVersionGroup section */
-		EB06C8B32C9028B100A25E07 /* VWO_FME_Demo.xcdatamodeld */ = {
-			isa = XCVersionGroup;
-			children = (
-				EB06C8B42C9028B100A25E07 /* VWO_FME_Demo.xcdatamodel */,
-			);
-			currentVersion = EB06C8B42C9028B100A25E07 /* VWO_FME_Demo.xcdatamodel */;
-			path = VWO_FME_Demo.xcdatamodeld;
-			sourceTree = "<group>";
-			versionGroupType = wrapper.xcdatamodel;
-		};
 		EB7E3D682D27D3D3009B572F /* OffineEventData.xcdatamodeld */ = {
 			isa = XCVersionGroup;
 			children = (

@@ -17,23 +17,44 @@
 import Foundation
 
 // Define a protocol for the initialization callback
-protocol IVwoInitCallback {
+@objc protocol IVwoInitCallback {
     func vwoInitSuccess(_ vwo: VWOFme, message: String)
     func vwoInitFailed(_ message: String)
 }
 
-public class VWOFme {
+@objc public class VWOFme: NSObject {
     private static var vwoClient: VWOClient? = nil
     private static let shared = VWOFme()
-    public static var isInitialized: Bool = false
+    @objc public static var isInitialized: Bool = false
+    private static var isInitializing: Bool = false
 
-    private init() {}
+    private override init() {}
     
     // Initializes the VWO instance
     @available(macOS 10.14, *)
     public static func initialize(options: VWOInitOptions, completion: @escaping VWOInitCompletionHandler) {
+        // Check if already initialized and return existing client
+        if isInitialized, vwoClient != nil {
+            DispatchQueue.main.async {
+                completion(.success(VWOInitSuccess.allreadyInitialized.rawValue))
+            }
+            return
+        }
+        
+        // Check if initialization is already in progress
+        if isInitializing {
+            DispatchQueue.main.async {
+                completion(.success(VWOInitSuccess.initializationInProgress.rawValue))
+            }
+            return
+        }
+        
+        // Set initialization flag
+        isInitializing = true
+        
         DispatchQueue.global(qos: .background).async {
             guard let sdkKey = options.sdkKey, !sdkKey.isEmpty else {
+                isInitializing = false
                 DispatchQueue.main.async {
                     completion(.failure(VWOInitError.missingSDKKey))
                 }
@@ -41,11 +62,13 @@ public class VWOFme {
             }
             
             guard let _ = options.accountId else {
+                isInitializing = false
                 DispatchQueue.main.async {
                     completion(.failure(VWOInitError.missingAccountId))
                 }
                 return
             }
+            let sdkStartTime = Date().currentTimeMillis()
             
             let vwoBuilder = options.vwoBuilder ?? VWOBuilder(options: options)
             vwoBuilder.setLogger()
@@ -56,35 +79,74 @@ public class VWOFme {
                 .setSegmentation()
                 .initPolling()
                 .getSettings(forceFetch: false) { result in
-                
-                guard let settingObj = result else {
-                    DispatchQueue.main.async {
-                        completion(.failure(VWOInitError.initializationFailed))
+                    
+                    guard let settingObj = result else {
+                        isInitializing = false
+                        DispatchQueue.main.async {
+                            completion(.failure(VWOInitError.initializationFailed))
+                        }
+                        return
                     }
-                    return
-                }
-                
-                self.vwoClient = VWOClient(options: options, settingObj: settingObj)
-                vwoBuilder.setVWOClient(self.vwoClient!)
-                
-                guard self.vwoClient != nil else {
-                    DispatchQueue.main.async {
-                        completion(.failure(VWOInitError.initializationFailed))
+                    
+                    self.vwoClient = VWOClient(options: options, settingObj: settingObj)
+                    self.vwoClient?.isSettingsValid = vwoBuilder.isSettingsValid
+                    self.vwoClient?.settingsFetchTime = vwoBuilder.settingsFetchTime
+                    vwoBuilder.setVWOClient(self.vwoClient!)
+                    
+                    guard self.vwoClient != nil else {
+                        isInitializing = false
+                        DispatchQueue.main.async {
+                            completion(.failure(VWOInitError.initializationFailed))
+                        }
+                        return
                     }
-                    return
+                    vwoBuilder.setVWOClient(self.vwoClient!)
+                    vwoBuilder.initSyncManager()
+                    self.isInitialized = true
+                    
+                    let sdkEndTime = Date().currentTimeMillis()
+                    let sdkInitTime = sdkEndTime - sdkStartTime
+                    
+                    if options.sdkName == Constants.SDK_NAME {  // Don't call sendSdkInitEvent for hybrid SDKs
+                        sendSdkInitEvent(sdkInitTime: sdkInitTime)
+                    }
+                    sendUsageStats()
+                    isInitializing = false
+                    DispatchQueue.main.async {
+                        completion(.success(VWOInitSuccess.initializationSuccess.rawValue))
+                    }
                 }
-                vwoBuilder.setVWOClient(self.vwoClient!)
-                vwoBuilder.initSyncManager()
-                self.isInitialized = true
-                DispatchQueue.main.async {
-                    completion(.success(VWOInitSuccess.initializationSuccess.rawValue))
-                }
-            }
         }
     }
     
+    
+    /**
+     * Sends an SDK initialization event.
+     *
+     * This function checks if the VWO instance is valid, if its settings have been processed,
+     * and critically, if the SDK has not been marked as initialized previously in the current
+     * session or from cached settings. If all conditions are true, it proceeds to send
+     * an "SDK initialized" tracking event, including the time it took for settings to be fetched
+     * and the time it took for the SDK to complete its initialization process.
+     *
+     * This helps in tracking the initial setup performance and ensuring that the
+     * initialization event is sent only once per effective SDK start.
+     *
+     * @param sdkInitTime The timestamp (in milliseconds) marking the completion of the SDK's initialization process.
+     */
+    
+     public static func sendSdkInitEvent(sdkInitTime: Int64) {
+         if isInitialized{
+             let wasInitializedEarlier =  VWOFme.vwoClient?.processedSettings?.sdkMetaInfo?.wasInitializedEarlier
+             
+             if (VWOFme.vwoClient?.isSettingsValid == true && (wasInitializedEarlier == false || wasInitializedEarlier == nil)) {
+                 EventsUtils().sendSdkInitEvent(settingsFetchTime: VWOFme.vwoClient?.settingsFetchTime, sdkInitTime: sdkInitTime)
+             }
+         }
+    }
+    
     // Updates the settings
-    static func updateSettings(_ newSettings: Settings) {
+   public static func updateSettings(_ newSettings: Settings) {
         VWOFme.vwoClient?.updateSettings(newSettings: newSettings)
     }
     
@@ -113,4 +175,22 @@ public class VWOFme {
     public static func performEventSync() {
         SyncManager.shared.syncSavedEvents(manually: true, ignoreThreshold: true)
     }
+    
+    /** Sends SDK usage statistics.
+     *
+     * This function retrieves the usage statistics account ID from settings.
+     * If the account ID is found, it triggers an event to send SDK usage statistics.
+     * This helps in understanding how the SDK is being utilized.
+     * If the `usageStatsAccountId` is not available in the settings, the function will return early
+     * and no event will be sent.
+     */
+    private static func sendUsageStats() {
+        // Get usage stats account id from settings
+        guard let usageStatsAccountId = VWOFme.vwoClient?.processedSettings?.usageStatsAccountId else {
+            return
+        }
+        
+        EventsUtils().sendSDKUsageStatsEvent(usageStatsAccountId: usageStatsAccountId)
+    }
+    
 }

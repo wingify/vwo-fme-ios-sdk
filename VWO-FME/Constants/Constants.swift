@@ -19,8 +19,9 @@ import Foundation
 struct Constants {
     static let defaultString: String = ""
     static let PLATFORM: String = "ios"
-    static let SDK_VERSION: String = "1.8.0"
 
+    static let SDK_VERSION: String = "1.11.1"
+    
     static let MAX_TRAFFIC_PERCENT: Int = 100
     static let MAX_TRAFFIC_VALUE: Int = 10000
     static let STATUS_RUNNING: String = "RUNNING"
@@ -30,6 +31,7 @@ struct Constants {
     static let DEFAULT_REQUEST_TIME_INTERVAL: TimeInterval = 600 // 10 * 60(secs) = 600 secs i.e. 10 minutes
     static let DEFAULT_EVENTS_PER_REQUEST: Int = 100
     static let SDK_NAME: String = "vwo-fme-ios-sdk"
+    static let PRODUCT_NAME: String = "fme"
     static let SETTINGS_EXPIRY: Int64 = 0 // default time for cached setting expiry
     static let SETTINGS_TIMEOUT: Int = 30
 
@@ -50,8 +52,14 @@ struct Constants {
     static let LOCATION_EXPIRY: Int64 = 60 * 60 * 1000 // 60 minutes in milliseconds
     static let LIST_ATTRIBUTE_EXPIRY: Int64 = 60 * 60 * 1000 // 60 minutes in milliseconds
 
-    static let USER_AGENT_VALUE: String = "VWO-FME (\(PlatformInfo.name) \(PlatformInfo.systemVersion))"
+    static let USER_AGENT_VALUE: String = "VWO FME \(PlatformInfo.name) \(SDK_VERSION) (\(PlatformInfo.deviceModel)/\(PlatformInfo.systemVersion))"
 
+    
+    static let APP_VERSION = "vwo_av"
+    static let OS_VERSION = "vwo_osv"
+    static let MANUFACTURER = "vwo_mfr"
+    static let DEVICE_MODEL = "vwo_dm"
+    static let LOCALE = "vwo_loc"
 }
 
 public typealias VWOInitCompletionHandler = (Result<String, Error>) -> Void

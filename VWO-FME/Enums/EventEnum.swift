@@ -38,4 +38,14 @@ enum EventEnum: String {
      * Event triggered when a sdk error is logged.
      */
     case vwoError = "vwo_log"
+    
+    /**
+     * FME sdk init event
+     */
+    case VWO_INIT_CALLED = "vwo_fmeSdkInit"
+    
+    /**
+     * FME sdk usage stat even
+     t*/
+    case VWO_USAGE_STATS = "vwo_sdkUsageStats"
 }

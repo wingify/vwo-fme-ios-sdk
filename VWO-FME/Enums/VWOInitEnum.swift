@@ -18,6 +18,8 @@ import Foundation
 
 enum VWOInitSuccess: String {
     case initializationSuccess = "VWO is ready to use."
+    case allreadyInitialized = "VWO is already initialized and ready."
+    case initializationInProgress = "VWO initialization is in progress. Please wait..."
 }
 
 enum VWOInitError: Error {

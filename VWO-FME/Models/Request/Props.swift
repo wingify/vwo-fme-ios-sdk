@@ -115,6 +115,7 @@ struct Props {
         if !vwoMeta.isEmpty {
             dict["vwoMeta"] = vwoMeta
         }
+        
         return dict
     }
 }

@@ -56,7 +56,22 @@ class SegmentEvaluator {
 
         case .ua:
             return SegmentOperandEvaluator.evaluateUserAgentDSL(subDsl.stringValue ?? "", context)
-
+            
+        case .device_model:
+            return SegmentOperandEvaluator.evaluateStringOperandDSL(dslOperandValue: subDsl.stringValue ?? "", value: DeviceUtil().getDeviceModel())
+            
+        case .locale:
+            return SegmentOperandEvaluator.evaluateStringOperandDSL(dslOperandValue: subDsl.stringValue ?? "", value: DeviceUtil().getLocale())
+        
+        case .app_version:
+            return SegmentOperandEvaluator.evaluateStringOperandDSL(dslOperandValue: subDsl.stringValue ?? "", value: DeviceUtil().getApplicationVersion())
+            
+        case .os_version:
+            return SegmentOperandEvaluator.evaluateStringOperandDSL(dslOperandValue: subDsl.stringValue ?? "", value: DeviceUtil().getOsVersion())
+            
+        case .manufacturer:
+            return SegmentOperandEvaluator.evaluateStringOperandDSL(dslOperandValue: subDsl.stringValue ?? "", value: DeviceUtil().getManufacturer())
+            
         default:
             return false
         }
