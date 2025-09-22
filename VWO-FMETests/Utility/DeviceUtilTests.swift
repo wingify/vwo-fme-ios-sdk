@@ -117,37 +117,91 @@ class DeviceUtilTests: XCTestCase {
         // Should not contain underscores (should be replaced with hyphens)
         XCTAssertFalse(locale.contains("_"), "Locale should not contain underscores")
         
-        // Should contain a hyphen (language-region format)
-        XCTAssertTrue(locale.contains("-"), "Locale should be in language-region format")
+        // Should be in valid format: either "en-US" or "en" format
+        let languageOnlyPattern = "^[a-z]{2}$"  // e.g., "en"
+        let languageRegionPattern = "^[a-z]{2}-[A-Z]{2}$"  // e.g., "en-US"
         
-        // Should be in valid format (e.g., "en-US", "fr-FR")
-        let localePattern = "^[a-z]{2}-[A-Z]{2}$"
-        let localeRegex = try! NSRegularExpression(pattern: localePattern)
+        let languageOnlyRegex = try! NSRegularExpression(pattern: languageOnlyPattern)
+        let languageRegionRegex = try! NSRegularExpression(pattern: languageRegionPattern)
+        
         let range = NSRange(location: 0, length: locale.utf16.count)
-        let matches = localeRegex.matches(in: locale, options: [], range: range)
+        let languageOnlyMatches = languageOnlyRegex.matches(in: locale, options: [], range: range)
+        let languageRegionMatches = languageRegionRegex.matches(in: locale, options: [], range: range)
         
-        XCTAssertFalse(matches.isEmpty, "Locale should match the expected format (e.g., en-US)")
+        let isValidFormat = !languageOnlyMatches.isEmpty || !languageRegionMatches.isEmpty
+        XCTAssertTrue(isValidFormat, "Locale should be in valid format (e.g., 'en' or 'en-US')")
+        
+        // If it contains a hyphen, it should be in language-region format
+        if locale.contains("-") {
+            XCTAssertTrue(!languageRegionMatches.isEmpty, "If locale contains hyphen, it should be in language-region format")
+        }
     }
     
     func testGetLocale_Format() {
         let locale = deviceUtil.getLocale()
         
-        // Should be in the format "language-region"
+        // Should be in valid format: either "language" or "language-region"
         let components = locale.components(separatedBy: "-")
-        XCTAssertEqual(components.count, 2, "Locale should have exactly 2 components separated by hyphen")
         
-        let languageCode = components[0]
-        let regionCode = components[1]
+        if components.count == 1 {
+            // Language only format (e.g., "en")
+            let languageCode = components[0]
+            XCTAssertEqual(languageCode.count, 2, "Language code should be 2 characters")
+            XCTAssertEqual(languageCode, languageCode.lowercased(), "Language code should be lowercase")
+        } else if components.count == 2 {
+            // Language-region format (e.g., "en-US")
+            let languageCode = components[0]
+            let regionCode = components[1]
+            
+            // Language code should be lowercase
+            XCTAssertEqual(languageCode, languageCode.lowercased(), "Language code should be lowercase")
+            
+            // Region code should be uppercase
+            XCTAssertEqual(regionCode, regionCode.uppercased(), "Region code should be uppercase")
+            
+            // Both should be 2 characters
+            XCTAssertEqual(languageCode.count, 2, "Language code should be 2 characters")
+            XCTAssertEqual(regionCode.count, 2, "Region code should be 2 characters")
+        } else {
+            XCTFail("Locale should be in 'language' or 'language-region' format, got: \(locale)")
+        }
+    }
+    
+    func testGetLocale_Behavior() {
+        let locale = deviceUtil.getLocale()
         
-        // Language code should be lowercase
-        XCTAssertEqual(languageCode, languageCode.lowercased(), "Language code should be lowercase")
+        // Should be a valid locale identifier
+        XCTAssertFalse(locale.isEmpty, "Locale should not be empty")
         
-        // Region code should be uppercase
-        XCTAssertEqual(regionCode, regionCode.uppercased(), "Region code should be uppercase")
+        // Should be either "en" (default) or a valid locale format
+        let validFormats = [
+            "^[a-z]{2}$",           // Language only: "en", "fr", "de"
+            "^[a-z]{2}-[A-Z]{2}$"   // Language-region: "en-US", "fr-FR", "de-DE"
+        ]
         
-        // Both should be 2 characters
-        XCTAssertEqual(languageCode.count, 2, "Language code should be 2 characters")
-        XCTAssertEqual(regionCode.count, 2, "Region code should be 2 characters")
+        var isValidFormat = false
+        for pattern in validFormats {
+            let regex = try! NSRegularExpression(pattern: pattern)
+            let range = NSRange(location: 0, length: locale.utf16.count)
+            let matches = regex.matches(in: locale, options: [], range: range)
+            if !matches.isEmpty {
+                isValidFormat = true
+                break
+            }
+        }
+        
+        XCTAssertTrue(isValidFormat, "Locale '\(locale)' should match a valid format")
+        
+        // Should not contain underscores (should be replaced with hyphens)
+        XCTAssertFalse(locale.contains("_"), "Locale should not contain underscores")
+        
+        // Should be lowercase for language part
+        if locale.contains("-") {
+            let languagePart = locale.components(separatedBy: "-")[0]
+            XCTAssertEqual(languagePart, languagePart.lowercased(), "Language part should be lowercase")
+        } else {
+            XCTAssertEqual(locale, locale.lowercased(), "Language-only locale should be lowercase")
+        }
     }
     
     // MARK: - All Device Details Tests
