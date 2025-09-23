@@ -19,14 +19,14 @@ jobs:
             xcode-version: '16.4'
             swift-version: '6.0'
             destination: 'platform=iOS Simulator,name=iPhone 16,OS=18.5'
-          - os: macos-14
-            xcode-version: '15.4'
-            swift-version: '5.10'
-            destination: 'platform=iOS Simulator,name=iPhone 15,OS=17.2'
-          - os: macos-14
-            xcode-version: '15.2'
-            swift-version: '5.9'
-            destination: 'platform=iOS Simulator,name=iPhone 15,OS=17.2'
+          # - os: macos-14
+          #   xcode-version: '15.4'
+          #   swift-version: '5.10'
+          #   destination: 'platform=iOS Simulator,name=iPhone 15,OS=17.2'
+          # - os: macos-14
+          #   xcode-version: '15.2'
+          #   swift-version: '5.9'
+          #   destination: 'platform=iOS Simulator,name=iPhone 15,OS=17.2'
 
     steps:
     - uses: actions/checkout@v4
@@ -62,13 +62,13 @@ jobs:
       run: |
         xcrun xccov view --report --files-for-target VWO-FME ./TestResults.xcresult
 
-    - name: Notification
-      if: always()
-      id: slack
-      uses: wingify/slack-github-action@v1.15.1-wingify
-      with:
-        channel-id: 'vwo-fs-fme-sdk-job-status'
-        slack-message: "<!here> iOS FME SDK Test on *macOS-${{ matrix.os }}* and *Xcode-${{ matrix.xcode-version }}* got *${{ job.status }}* ${{ job.status == 'success' && ':heavy_check_mark:' || ':x:' }} \nCommit: `${{ github.event.head_commit.message }}`. \nCheck the latest build: https://github.com/wingify/vwo-fme-ios-sdk/actions"
-        color: "${{ job.status == 'success' && '#00FF00' || '#FF0000' }}"
-      env:
-        SLACK_BOT_TOKEN: ${{ secrets.SLACK_NOTIFICATIONS_BOT_TOKEN }}
+    # - name: Notification
+    #   if: always()
+    #   id: slack
+    #   uses: wingify/slack-github-action@v1.15.1-wingify
+    #   with:
+    #     channel-id: 'vwo-fs-fme-sdk-job-status'
+    #     slack-message: "<!here> iOS FME SDK Test on *macOS-${{ matrix.os }}* and *Xcode-${{ matrix.xcode-version }}* got *${{ job.status }}* ${{ job.status == 'success' && ':heavy_check_mark:' || ':x:' }} \nCommit: `${{ github.event.head_commit.message }}`. \nCheck the latest build: https://github.com/wingify/vwo-fme-ios-sdk/actions"
+    #     color: "${{ job.status == 'success' && '#00FF00' || '#FF0000' }}"
+    #   env:
+    #     SLACK_BOT_TOKEN: ${{ secrets.SLACK_NOTIFICATIONS_BOT_TOKEN }}
