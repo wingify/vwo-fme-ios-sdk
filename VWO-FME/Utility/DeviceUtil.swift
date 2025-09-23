@@ -26,6 +26,7 @@ struct DeviceUtil {
 
     private let unknownValue = "valueUnknown"
     private let Manufacturer = "Apple"
+    private let WatchModel = "Apple Watch"
     private let DefaultLocale = "en"
 
     /// Gets the version name of the host application. e.g., "1.0.3"
@@ -57,8 +58,10 @@ struct DeviceUtil {
 
     /// Gets the device model. e.g., "iPhone", "MacBookPro"
     func getDeviceModel() -> String {
-        #if os(iOS) || os(tvOS) || os(watchOS)
+        #if os(iOS) || os(tvOS)
         return UIDevice.current.model
+        #elseif os(watchOS)
+        return WatchModel
         #elseif os(macOS)
         var model = unknownValue
         var size: size_t = 0
@@ -86,13 +89,31 @@ struct DeviceUtil {
         }
         
         // If not valid, fallback to just the language code (e.g. "en")
+        #if os(iOS)
         if #available(iOS 16, *) {
             if let languageCode = Locale.current.language.languageCode?.identifier {
                 return languageCode
             }
-        } else {
-            return DefaultLocale
         }
+        #elseif os(tvOS)
+        if #available(tvOS 16, *) {
+            if let languageCode = Locale.current.language.languageCode?.identifier {
+                return languageCode
+            }
+        }
+        #elseif os(macOS)
+        if #available(macOS 13, *) {
+            if let languageCode = Locale.current.language.languageCode?.identifier {
+                return languageCode
+            }
+        }
+        #elseif os(watchOS)
+        if #available(watchOS 9, *) {
+            if let languageCode = Locale.current.language.languageCode?.identifier {
+                return languageCode
+            }
+        }
+        #endif
         
         // Last fallback
         return DefaultLocale
@@ -110,5 +131,4 @@ struct DeviceUtil {
         ]
     }
 }
-
 

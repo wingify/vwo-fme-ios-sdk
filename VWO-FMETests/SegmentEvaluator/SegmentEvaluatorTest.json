@@ -25,7 +25,7 @@
                     }
                 ]
             },
-            "expectation": false,
+            "expectation": true,
             "customVariables": {
                 "eq": "Eq_Value"
             }
@@ -5274,9 +5274,9 @@
                     }
                 ]
             },
-            "expectation": false,
+            "expectation": true,
             "customVariables": {
-                "eq": "Something"
+                "eq": "something"
             }
         },
         "char_data_type": {
@@ -5649,9 +5649,9 @@
                     }
                 ]
             },
-            "expectation": false,
+            "expectation": true,
             "customVariables": {
-                "eq": "SOMETHING"
+                "eq": "something"
             }
         },
         "contains_operand_falsy_with_special_character": {
@@ -5801,9 +5801,9 @@
                     }
                 ]
             },
-            "expectation": false,
+            "expectation": true,
             "customVariables": {
-                "eq": "Something"
+                "eq": "something"
             }
         },
         "special_characters": {
@@ -6116,9 +6116,9 @@
                     }
                 ]
             },
-            "expectation": false,
+            "expectation": true,
             "customVariables": {
-                "eq": "SOMETHING"
+                "eq": "something"
             }
         },
         "float_data_type_extra_decimal_zeros": {
@@ -6268,7 +6268,7 @@
                     }
                 ]
             },
-            "expectation": false,
+            "expectation": true,
             "customVariables": {
                 "eq": "Something"
             }
@@ -6433,7 +6433,7 @@
                     }
                 ]
             },
-            "expectation": false,
+            "expectation": true,
             "customVariables": {
                 "eq": "E"
             }
@@ -6478,7 +6478,7 @@
                     }
                 ]
             },
-            "expectation": false,
+            "expectation": true,
             "customVariables": {
                 "eq": "e"
             }
@@ -6628,7 +6628,7 @@
                     }
                 ]
             },
-            "expectation": false,
+            "expectation": true,
             "customVariables": {
                 "eq": "SOMETHING"
             }
@@ -6828,7 +6828,7 @@
                     ]
                 }
             },
-            "expectation": true,
+            "expectation": false,
             "customVariables": {
                 "eq": "E"
             }
@@ -6845,7 +6845,7 @@
                     ]
                 }
             },
-            "expectation": true,
+            "expectation": false,
             "customVariables": {
                 "eq": "Something"
             }
@@ -7415,7 +7415,7 @@
                     ]
                 }
             },
-            "expectation": true,
+            "expectation": false,
             "customVariables": {
                 "eq": "SOMETHING"
             }
@@ -7449,7 +7449,7 @@
                     ]
                 }
             },
-            "expectation": true,
+            "expectation": false,
             "customVariables": {
                 "eq": "e"
             }
@@ -7604,7 +7604,7 @@
                     }
                 ]
             },
-            "expectation": false,
+            "expectation": true,
             "customVariables": {
                 "eq": "Eq_Value"
             }
