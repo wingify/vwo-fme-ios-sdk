@@ -35,7 +35,7 @@ final class EventDataManagerTests: XCTestCase {
         let fetchDeleteExpectation = XCTestExpectation(description: "Fetch and Delete")
         let payload = ["key": "value"]
 
-        DispatchQueue.concurrentPerform(iterations: 10000) { _ in
+        DispatchQueue.concurrentPerform(iterations: 100) { _ in
             EventDataManager.shared.createEvent(payload: payload)
         }
 

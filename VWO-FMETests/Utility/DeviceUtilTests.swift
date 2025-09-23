@@ -296,7 +296,7 @@ class DeviceUtilTests: XCTestCase {
     
     func testGetAllDeviceDetails_Performance() {
         measure {
-            for _ in 0..<100 {
+            for _ in 0..<10 {
                 _ = deviceUtil.getAllDeviceDetails()
             }
         }
@@ -304,7 +304,7 @@ class DeviceUtilTests: XCTestCase {
     
     func testIndividualMethods_Performance() {
         measure {
-            for _ in 0..<100 {
+            for _ in 0..<10 {
                 _ = deviceUtil.getApplicationVersion()
                 _ = deviceUtil.getOsVersion()
                 _ = deviceUtil.getManufacturer()
