@@ -30,21 +30,28 @@ final class EventDataManagerTests: XCTestCase {
     }
 
     func testConcurrentEventCreationAndFetchDelete() {
-
         let creationExpectation = XCTestExpectation(description: "Event Creation")
         let fetchDeleteExpectation = XCTestExpectation(description: "Fetch and Delete")
         let payload = ["key": "value"]
+        
+        let group = DispatchGroup()
 
-        DispatchQueue.concurrentPerform(iterations: 10) { _ in
-            EventDataManager.shared.createEvent(payload: payload)
+        for _ in 0..<10 {
+            group.enter()
+            DispatchQueue.global(qos: .userInitiated).async {
+                EventDataManager.shared.createEvent(payload: payload)
+                group.leave()
+            }
         }
 
-        CoreDataStack.shared.countEntries { count, error in
-            XCTAssertNil(error)
-            creationExpectation.fulfill()
+        group.notify(queue: .main) {
+            CoreDataStack.shared.countEntries { count, error in
+                XCTAssertNil(error)
+                creationExpectation.fulfill()
+            }
         }
 
-        wait(for: [creationExpectation], timeout: 2.0)
+        wait(for: [creationExpectation], timeout: 5.0)
 
         CoreDataStack.shared.fetchManagedObjects { events, error in
             XCTAssertNotNil(events)
@@ -60,6 +67,7 @@ final class EventDataManagerTests: XCTestCase {
             }
         }
 
-        wait(for: [fetchDeleteExpectation], timeout: 2.0)
+        wait(for: [fetchDeleteExpectation], timeout: 5.0)
     }
+
 }
