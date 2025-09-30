@@ -30,7 +30,7 @@ import Foundation
     var customVariables: [String: Any] = [:]
     var variationTargetingVariables: [String: Any] = [:]
     var vwo: GatewayService?
-    
+    var shouldUseDeviceIdAsUserId: Bool = false
     var postSegmentationVariables: [String]? = nil
 
     /**
@@ -39,11 +39,21 @@ import Foundation
      * - Parameters:
      *   - id: The unique identifier for the user.
      *   - customVariables: A dictionary of custom variables associated with the user.
+     *   - shouldUseDeviceIdAsUserId: If true, uses device ID when id is nil.
      *   - postSegmentationVariables: A list of Key variables that addes customVariable for postSegmentaion.
      */
-    public init(id: String?, customVariables: [String: Any], postSegmentationVariables: [String]? = nil) {
-        self.id = id
+
+    public init(id: String? = nil, shouldUseDeviceIdAsUserId: Bool = false,customVariables: [String: Any], postSegmentationVariables: [String]? = nil) {
+        self.shouldUseDeviceIdAsUserId = shouldUseDeviceIdAsUserId
         self.customVariables = customVariables
+        self.id = id
         self.postSegmentationVariables = postSegmentationVariables
+        if shouldUseDeviceIdAsUserId && id == nil {
+            if let deviceId = DeviceIDUtil().getDeviceID() {
+                self.id = deviceId
+                LoggerService.log(level: .info, key: "USER_ID_INFO", details: ["id": deviceId])
+            }
+        }
     }
+
 }

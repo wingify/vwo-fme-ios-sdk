@@ -14,7 +14,7 @@
   "API_INVALID_PARAM": "{key} passed to {apiName} API is not of valid type. Got type: {type}, should be: {correctType}",
   "API_SETTING_INVALID": "Settings are not valid. Contact VWO Support",
   "API_CONTEXT_INVALID": "Context should be an object and must contain a mandatory key - id, which is User ID",
-
+  "USER_ID_NULL": "UserId: No user ID was provided, and using the device ID as a fallback is currently disabled. Operations requiring a user ID may not function as expected.",
   "FEATURE_NOT_FOUND": "Feature not found for the key {featureKey}",
   "EVENT_NOT_FOUND": "Event {eventName} not found in any of the features metrics",
 
@@ -24,4 +24,14 @@
 
   "NETWORK_CALL_FAILED": "Error occurred while sending {method} request. Error: {err}",
   "BATCH_UPLOAD_ERROR": "Event batch could not be uploaded. Error: {err}",
+
+  "SETTINGS_MANAGER_NOT_INITIALIZED": "Settings Manager was not initialized while calling {api}",
+  "ALIAS_SET_API_ERROR": "Failed to set alias. Error: {error}",
+  "GET_ALIAS_FAILED": "Failed to retrieve alias. Error: {error}",
+  "GET_ALIAS_AFTER_SET_ERROR": "Failed to retrieve alias after setting. Error: {error}",
+  "ALIAS_FEATURE_DISABLED": "Alias feature is not enabled. Enable it while initializing the SDK",
+  "ALIAS_FEATURE_DISABLED_GATEWAY": "Alias feature is disabled. Configure Gateway Service while initializing the SDK",
+  "ALIAS_SAME_AS_TEMPID": "Alias ID:{aliasId} should not be same as temp Id:{tempId}",
+  "ALIASES_CANNOT_BE_EMPTY": "Alias ID cannot be empty or blank",
+  "USERID_CANNOT_BE_BLANK": "User ID cannot be blank"
 }

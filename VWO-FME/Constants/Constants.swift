@@ -20,7 +20,7 @@ struct Constants {
     static let defaultString: String = ""
     static let PLATFORM: String = "ios"
 
-    static let SDK_VERSION: String = "1.11.1"
+    static let SDK_VERSION: String = "1.12.0"
     
     static let MAX_TRAFFIC_PERCENT: Int = 100
     static let MAX_TRAFFIC_VALUE: Int = 10000
@@ -53,7 +53,9 @@ struct Constants {
     static let LIST_ATTRIBUTE_EXPIRY: Int64 = 60 * 60 * 1000 // 60 minutes in milliseconds
 
     static let USER_AGENT_VALUE: String = "VWO FME \(PlatformInfo.name) \(SDK_VERSION) (\(PlatformInfo.deviceModel)/\(PlatformInfo.systemVersion))"
-
+    
+    static let userIdErrorMessage = "User ID is required. Please provide a user ID or enable device ID in VWOUserContext."
+    static let VWOContextErrorMessage = "VWOUserContext is missing. Please provide a valid user context before proceeding."
     
     static let APP_VERSION = "vwo_av"
     static let OS_VERSION = "vwo_osv"

@@ -53,9 +53,10 @@ class VWOClient {
         do {
             LoggerService.log(level: .debug, key: "API_CALLED", details: ["apiName": apiName])
             let hooksManager = HooksManager(callback: options?.integrations)
-            guard let userId = context.id, !userId.isEmpty else {
+            let context = UserIdUtil().getUserId(context: context)
+            guard let userId = context.id , !userId.isEmpty else {
                 getFlag.setIsEnabled(isEnabled: false)
-                throw NSError(domain: "User ID is required", code: 0, userInfo: nil)
+                throw NSError(domain: Constants.userIdErrorMessage, code: 0, userInfo: nil)
             }
             
             guard let featureKey = featureKey, !featureKey.isEmpty else {
@@ -94,15 +95,20 @@ class VWOClient {
                 throw NSError(domain: "VWOClient", code: 400, userInfo: [NSLocalizedDescriptionKey: "TypeError: Event-name should be a string"])
             }
             
-            guard let userId = context?.id, !userId.isEmpty else {
-                throw NSError(domain: "VWOClient", code: 400, userInfo: [NSLocalizedDescriptionKey: "User ID is required"])
+            guard let context = context else {
+                throw NSError(domain: Constants.VWOContextErrorMessage, code: 0, userInfo: nil)
+            }
+            
+            let updatedContext = UserIdUtil().getUserId(context: context)
+            guard let userId = updatedContext.id, !userId.isEmpty else {
+                throw NSError(domain: "VWOClient", code: 400, userInfo: [NSLocalizedDescriptionKey: Constants.userIdErrorMessage])
             }
             
             guard let pSettings = self.processedSettings else {
                 resultMap[eventName] = false
                 return
             }
-            TrackEventAPI.track(settings: pSettings, eventName: eventName, context: context!, eventProperties: eventProperties, hooksManager: hooksManager)
+            TrackEventAPI.track(settings: pSettings, eventName: eventName, context: updatedContext, eventProperties: eventProperties, hooksManager: hooksManager)
         } catch {
             LoggerService.log(level: .error,
                               key: "API_THROW_ERROR",
@@ -146,15 +152,20 @@ class VWOClient {
                 }
             }
             
-            guard let userId = context?.id, !userId.isEmpty else {
-                throw NSError(domain: "User ID is required", code: 0, userInfo: nil)
+            guard let context = context else {
+                throw NSError(domain: Constants.VWOContextErrorMessage, code: 0, userInfo: nil)
+            }
+            
+            let updatedContext = UserIdUtil().getUserId(context: context)
+            guard let userId = updatedContext.id, !userId.isEmpty else {
+                throw NSError(domain: Constants.userIdErrorMessage, code: 0, userInfo: nil)
             }
             
             guard let processedSettings = self.processedSettings else {
                 return
             }
             
-            SetAttributeAPI.setAttributes(settings: processedSettings, attributes: attributes, context: context!)
+            SetAttributeAPI.setAttributes(settings: processedSettings, attributes: attributes, context: updatedContext)
         } catch {
             LoggerService.log(level: .error, key: "API_THROW_ERROR", details: ["apiName": apiName, "err": error.localizedDescription])
         }

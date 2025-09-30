@@ -5,8 +5,19 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.12.0] - 2025-09-30
 
-## [1.11.1] - 2025-09-21
+### Added
+
+- Introducing alias ID support - associate original user ID with it's temporary ID for easier identity management and better reporting.
+
+
+### Added
+
+-  Introduced alias ID support: users can now associate a temporary ID with their original ID for easier identity management.
+
+
+##[1.11.1] - 2025-09-21
 
 ### Fixed
 
@@ -16,7 +27,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
--  Smarter Segmentation: Attribute Support for Pre/Post Custom Variables
+- Smarter Segmentation: Attribute Support for Pre/Post Custom Variables
 
 ## [1.10.0] - 2025-09-01
 
@@ -25,6 +36,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Sends usage statistics to VWO servers automatically during SDK initialization
 
 - Added compatibility with Objective-C projects.
+
 
 
 ## [1.9.1] - 2025-08-22
@@ -95,6 +107,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
         }
 
     }
+```
+
+## [1.7.1] - 2025-07-11
+
+### Added
+
+- Support to use Device ID if `context.id` is not available
+
+```swift
+   let userContext = VWOUserContext(customVariables: customVariables, shouldUseDeviceIdAsUserId: true)
 ```
 
 ## [1.7.0] - 2025-06-12

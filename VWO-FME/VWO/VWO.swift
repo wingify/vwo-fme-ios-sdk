@@ -165,6 +165,10 @@ import Foundation
         VWOFme.vwoClient?.setAttribute(attributes: attributes, context: context)
     }
     
+    // Sets alias for a user
+    public static func setAlias(from userContext: VWOUserContext, to alias: String) {
+        AliasIdentifierManager.shared.setAlias(from: userContext, to: alias)
+    }
     /**
      * Manually triggers the synchronization of saved events.
      * This function can be used to ensure that all pending events are sent to the server.

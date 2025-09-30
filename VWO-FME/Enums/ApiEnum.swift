@@ -30,6 +30,16 @@ enum ApiEnum: String {
      * API endpoint for tracking user events.
      */
     case track = "track"
+    
+    /**
+     * API endpoint for setting user alias.
+     */
+    case setUserAlias = "setUserAlias"
+    
+    /**
+     * API endpoint for getting user alias.
+     */
+    case getUserAlias = "getAliasUserId"
 }
 
 enum HTTPMethod: String {

@@ -43,6 +43,7 @@ import Foundation
     var isUsageStatsDisabled: Bool = false
     var vwoMeta: [String: Any] = [:]
     var storageConnector: VWOStorageConnector? = nil
+    var isAliasingEnabled: Bool = false
     /**
      * Initializes a new instance of VWOInitOptions.
      *
@@ -58,6 +59,7 @@ import Foundation
      *   - batchMinSize: Minimum size of batch to upload.
      *   - batchUploadTimeInterval: Batch upload time interval in milliseconds. Please specify at least few minutes.
      *   - storageConnector: Connect user storage with SDK
+     *   - isAliasingEnabled:Enable for setup userId alias
      */
     public init(sdkKey: String? = nil,
                 accountId: Int? = nil,
@@ -74,7 +76,8 @@ import Foundation
                 logTransport: LogTransport? = nil,
                 isUsageStatsDisabled: Bool = false,
                 vwoMeta: [String: Any] = [:],
-                storage: VWOStorageConnector? = nil ) {
+                storage: VWOStorageConnector? = nil,
+                isAliasingEnabled: Bool? = false) {
         
         // Assigning the SDK key
         self.sdkKey = sdkKey
@@ -130,6 +133,10 @@ import Foundation
         
         if let storageConnector = storage {
             self.storageConnector = storageConnector
+        }
+        
+        if let isAliasingEnabled = isAliasingEnabled {
+            self.isAliasingEnabled = isAliasingEnabled
         }
         
         self.logTransport = logTransport

@@ -21,8 +21,12 @@
 /* End PBXAggregateTarget section */
 
 /* Begin PBXBuildFile section */
+		BA203D7A2E601B7A00DE8EEB /* UserIdUtil.swift in Sources */ = {isa = PBXBuildFile; fileRef = BA203D792E601B7A00DE8EEB /* UserIdUtil.swift */; };
+		BA5DD5E32E2655CE00D3A127 /* DeviceIDUtilTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = BA5DD5E22E2655CE00D3A127 /* DeviceIDUtilTests.swift */; };
 		BA5DD5E52E321FED00D3A127 /* SdkMetaInfo.swift in Sources */ = {isa = PBXBuildFile; fileRef = BA5DD5E42E321FDF00D3A127 /* SdkMetaInfo.swift */; };
 		BA5DD5E72E3225DC00D3A127 /* EventsUtils.swift in Sources */ = {isa = PBXBuildFile; fileRef = BA5DD5E62E3225D200D3A127 /* EventsUtils.swift */; };
+		BA8309F02E212D94001804F0 /* DeviceIDUtil.swift in Sources */ = {isa = PBXBuildFile; fileRef = BA8309EF2E212D87001804F0 /* DeviceIDUtil.swift */; };
+		BACCE91B2E49FC3400901FCC /* AliasIdentifierManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = BACCE91A2E49FC3400901FCC /* AliasIdentifierManager.swift */; };
 		BA6CF04F2E431F9E00FE5740 /* DeviceUtil.swift in Sources */ = {isa = PBXBuildFile; fileRef = BA6CF04D2E431E8700FE5740 /* DeviceUtil.swift */; };
 		BAD427462E12763800C5C011 /* VWOStorageConnector.swift in Sources */ = {isa = PBXBuildFile; fileRef = BAD427452E12763800C5C011 /* VWOStorageConnector.swift */; };
 		BAD427492E12766100C5C011 /* StorageConnectorProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = BAD427472E12766100C5C011 /* StorageConnectorProvider.swift */; };
@@ -148,6 +152,11 @@
 		EB5500862CA51C3C00A8B729 /* GetFlagAPI.swift in Sources */ = {isa = PBXBuildFile; fileRef = EB5500852CA51C3C00A8B729 /* GetFlagAPI.swift */; };
 		EB5500872CA51C3C00A8B729 /* SetAttributeAPI.swift in Sources */ = {isa = PBXBuildFile; fileRef = EB5500832CA51C3C00A8B729 /* SetAttributeAPI.swift */; };
 		EB5500882CA51C3C00A8B729 /* TrackEventAPI.swift in Sources */ = {isa = PBXBuildFile; fileRef = EB5500842CA51C3C00A8B729 /* TrackEventAPI.swift */; };
+		EB55008B2CA51C3C00A8B729 /* SetUserAliasAPI.swift in Sources */ = {isa = PBXBuildFile; fileRef = EB5500892CA51C3C00A8B729 /* SetUserAliasAPI.swift */; };
+		EB55008C2CA51C3C00A8B729 /* GetUserAliasAPI.swift in Sources */ = {isa = PBXBuildFile; fileRef = EB55008A2CA51C3C00A8B729 /* GetUserAliasAPI.swift */; };
+		EB5500902CA51C3C00A8B729 /* SetUserAliasRequest.swift in Sources */ = {isa = PBXBuildFile; fileRef = EB55008D2CA51C3C00A8B729 /* SetUserAliasRequest.swift */; };
+		EB5500912CA51C3C00A8B729 /* SetUserAliasResponse.swift in Sources */ = {isa = PBXBuildFile; fileRef = EB55008E2CA51C3C00A8B729 /* SetUserAliasResponse.swift */; };
+		EB5500922CA51C3C00A8B729 /* GetUserAliasResponse.swift in Sources */ = {isa = PBXBuildFile; fileRef = EB55008F2CA51C3C00A8B729 /* GetUserAliasResponse.swift */; };
 		EB7A73372DDC67190034279F /* CampaignUtilTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = EB7A73362DDC67190034279F /* CampaignUtilTests.swift */; };
 		EB7A73392DDC6DC60034279F /* RolloutAndTestingSettingsUserInlist.json in Resources */ = {isa = PBXBuildFile; fileRef = EB7A73382DDC6DB70034279F /* RolloutAndTestingSettingsUserInlist.json */; };
 		EB7E3D6A2D27D3D3009B572F /* OffineEventData.xcdatamodeld in Sources */ = {isa = PBXBuildFile; fileRef = EB7E3D682D27D3D3009B572F /* OffineEventData.xcdatamodeld */; };
@@ -174,8 +183,12 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
+		BA203D792E601B7A00DE8EEB /* UserIdUtil.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UserIdUtil.swift; sourceTree = "<group>"; };
+		BA5DD5E22E2655CE00D3A127 /* DeviceIDUtilTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeviceIDUtilTests.swift; sourceTree = "<group>"; };
 		BA5DD5E42E321FDF00D3A127 /* SdkMetaInfo.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SdkMetaInfo.swift; sourceTree = "<group>"; };
 		BA5DD5E62E3225D200D3A127 /* EventsUtils.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EventsUtils.swift; sourceTree = "<group>"; };
+		BA8309EF2E212D87001804F0 /* DeviceIDUtil.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeviceIDUtil.swift; sourceTree = "<group>"; };
+		BACCE91A2E49FC3400901FCC /* AliasIdentifierManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AliasIdentifierManager.swift; sourceTree = "<group>"; };
 		BA6CF04D2E431E8700FE5740 /* DeviceUtil.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeviceUtil.swift; sourceTree = "<group>"; };
 		BAD427452E12763800C5C011 /* VWOStorageConnector.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VWOStorageConnector.swift; sourceTree = "<group>"; };
 		BAD427472E12766100C5C011 /* StorageConnectorProvider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StorageConnectorProvider.swift; sourceTree = "<group>"; };
@@ -302,6 +315,11 @@
 		EB5500832CA51C3C00A8B729 /* SetAttributeAPI.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SetAttributeAPI.swift; sourceTree = "<group>"; };
 		EB5500842CA51C3C00A8B729 /* TrackEventAPI.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TrackEventAPI.swift; sourceTree = "<group>"; };
 		EB5500852CA51C3C00A8B729 /* GetFlagAPI.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GetFlagAPI.swift; sourceTree = "<group>"; };
+		EB5500892CA51C3C00A8B729 /* SetUserAliasAPI.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SetUserAliasAPI.swift; sourceTree = "<group>"; };
+		EB55008A2CA51C3C00A8B729 /* GetUserAliasAPI.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GetUserAliasAPI.swift; sourceTree = "<group>"; };
+		EB55008D2CA51C3C00A8B729 /* SetUserAliasRequest.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SetUserAliasRequest.swift; sourceTree = "<group>"; };
+		EB55008E2CA51C3C00A8B729 /* SetUserAliasResponse.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SetUserAliasResponse.swift; sourceTree = "<group>"; };
+		EB55008F2CA51C3C00A8B729 /* GetUserAliasResponse.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GetUserAliasResponse.swift; sourceTree = "<group>"; };
 		EB7A73362DDC67190034279F /* CampaignUtilTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CampaignUtilTests.swift; sourceTree = "<group>"; };
 		EB7A73382DDC6DB70034279F /* RolloutAndTestingSettingsUserInlist.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = RolloutAndTestingSettingsUserInlist.json; sourceTree = "<group>"; };
 		EB7E3D692D27D3D3009B572F /* OffineEventData.xcdatamodel */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcdatamodel; path = OffineEventData.xcdatamodel; sourceTree = "<group>"; };
@@ -458,6 +476,9 @@
 				EB06C7AD2C9023DA00A25E07 /* SettingsQueryParams.swift */,
 				EB06C7AE2C9023DA00A25E07 /* EventArchData.swift */,
 				EB8D4B0B2D2BB49F00DB924A /* EventBatchQueryParams.swift */,
+				EB55008D2CA51C3C00A8B729 /* SetUserAliasRequest.swift */,
+				EB55008E2CA51C3C00A8B729 /* SetUserAliasResponse.swift */,
+				EB55008F2CA51C3C00A8B729 /* GetUserAliasResponse.swift */,
 			);
 			path = Request;
 			sourceTree = "<group>";
@@ -481,9 +502,11 @@
 		EB06C7C72C90242600A25E07 /* Utility */ = {
 			isa = PBXGroup;
 			children = (
+				BA203D792E601B7A00DE8EEB /* UserIdUtil.swift */,
 				BA6CF04D2E431E8700FE5740 /* DeviceUtil.swift */,
 				EB06C7D42C90243000A25E07 /* MegUtil.swift */,
 				BA5DD5E62E3225D200D3A127 /* EventsUtils.swift */,
+				BA8309EF2E212D87001804F0 /* DeviceIDUtil.swift */,
 				EB06C7CD2C90242F00A25E07 /* CampaignUtil.swift */,
 				EB06C7C82C90242F00A25E07 /* DataTypeUtil.swift */,
 				EB06C7CC2C90242F00A25E07 /* DecisionUtil.swift */,
@@ -526,6 +549,7 @@
 				EB06C7F62C90246E00A25E07 /* SettingManager.swift */,
 				EB06C7F92C90246E00A25E07 /* UrlService.swift */,
 				EB22C9D92C946A8C00381E34 /* LocalStorageService.swift */,
+				BACCE91A2E49FC3400901FCC /* AliasIdentifierManager.swift */,
 			);
 			path = Services;
 			sourceTree = "<group>";
@@ -741,6 +765,7 @@
 				EB373EAB2DAE1FC2005713D1 /* UUIDUtilsTests.swift */,
 				BAE6CFE82E4396360041118A /* DeviceUtilTests.swift */,
 				EB373EB02DAE69EC005713D1 /* FunctionUtilTests.swift */,
+				BA5DD5E22E2655CE00D3A127 /* DeviceIDUtilTests.swift */,
 				EB373EB72DAE8013005713D1 /* SettingUtilTests.swift */,
 				EB544F162DD73E28006AA817 /* DataTypeUtilTests.swift */,
 				EB7A73362DDC67190034279F /* CampaignUtilTests.swift */,
@@ -842,6 +867,8 @@
 				EB5500852CA51C3C00A8B729 /* GetFlagAPI.swift */,
 				EB5500832CA51C3C00A8B729 /* SetAttributeAPI.swift */,
 				EB5500842CA51C3C00A8B729 /* TrackEventAPI.swift */,
+				EB5500892CA51C3C00A8B729 /* SetUserAliasAPI.swift */,
+				EB55008A2CA51C3C00A8B729 /* GetUserAliasAPI.swift */,
 			);
 			path = API;
 			sourceTree = "<group>";
@@ -1078,6 +1105,7 @@
 				EB06C7D52C90243300A25E07 /* RuleEvaluationUtil.swift in Sources */,
 				EB06C7C62C90241E00A25E07 /* Constants.swift in Sources */,
 				EB06C8902C9026EB00A25E07 /* SegmentOperatorValueEnum.swift in Sources */,
+				BA203D7A2E601B7A00DE8EEB /* UserIdUtil.swift in Sources */,
 				EB8560A72D364C2A00565862 /* FmeConfig.swift in Sources */,
 				EB7E3D712D27D7A8009B572F /* EventData+CoreDataClass.swift in Sources */,
 				EB06C7C12C9023EE00A25E07 /* Variable.swift in Sources */,
@@ -1088,7 +1116,9 @@
 				EB7E3D6A2D27D3D3009B572F /* OffineEventData.xcdatamodeld in Sources */,
 				EB06C7FB2C90247600A25E07 /* LoggerService.swift in Sources */,
 				EB7E3D722D27D7A8009B572F /* EventData+CoreDataProperties.swift in Sources */,
+				BACCE91B2E49FC3400901FCC /* AliasIdentifierManager.swift in Sources */,
 				EB7E3D752D27F351009B572F /* CoreDataStack.swift in Sources */,
+				BA8309F02E212D94001804F0 /* DeviceIDUtil.swift in Sources */,
 				EB06C7DA2C90243300A25E07 /* DecisionUtil.swift in Sources */,
 				EB06C8A32C90274C00A25E07 /* Event.swift in Sources */,
 				BAD427462E12763800C5C011 /* VWOStorageConnector.swift in Sources */,
@@ -1105,6 +1135,8 @@
 				EB06C7DD2C90243300A25E07 /* SettingUtil.swift in Sources */,
 				EB06C87F2C90269F00A25E07 /* GlobalRequestModel.swift in Sources */,
 				EB5500862CA51C3C00A8B729 /* GetFlagAPI.swift in Sources */,
+				EB55008B2CA51C3C00A8B729 /* SetUserAliasAPI.swift in Sources */,
+				EB55008C2CA51C3C00A8B729 /* GetUserAliasAPI.swift in Sources */,
 				EB06C7BF2C9023EB00A25E07 /* SegmentDslModel.swift in Sources */,
 				BA6CF04F2E431F9E00FE5740 /* DeviceUtil.swift in Sources */,
 				EB06C8A22C90274C00A25E07 /* SettingsQueryParams.swift in Sources */,
@@ -1118,6 +1150,9 @@
 				EB06C8622C90260900A25E07 /* LogManager.swift in Sources */,
 				EB06C79A2C90239C00A25E07 /* VWO.swift in Sources */,
 				EB8D4B0C2D2BB49F00DB924A /* EventBatchQueryParams.swift in Sources */,
+				EB5500902CA51C3C00A8B729 /* SetUserAliasRequest.swift in Sources */,
+				EB5500912CA51C3C00A8B729 /* SetUserAliasResponse.swift in Sources */,
+				EB5500922CA51C3C00A8B729 /* GetUserAliasResponse.swift in Sources */,
 				EB06C7992C90239C00A25E07 /* VWOBuilder.swift in Sources */,
 				EB06C8802C90269F00A25E07 /* ResponseModel.swift in Sources */,
 				EB06C8992C90273500A25E07 /* VWOUserContext.swift in Sources */,
@@ -1145,6 +1180,7 @@
 				EB373E752D9D484C005713D1 /* DecisionMakerTests.swift in Sources */,
 				EB544F072DD5FBA6006AA817 /* EnumTests.swift in Sources */,
 				EB373E782D9E7E08005713D1 /* SegmentEvaluatorTests.swift in Sources */,
+				BA5DD5E32E2655CE00D3A127 /* DeviceIDUtilTests.swift in Sources */,
 				EB373E8A2DA637C2005713D1 /* MockHookManager.swift in Sources */,
 				EB544F042DD5FA08006AA817 /* FeatureTests.swift in Sources */,
 				EB373EAF2DAE4344005713D1 /* TrackEventTests.swift in Sources */,

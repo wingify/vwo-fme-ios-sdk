@@ -15,6 +15,9 @@
  */
 
 import Foundation
+#if canImport(UIKit)
+import UIKit
+#endif
 
 /**
  * A service for managing local storage using UserDefaults.
@@ -23,9 +26,9 @@ import Foundation
  * and other data related to the application's local storage.
  */
 class StorageService {
-   
+
     private let userDefaults: UserDefaults
-    
+
     private struct Keys {
         static let settings = "com.vwo.fme.settings"
         static let version = "com.vwo.fme.version"
@@ -34,8 +37,12 @@ class StorageService {
         static let userDetailExpiry = "com.vwo.fme.userDetailExpiry"
         static let attributeCheckExpiry = "com.vwo.fme.attributeCheckExpiry"
         static let usageStats = "com.vwo.fme.usageStats"
+        static let aliasID = "com.vwo.fme.aliasID"
+        static let aliasMappings = "com.vwo.fme.aliasMappings"
+        static let deviceIdKey = "com.vwo.fme.deviceIdKey"
+
     }
-        
+
     /**
      * Initializes a new instance of StorageService.
      *
@@ -49,7 +56,7 @@ class StorageService {
             fatalError("Unable to initialize UserDefaults with suite")
         }
     }
-    
+
     /**
      * Saves the provided settings to local storage.
      *
@@ -64,7 +71,7 @@ class StorageService {
             LoggerService.log(level: .error, key: "SETTINGS_SCHEMA_INVALID", details: [:])
         }
     }
-    
+
     /**
      * Loads the settings from local storage.
      *
@@ -82,28 +89,50 @@ class StorageService {
         }
         return nil
     }
-    
+
     /**
      * Clears the settings from local storage.
      */
     func clearSettings() {
         userDefaults.removeObject(forKey: Keys.settings)
     }
-    
+
     /**
      * Retrieves the setting expiry time from local storage.
      *
      * - Returns: The expiry time as an Int64 if available, otherwise nil.
      */
     func getSettingExpiry() -> Int64? {
-        
+
         let data = userDefaults.value(forKey: Keys.settingExpiry)
         if let expiryTime = data as? Int64 {
             return expiryTime
         }
         return nil
     }
-    
+
+
+    /**
+     * Saves the Alias Mappings Array to local storage.
+     *
+     * - Parameter aliasMappings: Array of alias mappings to be saved.
+     */
+    func setAliasMappings(aliasMappings: [[String: String]]) {
+        userDefaults.set(aliasMappings, forKey: Keys.aliasMappings)
+    }
+
+    /**
+     * Retrieves the Alias Mappings Array from local storage.
+     *
+     * - Returns: Array of alias mappings if available, otherwise nil.
+     */
+    func getAliasMappings() -> [[String: String]]? {
+        if let existingMappings = userDefaults.array(forKey: Keys.aliasMappings) as? [[String: String]] {
+            return existingMappings
+        }
+        return nil
+    }
+
     /**
      * Saves the setting expiry time to local storage.
      *
@@ -112,14 +141,14 @@ class StorageService {
     func saveSettingExpiry(timeInterval: Int64) {
         userDefaults.set(timeInterval, forKey: Keys.settingExpiry)
     }
-    
+
     /**
      * Clears the setting expiry time from local storage.
      */
     func clearSettingExpiry() {
         userDefaults.removeObject(forKey: Keys.settingExpiry)
     }
-    
+
     /**
      * Retrieves the user detail expiry time from local storage.
      *
@@ -132,7 +161,7 @@ class StorageService {
         }
         return nil
     }
-    
+
     /**
      * Saves the user detail expiry time to local storage.
      *
@@ -141,14 +170,14 @@ class StorageService {
     func saveUserDetailExpiry(timeInterval: Int64) {
         userDefaults.set(timeInterval, forKey: Keys.userDetailExpiry)
     }
-   
+
     /**
      * Clears the user detail expiry time from local storage.
      */
     func clearUserDetailExpiry() {
         userDefaults.removeObject(forKey: Keys.userDetailExpiry)
     }
-    
+
     /**
      * Retrieves the attribute check expiry time from local storage.
      *
@@ -171,14 +200,28 @@ class StorageService {
         let key = "\(storageKey)_\(Keys.attributeCheckExpiry)"
         userDefaults.set(timeInterval, forKey: key)
     }
-    
+
     /**
      * Clears the attribute check expiry time from local storage.
      */
     func clearAttributeCheckExpiry() {
         userDefaults.removeObject(forKey: Keys.attributeCheckExpiry)
     }
-    
+
+    /**
+     * Fetch device ID is user Id is not provided
+     * It creates and save the Device ID
+     */
+    func getDeviceId() -> String? {
+        if let existingId = userDefaults.string(forKey: Keys.deviceIdKey) {
+            return existingId
+        } else {
+             let vendorIdentifier = DeviceIDUtil.genrateDeviceId()
+                userDefaults.set(vendorIdentifier, forKey: Keys.deviceIdKey)
+                return vendorIdentifier
+        }
+    }
+
     /**
      * Retrieves the user detail from local storage if valid.
      *
@@ -188,7 +231,7 @@ class StorageService {
         if !self.isCachedUserDetailValid() {
             return nil
         }
-        
+
         if let gatewayData = userDefaults.data(forKey: Keys.userDetail) {
             let decoder = JSONDecoder()
             do {
@@ -200,7 +243,7 @@ class StorageService {
         }
         return nil
     }
-    
+
     /**
      * Saves the user detail to local storage and updates the expiry time.
      *
@@ -211,21 +254,21 @@ class StorageService {
         do {
             let data = try encoder.encode(userDetail)
             userDefaults.set(data, forKey: Keys.userDetail)
-            
+
             let timeExpiry = Date().currentTimeMillis() + Constants.LOCATION_EXPIRY
             self.saveUserDetailExpiry(timeInterval: timeExpiry)
         } catch {
             LoggerService.log(level: .error, key: "STORING_DATA_ERROR", details: ["err": "\(error.localizedDescription)"])
         }
     }
-    
+
     /**
      * Clears the user detail from local storage.
      */
     func clearUserDetail() {
         userDefaults.removeObject(forKey: Keys.userDetail)
     }
-    
+
     /**
      * Retrieves the usage stats from local storage.
      *
@@ -245,7 +288,7 @@ class StorageService {
         }
         return nil
     }
-    
+
     /**
      * Saves the usage stats to local storage.
      *
@@ -259,14 +302,14 @@ class StorageService {
             LoggerService.log(level: .error, key: "STORING_DATA_ERROR", details: ["err": "\(error.localizedDescription)"])
         }
     }
-    
+
     /**
      * Clears the usage stats from local storage.
      */
     func clearUsageStats() {
         userDefaults.removeObject(forKey: Keys.usageStats)
     }
-    
+
     /**
      * Retrieves the attribute check result from local storage if valid.
      *
@@ -297,7 +340,7 @@ class StorageService {
             return nil
         }
     }
-    
+
     /**
      * Saves the attribute check result to local storage and updates the expiry time.
      *
@@ -314,7 +357,7 @@ class StorageService {
             LoggerService.log(level: .error, key: "STORING_DATA_ERROR", details: ["err": "Invalid data"])
             return
         }
-                
+
         let storageKey = self.getStorageKeyForAttributeCheck(featureKey: featureKey, listId: listId, attribute: attribute, userId: userId, customVariable: customVariable)
         let data: [String: Any] = ["featureKey": featureKey,
                                    "listId": listId,
@@ -323,11 +366,11 @@ class StorageService {
                                    "result": result,
                                    "customVariable": customVariable]
         userDefaults.set(data, forKey: storageKey)
-        
+
         let timeExpiry = Date().currentTimeMillis() + Constants.LIST_ATTRIBUTE_EXPIRY
         self.saveAttributeCheckExpiry(timeInterval: timeExpiry, storageKey: storageKey)
     }
-    
+
     /**
      * Generates a storage key for attribute check based on the provided parameters.
      *
@@ -344,7 +387,7 @@ class StorageService {
         let storageKey = "\(featureKey)_\(userId)_\(listId)_\(keyDsl)_\(attribute))"
         return storageKey
     }
-    
+
     /**
      * Checks if the cached attribute check is still valid based on expiry time.
      *
@@ -358,7 +401,7 @@ class StorageService {
         }
         return false
     }
-    
+
     /**
      * Checks if the cached user detail is still valid based on expiry time.
      *
@@ -372,7 +415,7 @@ class StorageService {
         }
         return false
     }
-    
+
     /**
      * Saves the version information to local storage.
      *
@@ -381,7 +424,7 @@ class StorageService {
     func saveVersion(_ version: String) {
         userDefaults.set(version, forKey: Keys.version)
     }
-    
+
     /**
      * Loads the version information from local storage.
      *
@@ -390,14 +433,14 @@ class StorageService {
     func loadVersion() -> String? {
         return userDefaults.string(forKey: Keys.version)
     }
-    
+
     /**
      * Empties the local storage suite.
      */
     func emptyLocalStorageSuite() {
         userDefaults.removePersistentDomain(forName: Constants.SDK_USERDEFAULT_SUITE)
     }
-        
+
     /**
      * Retrieves data from storage for a specific feature key and context.
      *
@@ -409,7 +452,7 @@ class StorageService {
     private func getDataInStorage(featureKey: String?, context: VWOUserContext) -> [String: Any]? {
         guard let featureKey = featureKey else { return nil }
         guard let userId = context.id else { return nil }
-        
+
         let storageKey = "\(featureKey)_\(userId)"
         if let connector = StorageConnectorProvider.shared.getStorageConnector() {
             if let data = connector.get(forKey:storageKey) {
@@ -425,7 +468,7 @@ class StorageService {
             }
         }
     }
-    
+
     /**
      * Sets data in storage for a specific feature key and user ID.
      *
@@ -436,22 +479,22 @@ class StorageService {
             LoggerService.log(level: .error, key: "STORING_DATA_ERROR", details: ["err": "Invalid data"])
             return
         }
-        
+
         let rolloutKey = data["rolloutKey"] as? String
         let experimentKey = data["experimentKey"] as? String
         let rolloutVariationId = data["rolloutVariationId"] as? Int
         let experimentVariationId = data["experimentVariationId"] as? Int
-        
+
         if let rolloutKey = rolloutKey, !rolloutKey.isEmpty, experimentKey == nil, rolloutVariationId == nil {
             LoggerService.log(level: .error, key: "STORING_DATA_ERROR", details: ["key": "Variation:(rolloutKey, experimentKey or rolloutVariationId)"])
             return
         }
-        
+
         if let experimentKey = experimentKey, !experimentKey.isEmpty, experimentVariationId == nil {
             LoggerService.log(level: .error, key: "STORING_DATA_ERROR", details: ["key": "Variation:(experimentKey or rolloutVariationId)"])
             return
         }
-        
+
         let storageKey = "\(featureKey)_\(userId)"
         if let connector = StorageConnectorProvider.shared.getStorageConnector() {
             connector.set( data, forKey: storageKey)
@@ -459,7 +502,7 @@ class StorageService {
             userDefaults.set(data, forKey: storageKey)
         }
     }
-       
+
     /**
      * Retrieves a feature from storage for a specific feature key and context.
      *
@@ -471,5 +514,5 @@ class StorageService {
     func getFeatureFromStorage(featureKey: String, context: VWOUserContext) -> [String : Any]? {
         return self.getDataInStorage(featureKey: featureKey, context: context)
     }
-    
+
 }

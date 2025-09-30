@@ -65,6 +65,10 @@ VWOFme.initialize(options: options) { result in
             let customVariables: [String : Any] = ["key_1": 2, "key_2": 0]
             // Create VWOUserContext object
             let userContext = VWOUserContext(id: "unique_user_id", customVariables: customVariables)
+            
+            //Or 
+            // if you want to configure DeviceID
+            let userContext = VWOUserContext(shouldUseDeviceIdAsUserId: true, customVariables: customVariables)
 
             // Get the GetFlag object for the feature key and context
             VWOFme.getFlag(featureKey: "feature_flag_name", context: userContext, completion: { featureFlagObj in
@@ -127,7 +131,8 @@ The following table explains all the parameters in the `context` object:
 | **Parameter**     | **Description**                                                            | **Required** | **Type** | **Example**                       |
 | ----------------- | -------------------------------------------------------------------------- | ------------ | -------- | --------------------------------- |
 | `id`              | Unique identifier for the user.                                            | Yes          | String   | `"unique_user_id"`                |
-| `customVariables` | Custom attributes for targeting.                                           | No           | Dictionary   | `["key_1": 2, "key_2": 0]`     |
+| `customVariables` | Custom attributes for targeting.                                           | No           | Dictionary   | `["key_1": 2, "key_2": 0]`    |
+| `shouldUseDeviceIdAsUserId`  | Use device ID as user ID when user ID is not provided.          | No           | Boolean  | `true`                            |
 
 #### Example
 
@@ -135,6 +140,34 @@ The following table explains all the parameters in the `context` object:
 let customVariables: [String : Any] = ["key_1": 2, "key_2": 0]
 let userContext = VWOUserContext(id: "unique_user_id", customVariables: customVariables)
 ```
+
+#### Device ID Configuration
+
+The SDK supports automatic device ID generation when a user ID is not provided. This feature helps maintain consistent user identification across app sessions.
+
+##### Enable Device ID
+
+To enable device ID generation, set the `shouldUseDeviceIdAsUserId` property in your `VWOUserContext`:
+
+##### How It Works
+
+- User ID Priority: If a user ID is provided, it takes precedence over device ID
+- Device ID Fallback: When no user ID is available and `shouldUseDeviceIdAsUserId` is enabled, the SDK generates a persistent device ID
+- Persistent: Device IDs remain consistent across app uninstalls/reinstalls but may change on factory resets
+
+#### Example 
+
+```swift
+let customVariables: [String : Any] = ["key_1": 2, "key_2": 0]
+let userContext = VWOUserContext(shouldUseDeviceIdAsUserId: true, customVariables: customVariables )
+```
+
+##### Error Handling
+
+If neither a user ID is provided nor device ID is enabled, the SDK will log an error.
+
+This feature is particularly useful for anonymous users or scenarios where explicit user identification is not available.
+
 
 ### Basic Feature Flagging
 
@@ -217,6 +250,39 @@ VWOFme.setAttribute(attributes: attributeDict, context: userContext)
 ```
 
 See [Pushing Attributes](https://developers.vwo.com/v2/docs/fme-ios-attributes#usage) documentation for additional information.
+
+### User Alias Management
+
+The `setAlias` method allows you to link a temporary user ID to an original user ID. This is particularly useful when users start as anonymous (with a temporary ID) and later log in with their actual user ID, ensuring consistent user identification across sessions.
+
+| **Parameter** | **Description**                                                            | **Required** | **Type**   | **Example**                                                                                          |
+| -------------- | -------------------------------------------------------------------------- | ------------ | ---------- | ---------------------------------------------------------------------------------------------------- |
+| `userContext`  | VWOUserContext containing the temporary user ID                           | Yes          | VWOUserContext | `VWOUserContext(id: "temp_user_123", customVariables: ["key": "value"])` |
+| `alias`        | The original/authenticated user ID to link to the temporary ID            | Yes          | String     | `"authenticated_user_456"`                                                                           |
+
+#### Use Cases
+
+- **Anonymous to Authenticated**: When a user starts using your app anonymously and later logs in
+- **Cross-Device Tracking**: Linking user sessions across different devices
+- **User Journey Continuity**: Maintaining consistent user identification throughout the user lifecycle
+
+#### Example Usage
+
+```swift
+// Create user context with temporary ID (anonymous user)
+let tempUserContext = VWOUserContext(id: "temp_user_123", customVariables: ["key": "value"])
+
+// When user logs in, link the temporary ID to their authenticated ID
+VWOFme.setAlias(from: tempUserContext, to: "authenticated_user_456")
+
+```
+
+#### Important Notes
+
+- The alias feature must be enabled in your VWO account settings
+- The temporary user ID and alias cannot be the same
+- Both user IDs must be non-empty strings
+- The method will log appropriate success/error messages for debugging
 
 
 ### Integrations

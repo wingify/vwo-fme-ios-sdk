@@ -17,34 +17,30 @@
 import Foundation
 
 /**
- * Enumeration representing API endpoint URLs.
+ * Request model for setting user alias.
  *
- * This enum defines constants for various API endpoint URLs used in the application.
- * Each URL is associated with a specific string value representing the relative path of the endpoint.
+ * This struct represents the request body for the setUserAlias API endpoint.
  */
-enum UrlEnum: String {
+struct SetUserAliasRequest: Codable {
     /**
-     * URL for the events endpoint.
+     * Temporary ID representing the user in logged out state.
      */
-    case events = "/events/t"
+    let tempId: String
     
     /**
-     * URL for checking attributes.
+     * User ID representing the user in logged in state.
      */
-    case attributeCheck = "/check-attribute"
+    let userId: String
     
     /**
-     * URL for retrieving user data.
+     * Initializes a new instance of SetUserAliasRequest.
+     *
+     * - Parameters:
+     *   - tempId: The temporary ID for the user in logged out state.
+     *   - userId: The user ID for the user in logged in state.
      */
-    case getUserData = "/get-user-details"
-    
-    /**
-     * URL for setting user alias.
-     */
-    case setUserAlias = "/user-alias/setUserAlias"
-    
-    /**
-     * URL for getting user alias.
-     */
-    case getUserAlias = "/user-alias/getAliasUserId"
+    init(tempId: String, userId: String) {
+        self.tempId = tempId
+        self.userId = userId
+    }
 }

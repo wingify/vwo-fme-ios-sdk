@@ -28,6 +28,7 @@ class VWOBuilder {
     init(options: VWOInitOptions?) {
         self.options = options
         UsageStatsUtil.shared.setUsageStats(options: options)
+        AliasIdentifierManager.shared.setIsEnabled(options: options)
     }
 
     // Set VWOClient instance
