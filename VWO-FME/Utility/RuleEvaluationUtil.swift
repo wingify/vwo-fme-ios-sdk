@@ -36,6 +36,7 @@ struct RuleEvaluationUtil {
         evaluatedFeatureMap: inout [String: Any],
         megGroupWinnerCampaigns: inout [Int: String]?,
         storageService: StorageService,
+        serviceContainer: ServiceContainer,
         decision: inout [String: Any]
     ) -> [String: Any] {
         // Check if the campaign satisfies the whitelisting and pre-segmentation
@@ -47,6 +48,7 @@ struct RuleEvaluationUtil {
             evaluatedFeatureMap: &evaluatedFeatureMap,
             megGroupWinnerCampaigns: &megGroupWinnerCampaigns,
             storageService: storageService,
+            serviceContainer: serviceContainer,
             decision: &decision
         )
         
@@ -67,7 +69,8 @@ struct RuleEvaluationUtil {
                 settings: settings,
                 campaignId: cmpId,
                 variationId: whitelistedId,
-                context: context
+                context: context,
+                serviceContainer: serviceContainer
             )
         }
         

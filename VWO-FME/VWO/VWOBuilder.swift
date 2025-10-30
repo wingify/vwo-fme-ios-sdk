@@ -25,6 +25,10 @@ class VWOBuilder {
     var isSettingsValid = false
     var settingsFetchTime : Int64 = 0
 
+    // Instance-level services instead of static ones
+    private var loggerService: LoggerService?
+    internal var storage: StorageService = StorageService()
+
     init(options: VWOInitOptions?) {
         self.options = options
         UsageStatsUtil.shared.setUsageStats(options: options)
@@ -34,6 +38,46 @@ class VWOBuilder {
     // Set VWOClient instance
     func setVWOClient(_ vwoClient: VWOClient?) {
         self.vwoClient = vwoClient
+    }
+    
+    /**
+     * Gets the LoggerService instance
+     * @return LoggerService instance
+     */
+    func getLoggerService() -> LoggerService? {
+        return loggerService
+    }
+    
+    /**
+     * Gets the SettingsManager instance
+     * @return SettingsManager instance
+     */
+    func getSettingsManager() -> SettingsManager? {
+        return settingFileManager
+    }
+    
+    /**
+     * Gets the SyncManager instance (iOS equivalent of BatchManager)
+     * @return SyncManager instance
+     */
+    internal func getBatchManager() -> SyncManager? {
+        return SyncManager.shared
+    }
+    
+    /**
+     * Creates a ServiceContainer instance with the current settings and options
+     * Following Android SDK pattern where ServiceContainer is created per API call
+     * @param processedSettings Processed settings object
+     * @param options VWO initialization options
+     * @return ServiceContainer instance
+     */
+    func createServiceContainer(processedSettings: Settings?, options: VWOInitOptions) -> ServiceContainer {
+        return ServiceContainer(
+            settingsManager: settingFileManager,
+            options: options,
+            settings: processedSettings,
+            loggerService: loggerService
+        )
     }
 
     /**
@@ -122,13 +166,22 @@ class VWOBuilder {
      * @return The instance of this builder.
      */
     func setLogger() -> VWOBuilder {
-        
-        if let options = options, !options.logger.isEmpty {
-            _ = LoggerService.createInstance(config: options.logger, logLevel: options.logLevel, logTransport: options.logTransport)
-        } else {
-            _ = LoggerService.createInstance(config: [:], logLevel: .error, logTransport: nil)
+        do {
+            if self.options == nil || options?.logger.isEmpty != false {
+                self.loggerService = LoggerService(config: [:], logLevel: .error, logTransport: nil)
+                // Also create static instance for backward compatibility
+                _ = LoggerService.createInstance(config: [:], logLevel: .error, logTransport: nil)
+            } else {
+                self.loggerService = LoggerService(config: options!.logger, logLevel: options!.logLevel, logTransport: options!.logTransport)
+                // Also create static instance for backward compatibility
+                _ = LoggerService.createInstance(config: options!.logger, logLevel: options!.logLevel, logTransport: options!.logTransport)
+            }
+            
+            LoggerService.log(level: .debug, key: "SERVICE_INITIALIZED", details: ["service": "Logger"])
+        } catch {
+            let message = "Error occurred while initializing Logger : \(error.localizedDescription)"
+            print(message)
         }
-        LoggerService.log(level: .debug, key: "SERVICE_INITIALIZED", details: ["service": "Logger"])
         return self
     }
 

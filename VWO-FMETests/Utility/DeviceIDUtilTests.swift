@@ -15,6 +15,7 @@
  */
 
 import XCTest
+import Security
 @testable import VWO_FME
 
 class DeviceIDUtilTests: XCTestCase {
@@ -28,6 +29,13 @@ class DeviceIDUtilTests: XCTestCase {
     override func setUp() {
         super.setUp()
         userDefaults.removeObject(forKey: deviceIdKey)
+        // Clear Keychain entry to ensure deterministic test
+        let query: [String: Any] = [
+            kSecClass as String: kSecClassGenericPassword,
+            kSecAttrService as String: "com.vwo.fme.deviceId",
+            kSecAttrAccount as String: "com.vwo.fme"
+        ]
+        SecItemDelete(query as CFDictionary)
     }
 
     override func tearDown() {
@@ -36,15 +44,17 @@ class DeviceIDUtilTests: XCTestCase {
     }
 
     func testGetDeviceID_GeneratesAndReturnsDeviceID() {
-        // Test that when no device ID is stored, it generates and stores identifierForVendor
+        // When nothing stored, it should generate (from keychain path) and persist to UserDefaults
         let util = DeviceIDUtil()
         let deviceId = util.getDeviceID()
-        let expected = UIDevice.current.identifierForVendor?.uuidString
         XCTAssertNotNil(deviceId, "Device ID should not be nil when generated.")
-        XCTAssertEqual(deviceId, expected, "Device ID should match identifierForVendor.")
-        // Also check that it is now stored in UserDefaults
+        // Check it is stored in UserDefaults and matches returned value
         let stored = userDefaults.string(forKey: deviceIdKey)
-        XCTAssertEqual(stored, expected, "Device ID should be stored in UserDefaults.")
+        XCTAssertEqual(stored, deviceId, "Device ID should be stored in UserDefaults and match returned value.")
+        
+        // Subsequent fetch should return the same (stability check)
+        let deviceIdAgain = util.getDeviceID()
+        XCTAssertEqual(deviceId, deviceIdAgain, "Device ID should remain stable across calls.")
     }
 
     func testGetDeviceID_ReturnsExistingDeviceIDFromUserDefaults() {

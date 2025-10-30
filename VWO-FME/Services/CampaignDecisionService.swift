@@ -130,9 +130,10 @@ class CampaignDecisionService {
      * This method is used to analyze the pre-segmentation decision for the user in the campaign.
      * @param campaign  CampaignModel object containing the campaign settings.
      * @param context  VWOUserContext object containing the user context.
+     * @param serviceContainer ServiceContainer instance for service access.
      * @return  boolean value indicating if the user passes the pre-segmentation.
      */
-    func getPreSegmentationDecision(campaign: Campaign, context: VWOUserContext) -> Bool {
+    func getPreSegmentationDecision(campaign: Campaign, context: VWOUserContext, serviceContainer: ServiceContainer) -> Bool {
         
         let campaignType = campaign.type
         let segments: [String: Any]
@@ -146,14 +147,14 @@ class CampaignDecisionService {
         }
         
         if segments.isEmpty {
-            LoggerService.log(level: .info, key: "SEGMENTATION_SKIP", details: [
+            serviceContainer.getLoggerService()?.log(level: .info, key: "SEGMENTATION_SKIP", details: [
                 "userId": context.id ?? "",
                 "campaignKey": campaign.type == CampaignTypeEnum.ab.rawValue ? "\(campaign.key ?? "--")" : "\(campaign.name ?? "--")_\(campaign.ruleKey ?? "--")",
             ])
             return true
         } else {
-            let preSegmentationResult = SegmentationManager.validateSegmentation(dsl: segments, properties: context.customVariables)
-            LoggerService.log(level: .info, key: "SEGMENTATION_STATUS", details: [
+            let preSegmentationResult = serviceContainer.getSegmentationManager().validateSegmentation(dsl: segments, properties: context.customVariables)
+            serviceContainer.getLoggerService()?.log(level: .info, key: "SEGMENTATION_STATUS", details: [
                 "userId": context.id ?? "",
                 "campaignKey": campaign.type == CampaignTypeEnum.ab.rawValue ? "\(campaign.key ?? "--")" : "\(campaign.name ?? "--")_\(campaign.ruleKey ?? "--")",
                 "status": preSegmentationResult ? "passed" : "failed"

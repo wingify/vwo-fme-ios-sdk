@@ -18,6 +18,9 @@ import Foundation
 
 class LoggerService {
     
+    // Instance-specific prefix for multi-instance support
+    private let instancePrefix: String
+    
     // Thread-safe static message dictionaries
     private static let messageLock = NSLock()
     private static var _debugMessages: [String: String] = [:]
@@ -92,8 +95,17 @@ class LoggerService {
     }
     
     init(config: [String: Any], logLevel: LogLevelEnum, logTransport: LogTransport?) {
-        // Initialize the LogManager using thread-safe method
-        _ = LogManager.createInstance(config: config, logLevel: logLevel, logTransport: logTransport)
+        // Initialize or reuse the shared LogManager instance with NO prefix
+        var sharedConfig = config
+        sharedConfig["prefix"] = ""
+        _ = LogManager.createInstance(config: sharedConfig, logLevel: logLevel, logTransport: logTransport)
+        
+        // Capture instance-specific prefix (do NOT rely on shared LogManager prefix)
+        if let prefix = config["prefix"] as? String {
+            self.instancePrefix = prefix
+        } else {
+            self.instancePrefix = ""
+        }
         
         // Read the log files (only once) - thread-safe
         LoggerService.messageLock.lock()
@@ -166,5 +178,18 @@ class LoggerService {
     static func log(level: LogLevelEnum, message: String?) {
         guard let logManager = LogManager.instance else { return }
         logManager.log(level: level, message: message)
+    }
+    
+    // Instance methods that prepend instance prefix while using shared LogManager
+    func log(level: LogLevelEnum, key: String, details: [String: String]?) {
+        let logFile = LoggerService.getLogFile(level: level)
+        let messageBuilder = LogMessageUtil.buildMessage(template: logFile[key], data: details)
+        let finalMessage = instancePrefix.isEmpty ? messageBuilder : "\(instancePrefix): \(messageBuilder ?? "")"
+        LogManager.instance?.log(level: level, message: finalMessage)
+    }
+    
+    func log(level: LogLevelEnum, message: String?) {
+        let finalMessage = instancePrefix.isEmpty ? message : "\(instancePrefix): \(message ?? "")"
+        LogManager.instance?.log(level: level, message: finalMessage)
     }
 }

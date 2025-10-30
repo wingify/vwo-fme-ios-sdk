@@ -21,12 +21,18 @@ import Foundation
     * This event is triggered when the init function is called.
     * @param settingsFetchTime Time taken to fetch settings in milliseconds.
     * @param sdkInitTime Time taken to initialize the SDK in milliseconds.
+    * @param serviceContainer ServiceContainer instance for service access.
     */
 class EventsUtils {
     
-    func sendSdkInitEvent(settingsFetchTime: Int64? = nil, sdkInitTime: Int64? = nil) {
+    func sendSdkInitEvent(settingsFetchTime: Int64? = nil, sdkInitTime: Int64? = nil, serviceContainer: ServiceContainer? = nil) {
         // Create the query parameters
-        let queryParams = NetworkUtil.getEventsBaseProperties(eventName: EventEnum.VWO_INIT_CALLED.rawValue, visitorUserAgent: nil, ipAddress: nil)
+        let queryParams = NetworkUtil.getEventsBaseProperties(
+            eventName: EventEnum.VWO_INIT_CALLED.rawValue,
+            visitorUserAgent: nil,
+            ipAddress: nil,
+            serviceContainer: serviceContainer
+        )
 
         // Create the payload with required fields
         let payload = NetworkUtil.getSDKInitEventPayload(eventName: EventEnum.VWO_INIT_CALLED.rawValue, settingsFetchTime: settingsFetchTime, sdkInitTime: sdkInitTime)
@@ -40,14 +46,16 @@ class EventsUtils {
     ///
     /// - Parameter usageStatsAccountId: The account ID specifically designated for tracking usage statistics.
     ///                                  This might be different from the main VWO account ID.
-    func sendSDKUsageStatsEvent(usageStatsAccountId: Int) {
+    /// - Parameter serviceContainer: ServiceContainer instance for service access.
+    func sendSDKUsageStatsEvent(usageStatsAccountId: Int, serviceContainer: ServiceContainer? = nil) {
         // Create the query parameters
         let queryParams = NetworkUtil.getEventsBaseProperties(
             eventName: EventEnum.VWO_USAGE_STATS.rawValue,
             visitorUserAgent: nil,
             ipAddress: nil,
             isUsageStatsEvent: true,
-            usageStatsAccountId: usageStatsAccountId
+            usageStatsAccountId: usageStatsAccountId,
+            serviceContainer: serviceContainer
         )
         
         // Create the payload with required fields

@@ -37,9 +37,12 @@ class SettingsManager {
     var isGatewayServiceProvided: Bool = false
     private var localStorageService = StorageService()
 
-    // Simple thread-safe singleton
-    private static var _instance: SettingsManager?
+    // Multi-instance support: store instances per account
+    private static var instances: [String: SettingsManager] = [:]
     private static let lock = NSLock()
+    
+    // Backward compatibility: most recently created instance
+    private static var _instance: SettingsManager?
     
     static var instance: SettingsManager? {
         get {
@@ -50,40 +53,71 @@ class SettingsManager {
         }
     }
     
-    /// Creates or returns the existing singleton instance of `SettingsManager`.
+    /// Creates or returns an existing instance of `SettingsManager` for the specific account.
     ///
-    /// This is a **thread-safe** factory method to initialize or retrieve the shared instance of the `SettingsManager`,
-    /// which is responsible for handling SDK configuration and settings. It ensures a single, consistent instance
-    /// across the application lifecycle, even in multi-threaded environments.
+    /// This method supports multi-instance usage by creating separate `SettingsManager` instances
+    /// for each account (identified by accountId and sdkKey). This ensures proper isolation
+    /// between different VWO accounts.
     ///
     /// - Parameter options: An instance of `VWOInitOptions` containing initialization parameters like account ID,
     ///   SDK key, logging level, and other configuration values.
     ///
-    /// - Returns: A shared `SettingsManager` instance initialized with the provided options.
+    /// - Returns: A `SettingsManager` instance specific to the provided account.
     ///
     /// - Note:
-    ///   Uses a lightweight double-checked locking pattern to minimize overhead once the instance is initialized.
-    ///   Safe to call multiple times; the same instance will be returned.
+    ///   Uses a thread-safe dictionary to store instances per account.
+    ///   Each account gets its own instance to ensure proper isolation.
     static func createInstance(options: VWOInitOptions) -> SettingsManager {
-        // Quick check without lock first
-        if let existing = _instance {
-            return existing
+        guard let accountId = options.accountId,
+              let sdkKey = options.sdkKey else {
+            // Fallback to old behavior if account info is missing
+            if let existing = _instance {
+                return existing
+            }
+            lock.lock()
+            defer { lock.unlock() }
+            if let existing = _instance {
+                return existing
+            }
+            let newInstance = SettingsManager(options: options)
+            _instance = newInstance
+            return newInstance
         }
         
-        // Only lock when we need to create
+        // Generate account key for multi-instance support
+        let accountKey = "\(accountId)_\(sdkKey)"
+        
         lock.lock()
         defer { 
             lock.unlock()
         }
         
-        // Check again after acquiring lock
-        if let existing = _instance {
-            return existing
+        // Check if instance exists for this account
+        if let existing = instances[accountKey] {
+            // Verify it still matches (account ID and SDK key)
+            if existing.accountId == accountId && existing.sdkKey == sdkKey {
+                _instance = existing // Update most recent for backward compatibility
+                return existing
+            }
         }
         
-        // Create and store the instance
-        _instance = SettingsManager(options: options)
-        return _instance!
+        // Create new instance for this account
+        let newInstance = SettingsManager(options: options)
+        instances[accountKey] = newInstance
+        _instance = newInstance // Update most recent for backward compatibility
+        return newInstance
+    }
+    
+    /// Gets an existing instance for a specific account
+    /// - Parameters:
+    ///   - accountId: The account ID
+    ///   - sdkKey: The SDK key
+    /// - Returns: The SettingsManager instance for this account, or nil if not found
+    static func getInstance(accountId: Int, sdkKey: String) -> SettingsManager? {
+        let accountKey = "\(accountId)_\(sdkKey)"
+        lock.lock()
+        defer { lock.unlock() }
+        return instances[accountKey]
     }
     
     /**

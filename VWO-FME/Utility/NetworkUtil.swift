@@ -35,8 +35,15 @@ class NetworkUtil {
     }
     
     // Generates the URL for the event
-    private static func generateEventUrl() -> String {
-        return Constants.HTTPS_PROTOCOL + UrlService.baseUrl + UrlEnum.events.rawValue
+    private static func generateEventUrl(serviceContainer: ServiceContainer? = nil) -> String {
+        let baseUrl: String
+        if let container = serviceContainer {
+            baseUrl = container.getBaseUrl()
+        } else {
+            // Fallback to static UrlService for backward compatibility
+            baseUrl = UrlService.baseUrl
+        }
+        return Constants.HTTPS_PROTOCOL + baseUrl + UrlEnum.events.rawValue
     }
     
     // Generates a message ID for the event
@@ -84,19 +91,29 @@ class NetworkUtil {
     }
     
     // Creates the base properties for the event arch APIs
-    static func getEventsBaseProperties(eventName: String, visitorUserAgent: String?, ipAddress: String?, isUsageStatsEvent: Bool? = false, usageStatsAccountId: Int? = 0) -> [String: String] {
-        let settingManager = SettingsManager.instance
-        let accountIdString = "\(SettingsManager.instance?.accountId ?? 0)"
-        let sdkKey = "\(settingManager?.sdkKey ?? "")"
+    static func getEventsBaseProperties(eventName: String, visitorUserAgent: String?, ipAddress: String?, isUsageStatsEvent: Bool? = false, usageStatsAccountId: Int? = 0, serviceContainer: ServiceContainer? = nil) -> [String: String] {
+        let accountIdString: String
+        let sdkKey: String
+        
+        if let container = serviceContainer {
+            accountIdString = "\(container.getAccountId())"
+            sdkKey = container.getSdkKey()
+        } else {
+            // Fallback to static SettingsManager for backward compatibility
+            let settingManager = SettingsManager.instance
+            accountIdString = "\(settingManager?.accountId ?? 0)"
+            sdkKey = settingManager?.sdkKey ?? ""
+        }
+        
         if let visitorUserAgent = visitorUserAgent {
-            var requestQueryParams = RequestQueryParams(en: eventName, a: accountIdString, env: sdkKey, visitorUa: visitorUserAgent, visitorIp: ipAddress ?? "", url: generateEventUrl())
+            var requestQueryParams = RequestQueryParams(en: eventName, a: accountIdString, env: sdkKey, visitorUa: visitorUserAgent, visitorIp: ipAddress ?? "", url: generateEventUrl(serviceContainer: serviceContainer))
             if (isUsageStatsEvent ?? false) {
                 requestQueryParams.env = nil
-                requestQueryParams.a = "\(usageStatsAccountId)"
+                requestQueryParams.a = "\(usageStatsAccountId ?? 0)"
             }
             return requestQueryParams.queryParams
         }else{
-            let requestQueryParams = RequestQueryParams(en: eventName, a: accountIdString, env: sdkKey, visitorUa: "", visitorIp: ipAddress ?? "", url: generateEventUrl())
+            let requestQueryParams = RequestQueryParams(en: eventName, a: accountIdString, env: sdkKey, visitorUa: "", visitorIp: ipAddress ?? "", url: generateEventUrl(serviceContainer: serviceContainer))
             if (isUsageStatsEvent ?? false) {
                 requestQueryParams.env = nil
                 if let usageStatsAccountId = usageStatsAccountId {
@@ -109,10 +126,20 @@ class NetworkUtil {
         
     }
     
-    static func getBatchEventsBaseProperties() -> [String:String] {
-        let settingManager = SettingsManager.instance
-        let accountId = "\(settingManager?.accountId ?? 0)"
-        let sdkKey = "\(settingManager?.sdkKey ?? "")"
+    static func getBatchEventsBaseProperties(serviceContainer: ServiceContainer? = nil) -> [String:String] {
+        let accountId: String
+        let sdkKey: String
+        
+        if let container = serviceContainer {
+            accountId = "\(container.getAccountId())"
+            sdkKey = container.getSdkKey()
+        } else {
+            // Fallback to static SettingsManager for backward compatibility
+            let settingManager = SettingsManager.instance
+            accountId = "\(settingManager?.accountId ?? 0)"
+            sdkKey = settingManager?.sdkKey ?? ""
+        }
+        
         let requestQueryParam = EventBatchQueryParams(i: sdkKey, env: sdkKey, a: accountId)
         return requestQueryParam.queryParams
     }
@@ -238,7 +265,7 @@ class NetworkUtil {
 
     
     // Returns the payload data for the track user API
-    class func getTrackUserPayloadData(settings: Settings, userId: String?, eventName: String, campaignId: Int, variationId: Int, visitorUserAgent: String?, ipAddress: String?, context: VWOUserContext) -> [String: Any] {
+    class func getTrackUserPayloadData(settings: Settings, userId: String?, eventName: String, campaignId: Int, variationId: Int, visitorUserAgent: String?, ipAddress: String?, context: VWOUserContext, serviceContainer: ServiceContainer? = nil) -> [String: Any] {
         var properties = NetworkUtil.getEventBasePayload(userId: userId, eventName: eventName, visitorUserAgent: visitorUserAgent, ipAddress: ipAddress)
         
         properties.d?.event?.props?.id = campaignId
@@ -255,11 +282,20 @@ class NetworkUtil {
             NetworkUtil.addCustomVariablesToVisitorProps(properties: &properties, context: context)
         }
 
-        LoggerService.log(level: .debug, 
-                          key: "IMPRESSION_FOR_TRACK_USER",
-                          details: ["accountId": "\(String(describing: settings.accountId))",
-                                    "userId": userId ?? "",
-                                    "campaignId": "\(String(describing: campaignId))"])
+        // Use instance logger if available, otherwise static logger
+        if let container = serviceContainer, let logger = container.getLoggerService() {
+            logger.log(level: .debug, 
+                      key: "IMPRESSION_FOR_TRACK_USER",
+                      details: ["accountId": "\(String(describing: settings.accountId))",
+                                "userId": userId ?? "",
+                                "campaignId": "\(String(describing: campaignId))"])
+        } else {
+            LoggerService.log(level: .debug, 
+                              key: "IMPRESSION_FOR_TRACK_USER",
+                              details: ["accountId": "\(String(describing: settings.accountId))",
+                                        "userId": userId ?? "",
+                                        "campaignId": "\(String(describing: campaignId))"])
+        }
         
         let payloadDict = properties.toDictionary()
         let cleanedPayload = removeNullValues(originalMap: payloadDict)
@@ -267,16 +303,25 @@ class NetworkUtil {
     }
     
     // Returns the payload data for the goal API
-    static func getTrackGoalPayloadData(settings: Settings, userId: String?, eventName: String, context: VWOUserContext, eventProperties: [String: Any]) -> [String: Any] {
+    static func getTrackGoalPayloadData(settings: Settings, userId: String?, eventName: String, context: VWOUserContext, eventProperties: [String: Any], serviceContainer: ServiceContainer? = nil) -> [String: Any] {
         var properties = NetworkUtil.getEventBasePayload(userId: userId, eventName: eventName, visitorUserAgent: context.userAgent, ipAddress: context.ipAddress)
         properties.d?.event?.props?.setIsCustomEvent(true)
         properties.d?.event?.props?.setAdditionalProperties(eventProperties)
         
-        LoggerService.log(level: .debug,
-                          key: "IMPRESSION_FOR_TRACK_GOAL",
-                          details: ["eventName": eventName,
-                                    "accountId": String(describing: settings.accountId),
-                                    "userId": userId ?? ""])
+        // Use instance logger if available, otherwise static logger
+        if let container = serviceContainer, let logger = container.getLoggerService() {
+            logger.log(level: .debug,
+                      key: "IMPRESSION_FOR_TRACK_GOAL",
+                      details: ["eventName": eventName,
+                                "accountId": String(describing: settings.accountId),
+                                "userId": userId ?? ""])
+        } else {
+            LoggerService.log(level: .debug,
+                              key: "IMPRESSION_FOR_TRACK_GOAL",
+                              details: ["eventName": eventName,
+                                        "accountId": String(describing: settings.accountId),
+                                        "userId": userId ?? ""])
+        }
                 
         let payloadDict: [String: Any] = properties.toDictionary()
         let cleanedPayload = removeNullValues(originalMap: payloadDict)
@@ -284,17 +329,26 @@ class NetworkUtil {
     }
     
     // Returns the payload data for the attribute API
-    static func getAttributePayloadData(settings: Settings, userId: String?, eventName: String, attributes: [String: Any]) -> [String: Any] {
+    static func getAttributePayloadData(settings: Settings, userId: String?, eventName: String, attributes: [String: Any], serviceContainer: ServiceContainer? = nil) -> [String: Any] {
         var properties = NetworkUtil.getEventBasePayload(userId: userId, eventName: eventName, visitorUserAgent: nil, ipAddress: nil)
         properties.d?.event?.props?.setIsCustomEvent(true)
         let visitorProp: [String: Any] = attributes
         properties.d?.visitor?.props = visitorProp
                 
-        LoggerService.log(level: .debug,
-                          key: "IMPRESSION_FOR_SYNC_VISITOR_PROP",
-                          details: ["eventName": eventName,
-                                    "accountId": String(describing: settings.accountId),
-                                    "userId": userId ?? ""])
+        // Use instance logger if available, otherwise static logger
+        if let container = serviceContainer, let logger = container.getLoggerService() {
+            logger.log(level: .debug,
+                      key: "IMPRESSION_FOR_SYNC_VISITOR_PROP",
+                      details: ["eventName": eventName,
+                                "accountId": String(describing: settings.accountId),
+                                "userId": userId ?? ""])
+        } else {
+            LoggerService.log(level: .debug,
+                              key: "IMPRESSION_FOR_SYNC_VISITOR_PROP",
+                              details: ["eventName": eventName,
+                                        "accountId": String(describing: settings.accountId),
+                                        "userId": userId ?? ""])
+        }
 
         
         let payloadDict: [String: Any] = properties.toDictionary()

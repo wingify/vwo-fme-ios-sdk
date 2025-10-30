@@ -28,9 +28,10 @@ class SegmentEvaluatorTests: XCTestCase {
         super.setUp()
         segmentEvaluator = SegmentEvaluator()
         mockContext = VWOUserContext(id: "user-2", customVariables: [:])
-        mockContext.userAgent = "VWO-FME (iOS 17.2)"
+        mockContext.userAgent = ""
         
-        mockSettings = nil
+        // Load utility settings to support featureId/operator dependent tests
+        mockSettings = FlagTestDataLoader.loadTestData(jsonFileName: SettingsTestJson.UtilitySettings.jsonFileName)
         mockFeature = nil
         
         segmentEvaluator.context = mockContext
@@ -62,6 +63,13 @@ class SegmentEvaluatorTests: XCTestCase {
             if let dsl = testCase.dsl,
                let customVariables = testCase.customVariables {
                 
+                // Apply test-specific context (reset first)
+                self.mockContext.userAgent = ""
+                self.mockContext.vwo = nil
+                if let ua = testCase.userAgent { self.mockContext.userAgent = ua }
+                if let loc = testCase.location { self.mockContext.vwo = GatewayService(location: loc, userAgent: nil) }
+                segmentEvaluator.context = self.mockContext
+                segmentEvaluator.settings = self.mockSettings
                 let result = segmentEvaluator.isSegmentationValid(dsl: dsl, properties: customVariables)
                 
                 XCTAssertEqual(result, testCase.expectation, "AND operator test failed for test case \(key)")
@@ -85,6 +93,10 @@ class SegmentEvaluatorTests: XCTestCase {
             if let dsl = testCase.dsl,
                let customVariables = testCase.customVariables {
                 
+                if let ua = testCase.userAgent { self.mockContext.userAgent = ua }
+                if let loc = testCase.location { self.mockContext.vwo = GatewayService(location: loc, userAgent: nil) }
+                segmentEvaluator.context = self.mockContext
+                segmentEvaluator.settings = self.mockSettings
                 let result = segmentEvaluator.isSegmentationValid(dsl: dsl, properties: customVariables)
                 
                 XCTAssertEqual(result, testCase.expectation, "InsensitiveEqualityOperand test failed for test case \(key)")
@@ -107,6 +119,10 @@ class SegmentEvaluatorTests: XCTestCase {
             if let dsl = testCase.dsl,
                let customVariables = testCase.customVariables {
                 
+                if let ua = testCase.userAgent { self.mockContext.userAgent = ua }
+                if let loc = testCase.location { self.mockContext.vwo = GatewayService(location: loc, userAgent: nil) }
+                segmentEvaluator.context = self.mockContext
+                segmentEvaluator.settings = self.mockSettings
                 let result = segmentEvaluator.isSegmentationValid(dsl: dsl, properties: customVariables)
                 
                 XCTAssertEqual(result, testCase.expectation, "ComplexAndOrs test failed for test case \(key)")
@@ -129,6 +145,10 @@ class SegmentEvaluatorTests: XCTestCase {
             if let dsl = testCase.dsl,
                let customVariables = testCase.customVariables {
                 
+                if let ua = testCase.userAgent { self.mockContext.userAgent = ua }
+                if let loc = testCase.location { self.mockContext.vwo = GatewayService(location: loc, userAgent: nil) }
+                segmentEvaluator.context = self.mockContext
+                segmentEvaluator.settings = self.mockSettings
                 let result = segmentEvaluator.isSegmentationValid(dsl: dsl, properties: customVariables)
                 
                 XCTAssertEqual(result, testCase.expectation, "ComplexDsl1 test failed for test case \(key)")
@@ -147,6 +167,10 @@ class SegmentEvaluatorTests: XCTestCase {
             if let dsl = testCase.dsl,
                let customVariables = testCase.customVariables {
                 
+                if let ua = testCase.userAgent { self.mockContext.userAgent = ua }
+                if let loc = testCase.location { self.mockContext.vwo = GatewayService(location: loc, userAgent: nil) }
+                segmentEvaluator.context = self.mockContext
+                segmentEvaluator.settings = self.mockSettings
                 let result = segmentEvaluator.isSegmentationValid(dsl: dsl, properties: customVariables)
                 
                 XCTAssertEqual(result, testCase.expectation, "ComplexDsl2 test failed for test case \(key)")
@@ -164,6 +188,10 @@ class SegmentEvaluatorTests: XCTestCase {
             if let dsl = testCase.dsl,
                let customVariables = testCase.customVariables {
                 
+                if let ua = testCase.userAgent { self.mockContext.userAgent = ua }
+                if let loc = testCase.location { self.mockContext.vwo = GatewayService(location: loc, userAgent: nil) }
+                segmentEvaluator.context = self.mockContext
+                segmentEvaluator.settings = self.mockSettings
                 let result = segmentEvaluator.isSegmentationValid(dsl: dsl, properties: customVariables)
                 
                 XCTAssertEqual(result, testCase.expectation, "ComplexDsl3 test failed for test case \(key)")
@@ -182,6 +210,10 @@ class SegmentEvaluatorTests: XCTestCase {
             if let dsl = testCase.dsl,
                let customVariables = testCase.customVariables {
                 
+                if let ua = testCase.userAgent { self.mockContext.userAgent = ua }
+                if let loc = testCase.location { self.mockContext.vwo = GatewayService(location: loc, userAgent: nil) }
+                segmentEvaluator.context = self.mockContext
+                segmentEvaluator.settings = self.mockSettings
                 let result = segmentEvaluator.isSegmentationValid(dsl: dsl, properties: customVariables)
                 
                 XCTAssertEqual(result, testCase.expectation, "ComplexDsl4 test failed for test case \(key)")
@@ -203,6 +235,10 @@ class SegmentEvaluatorTests: XCTestCase {
         for (key, testCase) in segmentationTests {
             if let dsl = testCase.dsl,
                let customVariables = testCase.customVariables {
+                if let ua = testCase.userAgent { self.mockContext.userAgent = ua }
+                if let loc = testCase.location { self.mockContext.vwo = GatewayService(location: loc, userAgent: nil) }
+                segmentEvaluator.context = self.mockContext
+                segmentEvaluator.settings = self.mockSettings
                 let result = segmentEvaluator.isSegmentationValid(dsl: dsl, properties: customVariables)
 
                 XCTAssertEqual(result, testCase.expectation, "ContainsOperand test failed for test case \(key)")
@@ -224,6 +260,10 @@ class SegmentEvaluatorTests: XCTestCase {
         for (key, testCase) in segmentationTests {
             if let dsl = testCase.dsl,
                let customVariables = testCase.customVariables {
+                if let ua = testCase.userAgent { self.mockContext.userAgent = ua }
+                if let loc = testCase.location { self.mockContext.vwo = GatewayService(location: loc, userAgent: nil) }
+                segmentEvaluator.context = self.mockContext
+                segmentEvaluator.settings = self.mockSettings
                 let result = segmentEvaluator.isSegmentationValid(dsl: dsl, properties: customVariables)
 
                 XCTAssertEqual(result, testCase.expectation, "EndsWithOperand test failed for test case \(key)")
@@ -245,6 +285,10 @@ class SegmentEvaluatorTests: XCTestCase {
         for (key, testCase) in segmentationTests {
             if let dsl = testCase.dsl,
                let customVariables = testCase.customVariables {
+                if let ua = testCase.userAgent { self.mockContext.userAgent = ua }
+                if let loc = testCase.location { self.mockContext.vwo = GatewayService(location: loc, userAgent: nil) }
+                segmentEvaluator.context = self.mockContext
+                segmentEvaluator.settings = self.mockSettings
                 let result = segmentEvaluator.isSegmentationValid(dsl: dsl, properties: customVariables)
 
                 XCTAssertEqual(result, testCase.expectation, "EqualityOperand test failed for test case \(key)")
@@ -266,6 +310,10 @@ class SegmentEvaluatorTests: XCTestCase {
         for (key, testCase) in segmentationTests {
             if let dsl = testCase.dsl,
                let customVariables = testCase.customVariables {
+                if let ua = testCase.userAgent { self.mockContext.userAgent = ua }
+                if let loc = testCase.location { self.mockContext.vwo = GatewayService(location: loc, userAgent: nil) }
+                segmentEvaluator.context = self.mockContext
+                segmentEvaluator.settings = self.mockSettings
                 let result = segmentEvaluator.isSegmentationValid(dsl: dsl, properties: customVariables)
 
                 XCTAssertEqual(result, testCase.expectation, "NewCasesForDecimalMismatch test failed for test case \(key)")

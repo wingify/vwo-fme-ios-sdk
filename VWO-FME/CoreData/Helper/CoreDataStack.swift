@@ -56,7 +56,15 @@ class CoreDataStack {
         }
         
         let persistentStoreCoordinator = NSPersistentStoreCoordinator(managedObjectModel: mom)
-        let storeURL = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first!.appendingPathComponent("\(self.storeName)")
+        // Use Caches directory to avoid sandbox permission issues during tests and app runs
+        let cachesDir = FileManager.default.urls(for: .cachesDirectory, in: .userDomainMask).first!
+        let storeDir = cachesDir.appendingPathComponent("VWO_FME/CoreData", isDirectory: true)
+        do {
+            try FileManager.default.createDirectory(at: storeDir, withIntermediateDirectories: true, attributes: nil)
+        } catch {
+            fatalError("Failed to create Core Data directory at \(storeDir): \(error)")
+        }
+        let storeURL = storeDir.appendingPathComponent("\(self.storeName)")
         let options = [NSMigratePersistentStoresAutomaticallyOption: true,
                              NSInferMappingModelAutomaticallyOption: true]
         

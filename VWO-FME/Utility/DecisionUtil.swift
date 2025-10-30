@@ -40,6 +40,7 @@ class DecisionUtil {
         evaluatedFeatureMap: inout [String: Any],
         megGroupWinnerCampaigns: inout [Int: String]?,
         storageService: StorageService,
+        serviceContainer: ServiceContainer,
         decision: inout [String: Any]
     ) -> [String: Any] {
         
@@ -59,7 +60,7 @@ class DecisionUtil {
             
             // Check for forced variation
             if campaign.isForcedVariationEnabled == true {
-                if let whitelistedVariation = checkCampaignWhitelisting(campaign: campaign, context: context) {
+                if let whitelistedVariation = checkCampaignWhitelisting(campaign: campaign, context: context, serviceContainer: serviceContainer) {
                     let variation = whitelistedVariation["variation"] ?? ""
                     return [
                         "preSegmentationResult": true,
@@ -165,7 +166,7 @@ class DecisionUtil {
         }
         
         // Evaluate pre-segmentation decision
-        let isPreSegmentationPassed = CampaignDecisionService().getPreSegmentationDecision(campaign: campaign, context: context)
+        let isPreSegmentationPassed = CampaignDecisionService().getPreSegmentationDecision(campaign: campaign, context: context, serviceContainer: serviceContainer)
         
         let variationId2 = campaign.type == CampaignTypeEnum.personalize.rawValue ? campaign.variations?[0].id : -1
         
@@ -174,7 +175,7 @@ class DecisionUtil {
         
         if let groupId = groupId, !groupId.isEmpty, isPreSegmentationPassed {
             
-            let variationModelEvaluated = MegUtil.evaluateGroups(settings: settings, feature: feature, groupId: Int(groupId) ?? 0, evaluatedFeatureMap: &evaluatedFeatureMap, context: context, storageService: storageService)
+            let variationModelEvaluated = MegUtil.evaluateGroups(settings: settings, feature: feature, groupId: Int(groupId) ?? 0, evaluatedFeatureMap: &evaluatedFeatureMap, context: context, storageService: storageService, serviceContainer: serviceContainer)
             
             if let variationModel = variationModelEvaluated, let variationId = variationModel.id, variationId == campaignId {
                 
@@ -265,11 +266,11 @@ class DecisionUtil {
      *   - context: The context of the current VWO session.
      * - Returns: A dictionary containing the whitelisted variation, if any.
      */
-    private static func checkCampaignWhitelisting(campaign: Campaign, context: VWOUserContext) -> [String: Any?]? {
-        let whitelistingResult = evaluateWhitelisting(campaign: campaign, context: context)
+    private static func checkCampaignWhitelisting(campaign: Campaign, context: VWOUserContext, serviceContainer: ServiceContainer) -> [String: Any?]? {
+        let whitelistingResult = evaluateWhitelisting(campaign: campaign, context: context, serviceContainer: serviceContainer)
         let status = whitelistingResult != nil ? StatusEnum.passed : StatusEnum.failed
         let variationString = whitelistingResult?["variationName"] as? String ?? ""
-        LoggerService.log(level: .info,
+        serviceContainer.getLoggerService()?.log(level: .info,
                           key: "WHITELISTING_STATUS",
                           details: ["userId": context.id ?? "",
                                     "campaignKey": campaign.type == CampaignTypeEnum.ab.rawValue ? "\(campaign.key ?? "--")" : "\(campaign.name ?? "--")_\(campaign.ruleKey ?? "--")",
@@ -286,14 +287,14 @@ class DecisionUtil {
      *   - context: The context of the current VWO session.
      * - Returns: A dictionary containing the whitelisted variation, if any.
      */
-    private static func evaluateWhitelisting(campaign: Campaign, context: VWOUserContext) -> [String: Any?]? {
+    private static func evaluateWhitelisting(campaign: Campaign, context: VWOUserContext, serviceContainer: ServiceContainer) -> [String: Any?]? {
         
         var targetedVariations = [Variation]()
         
         for variation in campaign.variations ?? [] {
             
             guard let segments = variation.segments else {
-                LoggerService.log(level: .info,
+                serviceContainer.getLoggerService()?.log(level: .info,
                                   key: "WHITELISTING_SKIP",
                                   details: ["userId": context.id ?? "",
                                             "campaignKey": campaign.ruleKey ?? "",
@@ -301,7 +302,7 @@ class DecisionUtil {
                 continue
             }
             
-            let segmentationResult = SegmentationManager.validateSegmentation(dsl: segments, properties: context.variationTargetingVariables)
+            let segmentationResult = serviceContainer.getSegmentationManager().validateSegmentation(dsl: segments, properties: context.variationTargetingVariables)
             if segmentationResult {
                 if let clonedVariation = FunctionUtil.cloneObject(variation) {
                     targetedVariations.append(clonedVariation)
