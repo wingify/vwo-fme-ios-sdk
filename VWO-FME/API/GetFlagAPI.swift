@@ -111,6 +111,7 @@ class GetFlagAPI {
                             ])
                             
                             getFlag.setIsEnabled(isEnabled: true)
+                            getFlag.setVariables(variation.variables)
                             shouldCheckForExperimentsRules = true
                             var featureInfo: [String: Any] = [:]
                             featureInfo["rolloutId"] = rolloutId
