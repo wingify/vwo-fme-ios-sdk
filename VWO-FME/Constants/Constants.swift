@@ -20,8 +20,8 @@ struct Constants {
     static let defaultString: String = ""
     static let PLATFORM: String = "ios"
 
-    static let SDK_VERSION: String = "1.11.2"
-    
+    static let SDK_VERSION: String = "1.11.3"
+
     static let MAX_TRAFFIC_PERCENT: Int = 100
     static let MAX_TRAFFIC_VALUE: Int = 10000
     static let STATUS_RUNNING: String = "RUNNING"
@@ -54,7 +54,7 @@ struct Constants {
 
     static let USER_AGENT_VALUE: String = "VWO FME \(PlatformInfo.name) \(SDK_VERSION) (\(PlatformInfo.deviceModel)/\(PlatformInfo.systemVersion))"
 
-    
+
     static let APP_VERSION = "vwo_av"
     static let OS_VERSION = "vwo_osv"
     static let MANUFACTURER = "vwo_mfr"
