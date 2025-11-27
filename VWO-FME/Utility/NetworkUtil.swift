@@ -89,10 +89,10 @@ class NetworkUtil {
         let accountIdString = "\(SettingsManager.instance?.accountId ?? 0)"
         let sdkKey = "\(settingManager?.sdkKey ?? "")"
         if let visitorUserAgent = visitorUserAgent {
-            var requestQueryParams = RequestQueryParams(en: eventName, a: accountIdString, env: sdkKey, visitorUa: visitorUserAgent, visitorIp: ipAddress ?? "", url: generateEventUrl())
+            let requestQueryParams = RequestQueryParams(en: eventName, a: accountIdString, env: sdkKey, visitorUa: visitorUserAgent, visitorIp: ipAddress ?? "", url: generateEventUrl())
             if (isUsageStatsEvent ?? false) {
                 requestQueryParams.env = nil
-                requestQueryParams.a = "\(usageStatsAccountId)"
+                requestQueryParams.a = "\(String(describing: usageStatsAccountId))"
             }
             return requestQueryParams.queryParams
         }else{
@@ -118,24 +118,34 @@ class NetworkUtil {
     }
     
     // Creates the base payload for the event arch APIs
-    static func getEventBasePayload(userId: String?, eventName: String, visitorUserAgent: String?, ipAddress: String?, isUsageStatsEvent: Bool? = false, usageStatsAccountId: Int? = 0) -> EventArchPayload {
+    static func getEventBasePayload(userId: String?, eventName: String, visitorUserAgent: String?, ipAddress: String?, isUsageStatsEvent: Bool? = false, usageStatsAccountId: Int? = 0, shouldGenerateUUID : Bool? = true, sessionId : Int64? = nil) -> EventArchPayload {
         
         var stringAccountId : String
         
         if (isUsageStatsEvent ?? false) {
-            stringAccountId = "\(usageStatsAccountId)"
+            stringAccountId = "\(String(describing: usageStatsAccountId))"
         } else {
             let settingManager = SettingsManager.instance
             stringAccountId = "\(settingManager?.accountId ?? 0)"
         }
         
-        let uuid = UUIDUtils.getUUID(userId: userId, accountId: stringAccountId)
+        var uuid: String
+        if shouldGenerateUUID ?? true {
+            uuid = UUIDUtils.getUUID(userId: userId, accountId: stringAccountId)
+        } else {
+            if let userId = userId {
+                uuid = "\(userId)"
+            }else{
+                uuid = UUIDUtils.getUUID(userId: userId, accountId: stringAccountId)
+            }
+            
+        }
 
         var eventArchData = EventArchData()
         
         eventArchData.msgId = NetworkUtil.generateMsgId(uuid: uuid)
         eventArchData.visId = uuid
-        eventArchData.sessionId = NetworkUtil.generateSessionId()
+        eventArchData.sessionId = sessionId
         
         if let visitorUserAgent = visitorUserAgent {
             eventArchData.visitorUserAgent = visitorUserAgent
@@ -238,8 +248,8 @@ class NetworkUtil {
 
     
     // Returns the payload data for the track user API
-    class func getTrackUserPayloadData(settings: Settings, userId: String?, eventName: String, campaignId: Int, variationId: Int, visitorUserAgent: String?, ipAddress: String?, context: VWOUserContext) -> [String: Any] {
-        var properties = NetworkUtil.getEventBasePayload(userId: userId, eventName: eventName, visitorUserAgent: visitorUserAgent, ipAddress: ipAddress)
+    class func getTrackUserPayloadData(settings: Settings, userId: String?, eventName: String, campaignId: Int, variationId: Int, visitorUserAgent: String?, ipAddress: String?,sessionId: Int64?, context: VWOUserContext) -> [String: Any] {
+        var properties = NetworkUtil.getEventBasePayload(userId: userId, eventName: eventName, visitorUserAgent: visitorUserAgent, ipAddress: ipAddress,sessionId: sessionId)
         
         properties.d?.event?.props?.id = campaignId
         properties.d?.event?.props?.variation = "\(variationId)"
@@ -268,7 +278,7 @@ class NetworkUtil {
     
     // Returns the payload data for the goal API
     static func getTrackGoalPayloadData(settings: Settings, userId: String?, eventName: String, context: VWOUserContext, eventProperties: [String: Any]) -> [String: Any] {
-        var properties = NetworkUtil.getEventBasePayload(userId: userId, eventName: eventName, visitorUserAgent: context.userAgent, ipAddress: context.ipAddress)
+        var properties = NetworkUtil.getEventBasePayload(userId: userId, eventName: eventName, visitorUserAgent: context.userAgent, ipAddress: context.ipAddress,sessionId: context.sessionId)
         properties.d?.event?.props?.setIsCustomEvent(true)
         properties.d?.event?.props?.setAdditionalProperties(eventProperties)
         
@@ -284,8 +294,8 @@ class NetworkUtil {
     }
     
     // Returns the payload data for the attribute API
-    static func getAttributePayloadData(settings: Settings, userId: String?, eventName: String, attributes: [String: Any]) -> [String: Any] {
-        var properties = NetworkUtil.getEventBasePayload(userId: userId, eventName: eventName, visitorUserAgent: nil, ipAddress: nil)
+    static func getAttributePayloadData(settings: Settings, userId: String?, eventName: String,sessionId: Int64?, attributes: [String: Any]) -> [String: Any] {
+        var properties = NetworkUtil.getEventBasePayload(userId: userId, eventName: eventName, visitorUserAgent: nil, ipAddress: nil,sessionId: sessionId)
         properties.d?.event?.props?.setIsCustomEvent(true)
         let visitorProp: [String: Any] = attributes
         properties.d?.visitor?.props = visitorProp
@@ -380,9 +390,9 @@ class NetworkUtil {
     
     
     // Sends a messaging event to DACDN
-    static func sendGatewayEvent(queryParams: [String: String], payload: [String: Any]) {
+    static func sendGatewayEvent(queryParams: [String: String], payload: [String: Any],eventName: String) {
         let settingsManager = SettingsManager.instance
-        let request = RequestModel(url: UrlService.baseUrl,
+        var request = RequestModel(url: UrlService.baseUrl,
                                    method: HTTPMethod.post.rawValue,
                                    path: UrlEnum.events.rawValue,
                                    query: queryParams,
@@ -391,6 +401,7 @@ class NetworkUtil {
                                    scheme: settingsManager?.protocolType ?? "https",
                                    port: settingsManager?.port ?? 0)
         
+        request.eventName = eventName
         NetworkManager.postAsync(request) { result in
             
             if let error = result.errorMessage {
@@ -400,12 +411,14 @@ class NetworkUtil {
     }
     
     // Sends a POST request to the VWO server
-    static func sendPostApiRequest(properties: [String: String], payload: [String: Any], userAgent: String?, ipAddress: String?) {
+    static func sendPostApiRequest(properties: [String: String], payload: [String: Any], userAgent: String?, ipAddress: String?, campaignInfo: [String: Any]? = nil) {
         NetworkManager.attachClient()
         
         let headers = createHeaders(userAgent: userAgent, ipAddress: ipAddress)
     
-        let request = RequestModel(url: UrlService.baseUrl, method: HTTPMethod.post.rawValue, path: UrlEnum.events.rawValue, query: properties, body: payload, headers: headers, scheme: Constants.HTTPS_PROTOCOL, port: SettingsManager.instance?.port ?? 0)
+        var request = RequestModel(url: UrlService.baseUrl, method: HTTPMethod.post.rawValue, path: UrlEnum.events.rawValue, query: properties, body: payload, headers: headers, scheme: Constants.HTTPS_PROTOCOL, port: SettingsManager.instance?.port ?? 0)
+        
+        request.campaignInfo = campaignInfo
         
         NetworkManager.postAsync(request) { result in
                         
@@ -436,7 +449,7 @@ class NetworkUtil {
             return [:] // Return an empty dictionary if either accountId or sdkKey is nil
         }
        
-        let userId = "\(accountId ?? 0)_\(sdkKey ?? "")"
+        let userId = "\(accountId)_\(sdkKey)"
         
         var properties = NetworkUtil.getEventBasePayload(userId: userId, eventName: event.rawValue, visitorUserAgent: nil, ipAddress: nil,isUsageStatsEvent: true,usageStatsAccountId: usageStatsAccountId)
         
@@ -454,5 +467,58 @@ class NetworkUtil {
         
         return payload
     }
+    
+    /// Returns the payload data for the debugger event.
+    /// - Parameter eventProps: The properties for the debugger event.
+    /// - Returns: A dictionary containing the payload data.
+    static func getDebuggerEventPayload(eventProps: [String: Any] = [:]) -> [String: Any] {
+        let settingsManager = SettingsManager.instance
+        guard let accountId = settingsManager?.accountId, let sdkKey = settingsManager?.sdkKey else {
+            return [:] // Return an empty dictionary if either accountId or sdkKey is nil
+        }
+        var userId: String
+        var shouldGenerateUUID = true
+
+        if let uuid = eventProps["uuid"] as? String {
+            userId = uuid
+            shouldGenerateUUID = false
+        } else {
+            userId = "\(accountId)_\(sdkKey)"
+        }
+
+        // Generate base payload
+        var properties = NetworkUtil.getEventBasePayload(userId: userId, eventName: EventEnum.VWO_DEBUGGER_EVENT.rawValue, visitorUserAgent: nil, ipAddress: nil, shouldGenerateUUID : shouldGenerateUUID)
+
+      
+
+        if !shouldGenerateUUID, let uuid = eventProps["uuid"] {
+            properties.d?.visId = String(describing: uuid)
+        }
+        
+        // Optional session ID
+        if let sessionId = eventProps["sId"] as? Int64 {
+            properties.d?.sessionId = sessionId
+        }
+
+        properties.d?.event?.props = Props()
+        var vwoMeta: [String: Any] = eventProps
+        vwoMeta["a"] = SettingsManager.instance?.accountId ?? ""
+        vwoMeta["product"] = Constants.PRODUCT_NAME
+        vwoMeta["sn"] = SDKMetaUtil.name
+        vwoMeta["sv"] = SDKMetaUtil.sdkVersion
+        vwoMeta["eventId"] = UUIDUtils.getRandomUUID(sdkKey: sdkKey)
+
+        properties.d?.event?.props?.vwoMeta = vwoMeta
+        
+        let payloadDict = properties.toDictionary()
+        let payload = NetworkUtil.removeNullValues(originalMap:payloadDict)
+        
+        return payload
+    }
+    
+   
+   
+
+
 
 }

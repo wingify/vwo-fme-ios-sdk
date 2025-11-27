@@ -4,27 +4,51 @@
   "INIT_OPTIONS_ACCOUNT_ID_ERROR": "[ERROR]: VWO-SDK {date} Please provide VWO account ID in the options and should be a of type string|number",
 
   "INIT_OPTIONS_INVALID": "Invalid {key} passed in options. Should be of type: {correctType} and greater than equal to {value}",
-
-  "SETTINGS_FETCH_ERROR": "Settings could not be fetched. Error: {err}",
-  "SETTINGS_SCHEMA_INVALID": "Settings are not valid. Failed schema validation",
+  "INVALID_POLLING_CONFIGURATION":"Invalid {key} passed in options. Should be of type: {correctType} and greater than equal to {value}",
+  "ERROR_FETCHING_SETTINGS": "Settings could not be fetched. Error: {err}",
+  "INVALID_SETTINGS_SCHEMA": "Settings are not valid. Failed schema validation",
 
   "POLLING_FETCH_SETTINGS_FAILED": "Error while fetching VWO settings with polling",
 
   "API_THROW_ERROR": "API - {apiName} failed to execute. Trace - {err}",
-  "API_INVALID_PARAM": "{key} passed to {apiName} API is not of valid type. Got type: {type}, should be: {correctType}",
+  "INVALID_PARAM": "{key} passed to {apiName} API is not of valid type. Got type: {type}, should be: {correctType}",
   "API_SETTING_INVALID": "Settings are not valid. Contact VWO Support",
   "API_CONTEXT_INVALID": "Context should be an object and must contain a mandatory key - id, which is User ID",
   "USER_ID_NULL": "UserId: No user ID was provided, and using the device ID as a fallback is currently disabled. Operations requiring a user ID may not function as expected.",
-  "FEATURE_NOT_FOUND": "Feature not found for the key {featureKey}",
-  "EVENT_NOT_FOUND": "Event {eventName} not found in any of the features metrics",
+  "FEATURE_NOT_FOUND": "Feature not found for the key: {featureKey}",
+  "EVENT_NOT_FOUND": "Event: {eventName} not found in any of the features metrics",
 
   "STORED_DATA_ERROR": "Error in getting data from storage. Error: {err}",
 
-  "GATEWAY_URL_ERROR": "Please provide a valid URL for VWO Gateway Service",
+  "INVALID_GATEWAY_URL": "Please provide a valid URL for VWO Gateway Service",
 
   "NETWORK_CALL_FAILED": "Error occurred while sending {method} request. Error: {err}",
   "BATCH_UPLOAD_ERROR": "Event batch could not be uploaded. Error: {err}",
-
+  
+  "DATABASE_ERROR": "Error while performing database operation. Error: {err}",
+  "ATTRIBUTES_NOT_FOUND": "{key} passed to the {apiName} API is empty. Please provide {expectedFormat}.",
+  "ERROR_SETTING_SEGMENTATION_CONTEXT": "Error in setting contextual data for segmentation. Got error: {err}",
+  "FEATURE_NOT_FOUND_WITH_ID": "Feature not found with featureIdKey {featureIdKey}",
+  "USER_AGENT_VALIDATION_ERROR": "Failed to validate User Agent. Error: {err}",
+  "USER_AGENT_PRE_SEGMENT_ERROR": "To evaluate user agent related segments, please pass userAgent in context object",
+  "SETTINGS_FETCH_FAILED": "Failed to fetch settings and hence VWO client instance couldn't be updated when API: {apiName} got called having isViaWebhook param as {isViaWebhook}. Error: {err}",
+  
+  "LOCATION_PRE_SEGMENT_ERROR": "To evaluate location pre Segment, please pass ipAddress in context object",
+  "INVALID_ATTRIBUTE_LIST_FORMAT": "Invalid inList operand format",
+  "GATEWAY_DATA_FETCH_ERROR": "Error while fetching data from gateway. Error: {err}",
+  "STORAGE_READ_ERROR": "Error while reading from storage. Error: {err}",
+  "STORAGE_WRITE_ERROR": "Error while writing to storage. Error: {err}",
+  "DECODE_SDK_KEY_ERROR": "Failed to decode sdkKey from storage. Error: {err}",
+  "INVALID_BATCH_EVENTS_CONFIG": "Invalid batch events config, should be an object, eventsPerRequest should be a number greater than 0 and requestTimeInterval should be a number greater than 0",
+  "ATTRIBUTES_MAP_ERROR": "Attributes map must contain atleast 1 key-value pair",
+  "ATTRIBUTES_MAP_INVALID": "Attributes should be an object containing key-value pairs",
+  "BATCHING_NOT_ENABLED": "Batching is not enabled. Pass batchEventData in the SDK configuration while invoking init API.",
+  "NETWORK_CALL_FAILED_AFTER_MAX_RETRIES": "Max retries reached. Request failed for {endPoint}, Error: {err}",
+  "ATTEMPTING_RETRY_FOR_FAILED_NETWORK_CALL": "Request failed for {endPoint}, Error: {err}. Retrying in {delay} seconds, attempt {attempt} of {maxRetries}",
+  "ERROR_STORING_DATA_IN_STORAGE": "Error in to store data into storage. Error: {err}",
+  "NETWORK_CALL_FAILURE_AFTER_MAX_RETRIES_FOR_GET_FLAG" :"Network call for {extraData} failed after {attempts} retry attempt(s). Got Error: {err}",
+  "NETWORK_CALL_FAILURE_AFTER_MAX_RETRIES": "Network call for {extraData} failed after {attempts} retry attempt(s). Got Error: {err}",
+  "INVALID_USER_AGENT_IN_CONTEXT_FOR_PRE_SEGMENTATION":"To Evaluate UserAgent segmentation, please provide userAgent in context",
   "SETTINGS_MANAGER_NOT_INITIALIZED": "Settings Manager was not initialized while calling {api}",
   "ALIAS_SET_API_ERROR": "Failed to set alias. Error: {error}",
   "GET_ALIAS_FAILED": "Failed to retrieve alias. Error: {error}",
@@ -34,4 +58,5 @@
   "ALIAS_SAME_AS_TEMPID": "Alias ID:{aliasId} should not be same as temp Id:{tempId}",
   "ALIASES_CANNOT_BE_EMPTY": "Alias ID cannot be empty or blank",
   "USERID_CANNOT_BE_BLANK": "User ID cannot be blank"
+
 }

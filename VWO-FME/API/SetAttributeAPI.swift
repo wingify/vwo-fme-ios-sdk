@@ -54,6 +54,7 @@ class SetAttributeAPI {
             settings: settings,
             userId: context.id,
             eventName: EventEnum.vwoSyncVisitorProp.rawValue,
+            sessionId: context.sessionId,
             attributes: attributes
         )
 

@@ -72,7 +72,7 @@ class SegmentationManager {
             dispatchGroup.enter()
             
             let params = GatewayServiceUtil.getQueryParams(queryParams)
-            GatewayServiceUtil.getFromGatewayService(queryParams: params, endpoint: UrlEnum.getUserData.rawValue) { gatewayResponse in
+            GatewayServiceUtil.getFromGatewayService(queryParams: params, endpoint: UrlEnum.getUserData.rawValue, context: context) { gatewayResponse in
                 if let modelData = gatewayResponse {
                     if let stringData = modelData.data {
                         do {
@@ -80,8 +80,15 @@ class SegmentationManager {
                             let gatewayServiceModel = try JSONDecoder().decode(GatewayService.self, from: gatewayData!)
                             context.vwo = gatewayServiceModel
                             storageService.saveUserDetail(userDetail: gatewayServiceModel)
-                        } catch {
-                            LoggerService.log(level: .error, message: "Failed to decode GatewayService model")
+                        } catch(let err) {
+                            LoggerService.errorLog( key: "ERROR_SETTING_SEGMENTATION_CONTEXT",data: ["err":FunctionUtil.getFormattedErrorMessage(err)],
+                                                    debugData: [
+                                    "an": ApiEnum.getFlag.rawValue,
+                                    "uuid": context.uuid,
+                                    "sId": context.sessionId
+                                ]
+                            )
+
                         }
                     }
                 }

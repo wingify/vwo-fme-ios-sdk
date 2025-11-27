@@ -129,13 +129,42 @@ class EventDataManager {
      */
     private func convertDictToString(_ payload: [String: Any]) -> String? {
         do {
-            let jsonData = try JSONSerialization.data(withJSONObject: payload, options: [])
+            let sanitizedPayload = sanitizeForJSON(payload)
+            let jsonData = try JSONSerialization.data(withJSONObject: sanitizedPayload, options: [])
             let jsonString = String(data: jsonData, encoding: .utf8)
             return jsonString
         } catch {
             return nil
         }
     }
+    
+    /// Recursively sanitizes a given object to ensure it can be safely serialized to JSON.
+    ///
+    /// This function walks through dictionaries and arrays, and ensures all values are JSON-compatible.
+    /// If it encounters types like `Error`, custom enums, or other unsupported types, it converts them
+    /// into a `String` representation (typically using `localizedDescription` or `String(describing:)`).
+    ///
+    /// - Parameter object: The object to sanitize. Can be a dictionary, array, or any other type.
+    /// - Returns: A sanitized version of the object, safe for use with `JSONSerialization`.
+
+    private func sanitizeForJSON(_ object: Any) -> Any {
+        if let dict = object as? [String: Any] {
+            var sanitized = [String: Any]()
+            for (key, value) in dict {
+                sanitized[key] = sanitizeForJSON(value)
+            }
+            return sanitized
+        } else if let array = object as? [Any] {
+            return array.map { sanitizeForJSON($0) }
+        } else if let error = object as? Error {
+            return error.localizedDescription // Or "\(error)"
+        } else if JSONSerialization.isValidJSONObject([ "key": object ]) {
+            return object
+        } else {
+            return "\(object)" // Fallback to string representation
+        }
+    }
+
     
     /**
      * Converts a JSON string to a dictionary.

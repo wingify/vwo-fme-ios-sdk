@@ -31,9 +31,14 @@
   "BATCH_PROCESSING_STARTED": "Batch: Starting to upload events, triggered by {name}.",
   "BATCH_PROCESSING_FINISHED": "Batch: Finished uploading events with status: {status}, triggered by {name}",
   "ONLINE_BATCH_PROCESSING_STATUS": "Batch: Events batching is {status} when device is online.",
+
+  "NETWORK_CALL_SUCCESS_WITH_RETRIES_FOR_GET_FLAG":"Network call for {extraData} succeeded after {attempts} retry attempt(s). Previous attempts failed with error: {err}",
+  "NETWORK_CALL_SUCCESS_WITH_RETRIES": "Network call for {extraData} succeeded after {attempts} retry attempt(s). Previous attempts failed with error: {err}",
+  
   "USER_ID_INFO": "UserId: Using {id} as user identifier.",
   "ALIAS_SET_SUCCESS": "Successfully set alias for temporary ID:{tempId}.",
   "ALIAS_SET_FAILED": "Failed to set alias for temporary ID:{tempId}.",
   "GET_ALIAS_AFTER_SET_SUCCESS": "Successfully retrieved alias",
   "GET_ALIAS_SUCCESS": "Successfully retrieved alias for IDs:{ids}"
+
 }

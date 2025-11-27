@@ -135,7 +135,13 @@ class SegmentEvaluator {
                                     return false
                                 }
                             } else {
-                                LoggerService.log(level: .debug, message: "Feature not found with featureIdKey: \(featureIdKey)")
+                                LoggerService.errorLog( key: "FEATURE_NOT_FOUND_WITH_ID",data: ["featureIdKey":featureIdKey],
+                                                        debugData: [
+                                        "an": ApiEnum.getFlag.rawValue,
+                                        "uuid": context?.uuid ?? "",
+                                        "sId": context?.sessionId ?? FmeConfig.generateSessionId()
+                                    ]
+                                )
                                 return false // Handle the case when feature is not found
                             }
                         }
@@ -143,6 +149,7 @@ class SegmentEvaluator {
                 }
             }
 
+            
             // Check if the count of keys encountered is equal to dslNodes.count
             if isUaParser && keyCount == dslNodes.count {
                 let uaParserResult = checkUserAgentParser(uaParserMap: uaParserMap)
@@ -228,7 +235,15 @@ class SegmentEvaluator {
     func checkUserAgentParser(uaParserMap: [String: [String]]) -> Bool {
         // Ensure user's user agent is available
         guard let userAgent = context?.userAgent, !userAgent.isEmpty else {
-            LoggerService.log(level: .info, message: "To evaluate user agent related segments, please pass userAgent in context object")
+            LoggerService.errorLog(
+                key: "USER_AGENT_PRE_SEGMENT_ERROR",data: [:],
+                debugData: [
+                    "an": ApiEnum.getFlag.rawValue,
+                    "uuid": context?.uuid ?? "",
+                    "sId": context?.sessionId ?? FmeConfig.generateSessionId()
+                ]
+            )
+
             return false
         }
         // Check if user agent data is available and matches the expected values

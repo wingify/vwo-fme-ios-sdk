@@ -40,13 +40,20 @@ class GetFlagAPI {
             // get feature object from feature key
             let feature: Feature? = FunctionUtil.getFeatureFromKey(settings: settings, featureKey: featureKey)
             
+            
+            // Initialize debug event properties
+            var debugEventProps: [String: Any] = [
+                "an": ApiEnum.getFlag.rawValue,
+                "uuid": context.uuid,
+                "fk": featureKey,
+                "sId": context.sessionId
+            ]
+            
             /**
              * if feature is not found, return false
              */
             guard let feature = feature else {
-                LoggerService.log(level: .error, key: "FEATURE_NOT_FOUND", details: [
-                    "featureKey": featureKey
-                ])
+                LoggerService.errorLog(key: "FEATURE_NOT_FOUND",data: ["featureKey":featureKey], debugData: debugEventProps)
                 getFlag.setIsEnabled(isEnabled: false)
                 dispatchGroup.leave()
                 return
@@ -238,6 +245,16 @@ class GetFlagAPI {
             hookManager.set(properties: decision)
             hookManager.execute(properties: hookManager.get())
             
+            // Send debug event if debugger is enabled
+            if feature.isDebuggerEnabled {
+                debugEventProps["cg"] = DebuggerCategoryEnum.DECISION.rawValue
+                debugEventProps["lt"] = LogLevelEnum.info.rawValue
+                debugEventProps["msg_t"] = Constants.FLAG_DECISION_GIVEN
+                // Update debug event props with decision keys
+                updateDebugEventProps(&debugEventProps, decision: decision)
+                DebuggerServiceUtil.sendDebugEventToVWO(eventProps: debugEventProps)
+            }
+
             /**
              * If the feature has an impact campaign, send an impression for the variation shown
              * If flag enabled - variation 2, else - variation 1
@@ -254,6 +271,40 @@ class GetFlagAPI {
         }
         dispatchGroup.wait()
         completion(getFlag)
+    }
+
+    /// Update debug event props with decision keys
+    /// - Parameters:
+    ///   - debugEventProps: The debug event properties (modified in-place)
+    ///   - decision: The decision dictionary
+    private static func updateDebugEventProps(_ debugEventProps: inout [String: Any], decision: [String: Any]) {
+
+        let decisionKeys = DebuggerServiceUtil.extractDecisionKeys(decisionObj: decision)
+        
+        guard let featureKey = decision["featureKey"] as? String else {
+            debugEventProps["msg"] = "Invalid decision: Missing featureKey"
+            return
+        }
+
+        var message = "Flag decision given for feature:\(featureKey)."
+        
+        if let rolloutKey = decision["rolloutKey"] as? String,
+           let rolloutVariationId = decision["rolloutVariationId"] {
+            let trimmedRolloutKey = rolloutKey.replacingOccurrences(of: "\(featureKey)_", with: "")
+            message += " Got rollout:\(trimmedRolloutKey) with variation:\(rolloutVariationId)"
+        }
+
+        if let experimentKey = decision["experimentKey"] as? String,
+           let experimentVariationId = decision["experimentVariationId"] {
+            let trimmedExperimentKey = experimentKey.replacingOccurrences(of: "\(featureKey)_", with: "")
+            message += " and experiment:\(trimmedExperimentKey) with variation:\(experimentVariationId)"
+        }
+
+        debugEventProps["msg"] = message
+
+        for (key, value) in decisionKeys {
+            debugEventProps[key] = value
+        }
     }
 
     /**

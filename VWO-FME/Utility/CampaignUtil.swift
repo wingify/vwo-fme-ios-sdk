@@ -245,6 +245,43 @@ class CampaignUtil {
         return featureKeys
     }
     
+    /// Retrieves the key of a campaign by its ID.
+    /// - Parameters:
+    ///   - settings: The settings model containing all campaigns.
+    ///   - campaignId: The ID of the campaign to retrieve.
+    /// - Returns: The key of the campaign or nil if not found.
+    static func getCampaignKeyFromCampaignId(settings: Settings, campaignId: Int) -> String? {
+        return settings.campaigns?.first(where: { $0.id == campaignId })?.key
+    }
+
+    /// Retrieves the variation key by its ID within a specific campaign identified by its ID.
+    /// - Parameters:
+    ///   - settings: The settings model containing all campaigns.
+    ///   - campaignId: The ID of the campaign.
+    ///   - variationId: The ID of the variation to retrieve.
+    /// - Returns: The key of the variation or nil if not found.
+    static func getVariationKeyFromCampaignIdAndVariationId(settings: Settings, campaignId: Int, variationId: Int) -> String? {
+        guard let campaign = settings.campaigns?.first(where: { $0.id == campaignId }) else {
+                return nil
+            }
+            
+            guard let variation = campaign.variations?.first(where: { $0.id == variationId }) else {
+                return nil
+            }
+            
+            return variation.key
+    }
+
+    /// Retrieves the type of a campaign by its ID.
+    /// - Parameters:
+    ///   - settings: The settings model containing all campaigns.
+    ///   - campaignId: The ID of the campaign to retrieve.
+    /// - Returns: The type of the campaign or nil if not found.
+    static func getCampaignTypeFromCampaignId(settings: Settings, campaignId: Int) -> String? {
+        return settings.campaigns?.first(where: { $0.id == campaignId })?.type
+    }
+
+    
     /**
      * Retrieves campaign IDs from a feature key.
      *

@@ -129,7 +129,6 @@ internal class LogManager {
             osLogType = .default
         case .error:
             osLogType = .error
-            self.sendMessageEventIfNeeded(message: message)
         }
         let formatMessage = "\(prefix.isEmpty ? "\(tag)" : "\(prefix)"): \(level.levelIndicator): \(message ?? "")"
         
@@ -171,6 +170,36 @@ internal class LogManager {
         if let message = message, !message.isEmpty, !sentMessages.contains(message) {
             sentMessages.insert(message)
             LogMessageUtil.sendMessageEvent(message: message)
+        }
+    }
+    
+     func errorLog(key: String, data: [String: Any]? = nil, debugData: [String: Any]? = nil,shouldSendToVWO: Bool ) {
+        // Lookup message template from errorMessages dictionary
+         let template = LoggerService.getLogFile(level: .error)
+        
+        // Format the message using the template and data
+        let message = LogMessageUtil.buildMessage(template: template[key], data: data) ?? "Unknown error"
+       
+         self.log(level: .error, message: message)
+         
+        // Conditionally send to VWO
+        if shouldSendToVWO {
+            var debugEventProps: [String: Any] = [:]
+
+            if let debugData = debugData {
+                debugEventProps.merge(debugData) { _, new in new }
+            }
+
+            if let data = data {
+                debugEventProps.merge(data) { _, new in new }
+            }
+
+            debugEventProps["msg_t"] = key
+            debugEventProps["lt"] = LogLevelEnum.error.rawValue
+            debugEventProps["cg"] = DebuggerCategoryEnum.ERROR.rawValue
+            debugEventProps["msg"] = message
+
+            DebuggerServiceUtil.sendDebugEventToVWO(eventProps: debugEventProps)
         }
     }
 }

@@ -189,10 +189,10 @@ class SyncManager {
             return true
         default:
             if let interval = batchUploadInterval, interval < minimumInterval {
-                LoggerService.log(level: .error, key: "INIT_OPTIONS_INVALID", details: ["key": "batchUploadInterval", "correctType": "number", "value": "60000, batchUploadInterval value in milliseconds "])
+                LoggerService.errorLog(key: "INIT_OPTIONS_INVALID",data:["key": "batchUploadInterval", "correctType": "number", "value": "60000, batchUploadInterval value in milliseconds "],debugData: ["an":ApiEnum.Init.rawValue] )
             }
             if let size = batchSize, size <= 0 {
-                LoggerService.log(level: .error, key: "INIT_OPTIONS_INVALID", details: ["key": "batchMinSize", "correctType": "number", "value": "1"])
+                LoggerService.errorLog(key: "INIT_OPTIONS_INVALID",data:["key": "batchMinSize", "correctType": "number", "value": "1"],debugData: ["an":ApiEnum.Init.rawValue] )
             }
             return false
         }

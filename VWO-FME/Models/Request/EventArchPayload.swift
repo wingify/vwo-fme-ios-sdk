@@ -18,12 +18,6 @@ import Foundation
 
 /**
  * Event arch payload
- */
-
-import Foundation
-
-/**
- * Event arch payload
  *
  * @constructor Create empty Event arch payload
  */

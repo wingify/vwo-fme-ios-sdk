@@ -20,8 +20,8 @@ struct Constants {
     static let defaultString: String = ""
     static let PLATFORM: String = "ios"
 
-    static let SDK_VERSION: String = "1.12.1"
-    
+    static let SDK_VERSION: String = "1.13.0"
+
     static let MAX_TRAFFIC_PERCENT: Int = 100
     static let MAX_TRAFFIC_VALUE: Int = 10000
     static let STATUS_RUNNING: String = "RUNNING"
@@ -53,10 +53,22 @@ struct Constants {
     static let LIST_ATTRIBUTE_EXPIRY: Int64 = 60 * 60 * 1000 // 60 minutes in milliseconds
 
     static let USER_AGENT_VALUE: String = "VWO FME \(PlatformInfo.name) \(SDK_VERSION) (\(PlatformInfo.deviceModel)/\(PlatformInfo.systemVersion))"
-    
+
+
+    // Debugger constants
+    static let POLLING = "polling"
+    static let BROWSER_STORAGE = "browserStorage"
+    static let FLAG_DECISION_GIVEN = "FLAG_DECISION_GIVEN"
+    static let  NETWORK_CALL_FAILURE_AFTER_MAX_RETRIES = "NETWORK_CALL_FAILURE_AFTER_MAX_RETRIES"
+    static let  NETWORK_CALL_SUCCESS_WITH_RETRIES = "NETWORK_CALL_SUCCESS_WITH_RETRIES"
+    static let  NETWORK_CALL_SUCCESS_WITH_RETRIES_FOR_GET_FLAG = "NETWORK_CALL_SUCCESS_WITH_RETRIES_FOR_GET_FLAG"
+    static let  NETWORK_CALL_FAILURE_AFTER_MAX_RETRIES_FOR_GET_FLAG = "NETWORK_CALL_FAILURE_AFTER_MAX_RETRIES_FOR_GET_FLAG"
+    static let  MOBILE_STORAGE = "MobileDefaultStorage"
+
     static let userIdErrorMessage = "User ID is required. Please provide a user ID or enable device ID in VWOUserContext."
     static let VWOContextErrorMessage = "VWOUserContext is missing. Please provide a valid user context before proceeding."
-    
+
+
     static let APP_VERSION = "vwo_av"
     static let OS_VERSION = "vwo_osv"
     static let MANUFACTURER = "vwo_mfr"

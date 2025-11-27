@@ -42,7 +42,17 @@ class TrackEventAPI {
             hooksManager.set(properties: objectToReturn)
             hooksManager.execute(properties: hooksManager.get())
         } else {
-            LoggerService.log(level: .error, key: "EVENT_NOT_FOUND", details: ["eventName": eventName])
+            // Log an error if the event does not exist
+            LoggerService.errorLog(
+                key: "EVENT_NOT_FOUND",
+                data: ["eventName": eventName],
+                debugData: [
+                    "an": ApiEnum.track.rawValue,
+                    "uuid": context.uuid,
+                    "sId": context.sessionId
+                ]
+            )
+
         }
     }
 

@@ -34,6 +34,7 @@ struct Feature: Codable, Equatable {
     var rulesLinkedCampaign: [Campaign]?
     var isGatewayServiceRequired: Bool = false
     var variables: [Variable]?
+    var isDebuggerEnabled: Bool = false
     
     enum CodingKeys: String, CodingKey {
         case key
@@ -47,6 +48,7 @@ struct Feature: Codable, Equatable {
         case rulesLinkedCampaign
         case isGatewayServiceRequired
         case variables
+        case isDebuggerEnabled
     }
     
     init(from decoder: Decoder) throws {
@@ -62,6 +64,7 @@ struct Feature: Codable, Equatable {
         rulesLinkedCampaign = try container.decodeIfPresent([Campaign].self, forKey: .rulesLinkedCampaign)
         isGatewayServiceRequired = try container.decodeIfPresent(Bool.self, forKey: .isGatewayServiceRequired) ?? false
         variables = try container.decodeIfPresent([Variable].self, forKey: .variables)
+        isDebuggerEnabled = try container.decodeIfPresent(Bool.self, forKey: .isDebuggerEnabled) ?? false
     }
 }
 

@@ -33,6 +33,15 @@ import Foundation
     var shouldUseDeviceIdAsUserId: Bool = false
     var postSegmentationVariables: [String]? = nil
 
+    internal lazy var uuid: String = {
+        let settingManager = SettingsManager.instance
+        let stringAccountId = "\(settingManager?.accountId ?? 0)"
+
+        return UUIDUtils.getUUID(userId: self.id,  accountId: stringAccountId )
+    }()
+
+    internal var sessionId: Int64 = FmeConfig.generateSessionId()
+
     /**
      * Initializes a new instance of VWOUserContext.
      *

@@ -49,7 +49,7 @@ class SegmentOperandEvaluator {
             let listIdPattern = try? NSRegularExpression(pattern: "inlist\\(([^)]+)\\)")
             let matches = listIdPattern?.matches(in: operandValue, options: [], range: NSRange(location: 0, length: operandValue.utf16.count))
             guard let match = matches?.first, let range = Range(match.range(at: 1), in: operandValue) else {
-                LoggerService.log(level: .error, message: "Invalid 'inList' operand format")
+                LoggerService.errorLog(key: "INVALID_ATTRIBUTE_LIST_FORMAT",data:[:] ,debugData: ["an":ApiEnum.getFlag.rawValue,"uuid": context?.uuid ?? "","sId": context?.sessionId ?? 0])
                 return false
             }
             let listId = String(operandValue[range])
@@ -57,7 +57,7 @@ class SegmentOperandEvaluator {
             let attributeValue = preProcessTagValue(tagValue as! String)
             
             var result = false
-            checkAttributeInList(listId: listId, attributeValue: attributeValue, userId: userId, featureKey: feature?.key ?? "", customVariable: true) { booleanValue in
+            checkAttributeInList(listId: listId, attributeValue: attributeValue, userId: userId, featureKey: feature?.key ?? "", customVariable: true, context: context) { booleanValue in
                 result = booleanValue
             }
             return result
@@ -142,7 +142,16 @@ class SegmentOperandEvaluator {
             let listIdPattern = try? NSRegularExpression(pattern: "inlist\\(([^)]+)\\)")
             let matches = listIdPattern?.matches(in: operandValue, options: [], range: NSRange(location: 0, length: operandValue.utf16.count))
             guard let match = matches?.first, let range = Range(match.range(at: 1), in: operandValue) else {
-                LoggerService.log(level: .error, message: "Invalid 'inList' operand format")
+                LoggerService.errorLog(
+                    key: "INVALID_ATTRIBUTE_LIST_FORMAT",
+                    data: [:],
+                    debugData: [
+                        "an": ApiEnum.getFlag.rawValue,
+                        "uuid": context?.uuid ?? "",
+                        "sId": context?.sessionId ?? 0
+                    ]
+                )
+
                 return false
             }
             let listId = String(operandValue[range])
@@ -153,7 +162,7 @@ class SegmentOperandEvaluator {
             }
             let attributeValue = preProcessTagValue(tagValue)
             var result = false
-            checkAttributeInList(listId: listId, attributeValue: attributeValue, userId: userId, featureKey: feature?.key ?? "", customVariable: false) { booleanValue in
+            checkAttributeInList(listId: listId, attributeValue: attributeValue, userId: userId, featureKey: feature?.key ?? "", customVariable: false, context: context) { booleanValue in
                 result = booleanValue
             }
             return result
@@ -206,7 +215,15 @@ class SegmentOperandEvaluator {
      */
     static func evaluateUserAgentDSL(_ dslOperandValue: String, _ context: VWOUserContext?) -> Bool {
         guard let userAgent = context?.userAgent else {
-            LoggerService.log(level: .info, message: "To Evaluate UserAgent segmentation, please provide userAgent in context")
+            LoggerService.errorLog(
+                key: "INVALID_USER_AGENT_IN_CONTEXT_FOR_PRE_SEGMENTATION",
+                data: [:],
+                debugData: [
+                    "an": ApiEnum.getFlag.rawValue,
+                    "uuid": context?.uuid ?? "",
+                    "sId": context?.sessionId ?? 0
+                ]
+            )
             return false
         }
         var tagValue = userAgent.removingPercentEncoding ?? ""
@@ -429,6 +446,7 @@ class SegmentOperandEvaluator {
         userId: String,
         featureKey: String,
         customVariable: Bool,
+        context: VWOUserContext?,
         completion: @escaping (Bool) -> Void
     ) {
         let storageService = StorageService()
@@ -449,7 +467,7 @@ class SegmentOperandEvaluator {
         dispatchGroup.enter()
         
         // Make a web service call to check the attribute against the list
-        GatewayServiceUtil.getFromGatewayService(queryParams: queryParamsObj, endpoint: UrlEnum.attributeCheck.rawValue) { gatewayResponse in
+        GatewayServiceUtil.getFromGatewayService(queryParams: queryParamsObj, endpoint: UrlEnum.attributeCheck.rawValue, context: context) { gatewayResponse in
             if let modelData = gatewayResponse {
                 if let stringValue = modelData.data {
                     if let booleanValue = stringValue.toBool {

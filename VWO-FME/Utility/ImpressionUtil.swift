@@ -57,15 +57,30 @@ class ImpressionUtil {
             variationId: variationId,
             visitorUserAgent: context.userAgent,
             ipAddress: context.ipAddress,
+            sessionId:context.sessionId,
             context: context
         )
+        
+        let campaignKeyWithFeatureName = CampaignUtil.getCampaignKeyFromCampaignId(settings: settings, campaignId: campaignId)
+        let variationName = CampaignUtil.getVariationKeyFromCampaignIdAndVariationId(settings: settings, campaignId: campaignId, variationId: variationId)
+
+        let parts = campaignKeyWithFeatureName?.split(separator: "_")
+        let featureName = parts?.first.map(String.init)
+        let campaignKey = (parts?.count ?? 0 > 1) ? String(parts![1]) : nil
+
+        let campaignType = CampaignUtil.getCampaignTypeFromCampaignId(settings: settings, campaignId: campaignId)
         
         // Send the constructed properties and payload as a POST request
         NetworkUtil.sendPostApiRequest(
             properties: properties,
             payload: payload,
             userAgent: context.userAgent,
-            ipAddress: context.ipAddress
+            ipAddress: context.ipAddress,
+            campaignInfo: ["campaignKey": campaignKey,
+                           "variationName": variationName,
+                           "featureName": featureName,
+                           "campaignType": campaignType
+                          ]
         )
     }
     

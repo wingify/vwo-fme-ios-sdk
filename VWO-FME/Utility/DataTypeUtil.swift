@@ -114,6 +114,15 @@ class DataTypeUtil {
         return val is String
     }
     
+    static func isblank(_ val: Any?) -> Bool {
+        if let stringVal = val as? String {
+            if stringVal.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty{
+                return true
+            }
+        }
+        return false
+    }
+    
     /**
      * Checks if a value is a boolean.
      *

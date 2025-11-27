@@ -72,7 +72,7 @@ class VWOClient {
             
             return GetFlagAPI.getFlag(featureKey: featureKey, settings: procSettings, context: context, hookManager: hooksManager, completion: completion)
         } catch {
-            LoggerService.log(level: .error, key: "API_THROW_ERROR", details: ["apiName": apiName, "err": error.localizedDescription])
+            LoggerService.errorLog(key: "API_THROW_ERROR",data: ["apiName":ApiEnum.getFlag.rawValue,"err": error.localizedDescription],debugData: ["an": ApiEnum.getFlag.rawValue])
             getFlag.setIsEnabled(isEnabled: false)
             completion(getFlag)
         }
@@ -85,12 +85,10 @@ class VWOClient {
             LoggerService.log(level: .debug, key: "API_CALLED", details: ["apiName": apiName])
             let hooksManager = HooksManager(callback: options?.integrations)
             guard DataTypeUtil.isString(eventName) else {
-                LoggerService.log(level: .error,
-                                  key: "API_INVALID_PARAM",
-                                  details: ["apiName": apiName,
-                                            "key": "eventName",
-                                            "type": DataTypeUtil.getType(eventName),
-                                            "correctType": "String"])
+                LoggerService.errorLog(key: "INVALID_PARAM",data: ["apiName": apiName,
+                                                                       "key": "eventName",
+                                                                       "type": DataTypeUtil.getType(eventName),
+                                                                       "correctType": "String"],debugData: ["an": ApiEnum.track.rawValue])
                 
                 throw NSError(domain: "VWOClient", code: 400, userInfo: [NSLocalizedDescriptionKey: "TypeError: Event-name should be a string"])
             }
@@ -110,9 +108,7 @@ class VWOClient {
             }
             TrackEventAPI.track(settings: pSettings, eventName: eventName, context: updatedContext, eventProperties: eventProperties, hooksManager: hooksManager)
         } catch {
-            LoggerService.log(level: .error,
-                              key: "API_THROW_ERROR",
-                              details: ["apiName": apiName, "err": error.localizedDescription])
+            LoggerService.errorLog(key: "API_THROW_ERROR",data: ["apiName":ApiEnum.track.rawValue,"err": error.localizedDescription],debugData: ["an": ApiEnum.track.rawValue])
             resultMap[eventName] = false
         }
     }
@@ -132,23 +128,34 @@ class VWOClient {
             LoggerService.log(level: .debug, key: "API_CALLED", details: ["apiName": apiName])
             
             if attributes.isEmpty {
-                LoggerService.log(level: .warn,
-                                  key: "ATTRIBUTES_NOT_FOUND",
-                                  details: ["apiName": apiName,
-                                            "key": "attributes",
-                                            "expectedFormat": "a dictionary with expected keys and value types"])
+                LoggerService.errorLog(key: "ATTRIBUTES_NOT_FOUND",data: ["apiName": apiName,
+                                                                          "key": "attributes",
+                                                                          "expectedFormat": "a dictionary with expected keys and value types"],debugData: ["an": ApiEnum.setAttribute.rawValue])
+
                 return
             }
             
             for (attributeKey, attributeValue) in attributes {
-                guard DataTypeUtil.isString(attributeValue) || DataTypeUtil.isNumber(attributeValue) || DataTypeUtil.isBoolean(attributeValue) else {
-                    LoggerService.log(level: .error,
-                                      key: "API_INVALID_PARAM",
-                                      details: ["apiName": apiName,
-                                                "key": "attributeValue for attributeKey: \(attributeKey)",
-                                                "type": DataTypeUtil.getType(attributeValue),
-                                                "correctType": "String, Number, Boolean"])
-                    throw NSError(domain: "TypeError: attributeValue should be a String, Number or Boolean", code: 0, userInfo: nil)
+                
+                let isValidType = DataTypeUtil.isString(attributeValue) || DataTypeUtil.isNumber(attributeValue) || DataTypeUtil.isBoolean(attributeValue)
+                let isBlankKey = DataTypeUtil.isblank(attributeKey)
+                
+                guard !isBlankKey else{
+                    LoggerService.errorLog(key: "INVALID_PARAM",data: ["key": "AttributeValue for attributeKey: \(attributeKey)",
+                                                                           "apiName": apiName,
+                                                                           "type": "Empty Key",
+                                                                           "correctType": "String, Number, Boolean"],debugData: ["an": ApiEnum.setAttribute.rawValue])
+
+                    throw NSError(domain: "TypeError: AttributeValue should be a String, Number or Boolean", code: 0, userInfo: nil)
+                }
+                
+                guard isValidType  else {
+                    LoggerService.errorLog(key: "INVALID_PARAM",data: ["key": "AttributeValue for attributeKey: \(attributeKey)",
+                                                                           "apiName": apiName,
+                                                                           "type": DataTypeUtil.getType(attributeValue),
+                                                                           "correctType": "String, Number, Boolean"],debugData: ["an": ApiEnum.setAttribute.rawValue])
+
+                    throw NSError(domain: "TypeError: AttributeValue should be a String, Number or Boolean", code: 0, userInfo: nil)
                 }
             }
             
@@ -167,7 +174,8 @@ class VWOClient {
             
             SetAttributeAPI.setAttributes(settings: processedSettings, attributes: attributes, context: updatedContext)
         } catch {
-            LoggerService.log(level: .error, key: "API_THROW_ERROR", details: ["apiName": apiName, "err": error.localizedDescription])
+            LoggerService.errorLog(key: "API_THROW_ERROR",data: ["apiName":ApiEnum.setAttribute.rawValue,"err": error.localizedDescription],debugData: ["an": ApiEnum.setAttribute.rawValue])
+
         }
     }
     
@@ -177,12 +185,10 @@ class VWOClient {
             if DataTypeUtil.isString(attributeValue) || DataTypeUtil.isNumber(attributeValue) || DataTypeUtil.isBoolean(attributeValue) {
                 validAttributes[attributeKey] = attributeValue
             } else {
-                LoggerService.log(level: .error,
-                                  key: "API_INVALID_PARAM",
-                                  details: ["apiName": apiName,
-                                            "key": "attributeValue for attributeKey: \(attributeKey)",
-                                            "type": DataTypeUtil.getType(attributeValue),
-                                            "correctType": "String, Number, Boolean"])
+                LoggerService.errorLog(key: "INVALID_PARAM",data: ["key": "attributeValue for attributeKey: \(attributeKey)",
+                                                                       "type": DataTypeUtil.getType(attributeValue),
+                                                                       "correctType": "String, Number, Boolean"],debugData: ["an": ApiEnum.setAttribute.rawValue])
+
             }
         }
         return validAttributes

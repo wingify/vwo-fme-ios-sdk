@@ -34,7 +34,7 @@ class LogMessageUtil {
      * - Returns: The constructed message with all placeholders replaced by their corresponding values from the data object.
      */
     
-    static func buildMessage(template: String?, data: [String: String]?) -> String? {
+    static func buildMessage(template: String?, data: [String: Any?]?) -> String? {
         guard let template = template, let data = data else {
             return template
         }
@@ -44,7 +44,8 @@ class LogMessageUtil {
             if let keyRange = Range(match.range(at: 1), in: template) {
                 let key = String(template[keyRange])
                 if let value = data[key] {
-                    result.replaceCharacters(in: match.range, with: NSRegularExpression.escapedTemplate(for: value))
+                    let replacement = String(describing: value ?? "")
+                    result.replaceCharacters(in: match.range, with: NSRegularExpression.escapedTemplate(for: replacement))
                 }
             }
         }
@@ -67,4 +68,5 @@ class LogMessageUtil {
         let payload = NetworkUtil.getMessagingEventPayload(messageType: "error", message: message, eventName: EventEnum.vwoError.rawValue)
         NetworkUtil.sendMessagingEvent(properties: properties, payload: payload)
     }
+    
 }

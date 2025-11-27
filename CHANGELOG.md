@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+
+## [1.13.0] - 2025-11-27
+
+### Added
+
+- Enhanced Logging capabilities at VWO by sending `vwo_sdkDebug` event with additional debug properties.
+
+
 ## [1.12.1] - 2025-11-12
 
 ### Fixed
@@ -13,17 +21,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [1.12.0] - 2025-09-30
 
+
 ### Added
 
 - Introducing alias ID support - associate original user ID with it's temporary ID for easier identity management and better reporting.
 
 
-### Added
-
--  Introduced alias ID support: users can now associate a temporary ID with their original ID for easier identity management.
-
-
-##[1.11.1] - 2025-09-21
+## [1.11.1] - 2025-09-21
 
 ### Fixed
 
@@ -40,9 +44,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - Sends usage statistics to VWO servers automatically during SDK initialization
-
 - Added compatibility with Objective-C projects.
-
 
 
 ## [1.9.1] - 2025-08-22

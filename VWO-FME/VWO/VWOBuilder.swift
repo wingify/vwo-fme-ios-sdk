@@ -142,7 +142,7 @@ class VWOBuilder {
         }
 
         if pollInterval < 1000 {
-            LoggerService.log(level: .error, key: "INIT_OPTIONS_INVALID", details: ["key": "pollInterval", "correctType": "number", "value": "1000"])
+            LoggerService.errorLog(key: "INVALID_POLLING_CONFIGURATION",data:["key": "pollInterval", "correctType": "number", "value": "1000"],debugData: ["an":ApiEnum.Init.rawValue] )
             return self
         }
 

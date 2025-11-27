@@ -25,6 +25,8 @@
 		BA5DD5E32E2655CE00D3A127 /* DeviceIDUtilTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = BA5DD5E22E2655CE00D3A127 /* DeviceIDUtilTests.swift */; };
 		BA5DD5E52E321FED00D3A127 /* SdkMetaInfo.swift in Sources */ = {isa = PBXBuildFile; fileRef = BA5DD5E42E321FDF00D3A127 /* SdkMetaInfo.swift */; };
 		BA5DD5E72E3225DC00D3A127 /* EventsUtils.swift in Sources */ = {isa = PBXBuildFile; fileRef = BA5DD5E62E3225D200D3A127 /* EventsUtils.swift */; };
+		BA76097B2E704B8300E1EDA9 /* DebuggerCategoryEnum.swift in Sources */ = {isa = PBXBuildFile; fileRef = BA76097A2E704B8300E1EDA9 /* DebuggerCategoryEnum.swift */; };
+		BA76097D2E70503400E1EDA9 /* DebuggerServiceUtil.swift in Sources */ = {isa = PBXBuildFile; fileRef = BA76097C2E70502300E1EDA9 /* DebuggerServiceUtil.swift */; };
 		BA8309F02E212D94001804F0 /* DeviceIDUtil.swift in Sources */ = {isa = PBXBuildFile; fileRef = BA8309EF2E212D87001804F0 /* DeviceIDUtil.swift */; };
 		BACCE91B2E49FC3400901FCC /* AliasIdentifierManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = BACCE91A2E49FC3400901FCC /* AliasIdentifierManager.swift */; };
 		BA6CF04F2E431F9E00FE5740 /* DeviceUtil.swift in Sources */ = {isa = PBXBuildFile; fileRef = BA6CF04D2E431E8700FE5740 /* DeviceUtil.swift */; };
@@ -187,6 +189,8 @@
 		BA5DD5E22E2655CE00D3A127 /* DeviceIDUtilTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeviceIDUtilTests.swift; sourceTree = "<group>"; };
 		BA5DD5E42E321FDF00D3A127 /* SdkMetaInfo.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SdkMetaInfo.swift; sourceTree = "<group>"; };
 		BA5DD5E62E3225D200D3A127 /* EventsUtils.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EventsUtils.swift; sourceTree = "<group>"; };
+		BA76097A2E704B8300E1EDA9 /* DebuggerCategoryEnum.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DebuggerCategoryEnum.swift; sourceTree = "<group>"; };
+		BA76097C2E70502300E1EDA9 /* DebuggerServiceUtil.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DebuggerServiceUtil.swift; sourceTree = "<group>"; };
 		BA8309EF2E212D87001804F0 /* DeviceIDUtil.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeviceIDUtil.swift; sourceTree = "<group>"; };
 		BACCE91A2E49FC3400901FCC /* AliasIdentifierManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AliasIdentifierManager.swift; sourceTree = "<group>"; };
 		BA6CF04D2E431E8700FE5740 /* DeviceUtil.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeviceUtil.swift; sourceTree = "<group>"; };
@@ -502,6 +506,8 @@
 		EB06C7C72C90242600A25E07 /* Utility */ = {
 			isa = PBXGroup;
 			children = (
+
+				BA76097C2E70502300E1EDA9 /* DebuggerServiceUtil.swift */,
 				BA203D792E601B7A00DE8EEB /* UserIdUtil.swift */,
 				BA6CF04D2E431E8700FE5740 /* DeviceUtil.swift */,
 				EB06C7D42C90243000A25E07 /* MegUtil.swift */,
@@ -527,6 +533,7 @@
 		EB06C7E22C90243E00A25E07 /* Enums */ = {
 			isa = PBXGroup;
 			children = (
+				BA76097A2E704B8300E1EDA9 /* DebuggerCategoryEnum.swift */,
 				EB06C7E72C90245000A25E07 /* ApiEnum.swift */,
 				EB06C7E62C90245000A25E07 /* CampaignTypeEnum.swift */,
 				EB06C7E42C90245000A25E07 /* EventEnum.swift */,
@@ -1078,6 +1085,7 @@
 				EB06C8962C9026F400A25E07 /* SegmentOperandEvaluator.swift in Sources */,
 				EB06C7D82C90243300A25E07 /* DataTypeUtil.swift in Sources */,
 				EB06C7E12C90243300A25E07 /* MegUtil.swift in Sources */,
+				BA76097D2E70503400E1EDA9 /* DebuggerServiceUtil.swift in Sources */,
 				BAD427492E12766100C5C011 /* StorageConnectorProvider.swift in Sources */,
 				EB8560A92D364CBF00565862 /* FmeSession.swift in Sources */,
 				EB06C7DC2C90243300A25E07 /* LogMessageUtil.swift in Sources */,
@@ -1149,6 +1157,7 @@
 				EB06C7EF2C90245300A25E07 /* StorageEnum.swift in Sources */,
 				EB06C8622C90260900A25E07 /* LogManager.swift in Sources */,
 				EB06C79A2C90239C00A25E07 /* VWO.swift in Sources */,
+				BA76097B2E704B8300E1EDA9 /* DebuggerCategoryEnum.swift in Sources */,
 				EB8D4B0C2D2BB49F00DB924A /* EventBatchQueryParams.swift in Sources */,
 				EB5500902CA51C3C00A8B729 /* SetUserAliasRequest.swift in Sources */,
 				EB5500912CA51C3C00A8B729 /* SetUserAliasResponse.swift in Sources */,
