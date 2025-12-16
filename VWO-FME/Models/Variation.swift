@@ -32,7 +32,7 @@ struct Variation: Codable, Equatable {
     var startRangeVariation: Int = 0
     var endRangeVariation: Int = 0
     var variables: [Variable] = []
-    var variations: [Variation] = []    
+    var variations: [Variation] = []
     var segments: [String: CodableValue]?
     var salt: String?
     
@@ -91,27 +91,66 @@ enum CodableValue: Codable, Equatable {
     case bool(Bool)
     case array([CodableValue])
     case dictionary([String: CodableValue])
+    case null
     
     init(from decoder: Decoder) throws {
         let container = try decoder.singleValueContainer()
         
-        if let value = try? container.decode(String.self) {
-            self = .string(value)
-        } else if let value = try? container.decode(Int.self) {
-            self = .int(value)
-        } else if let value = try? container.decode(Double.self) {
-            self = .double(value)
-        } else if let value = try? container.decode(Float.self) {
-            self = .float(value)
-        } else if let value = try? container.decode(Bool.self) {
-            self = .bool(value)
-        } else if let value = try? container.decode([CodableValue].self) {
-            self = .array(value)
-        } else if let value = try? container.decode([String: CodableValue].self) {
-            self = .dictionary(value)
-        } else {
-            throw DecodingError.typeMismatch(CodableValue.self, DecodingError.Context(codingPath: decoder.codingPath, debugDescription: "Type not supported"))
+        // Check for null value first
+        if container.decodeNil() {
+            self = .null
+            return
         }
+        
+        // Try to decode in order, starting with most complex types
+        // Note: singleValueContainer allows multiple decode attempts, but each try? consumes the attempt
+        // We need to try in the right order to avoid false matches (e.g., Int matching when it's actually Double)
+        
+        // Try dictionary first (handles empty objects {} and complex nested structures)
+        if let dictValue = try? container.decode([String: CodableValue].self) {
+            self = .dictionary(dictValue)
+            return
+        }
+        
+        // Try array
+        if let arrayValue = try? container.decode([CodableValue].self) {
+            self = .array(arrayValue)
+            return
+        }
+        
+        // Try string
+        if let stringValue = try? container.decode(String.self) {
+            self = .string(stringValue)
+            return
+        }
+        
+        // Try bool (before numbers to avoid false matches)
+        if let boolValue = try? container.decode(Bool.self) {
+            self = .bool(boolValue)
+            return
+        }
+        
+        // Try Int (before Double to avoid false matches)
+        if let intValue = try? container.decode(Int.self) {
+            self = .int(intValue)
+            return
+        }
+        
+        // Try Double
+        if let doubleValue = try? container.decode(Double.self) {
+            self = .double(doubleValue)
+            return
+        }
+        
+        // Try Float
+        if let floatValue = try? container.decode(Float.self) {
+            self = .float(floatValue)
+            return
+        }
+        
+        // If all attempts fail, throw error with context
+        let codingPath = decoder.codingPath.map { $0.stringValue }.joined(separator: ".")
+        throw DecodingError.typeMismatch(CodableValue.self, DecodingError.Context(codingPath: decoder.codingPath, debugDescription: "Type not supported at path: \(codingPath). Expected one of: String, Int, Double, Float, Bool, Array, Dictionary, or null"))
     }
     
     func encode(to encoder: Encoder) throws {
@@ -132,6 +171,8 @@ enum CodableValue: Codable, Equatable {
             try container.encode(value)
         case .float(let value):
             try container.encode(value)
+        case .null:
+            try container.encodeNil()
         }
     }
     
@@ -151,6 +192,8 @@ enum CodableValue: Codable, Equatable {
             return value.mapValues { $0.toJSONCompatible() }
         case .float(let value):
             return value
+        case .null:
+            return NSNull()
         }
     }
     
