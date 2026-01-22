@@ -357,10 +357,19 @@ class NetworkUtil {
     }
     
     // Returns the payload data for the messaging event
-    static func getMessagingEventPayload(messageType: String, message: String, eventName: String) -> [String: Any] {
-        let settingManager = SettingsManager.instance
-        let stringAccountId = "\(settingManager?.accountId ?? 0)"
-        let sdkKey = "\(settingManager?.sdkKey ?? "")"
+    static func getMessagingEventPayload(messageType: String, message: String, eventName: String, serviceContainer: ServiceContainer? = nil) -> [String: Any] {
+        let stringAccountId: String
+        let sdkKey: String
+        
+        if let container = serviceContainer {
+            stringAccountId = "\(container.getAccountId())"
+            sdkKey = container.getSdkKey()
+        } else {
+            // Fallback to static SettingsManager for backward compatibility
+            let settingManager = SettingsManager.instance
+            stringAccountId = "\(settingManager?.accountId ?? 0)"
+            sdkKey = "\(settingManager?.sdkKey ?? "")"
+        }
         
         let userId = stringAccountId + "_" + sdkKey
         var properties = NetworkUtil.getEventBasePayload(userId: userId, eventName: eventName, visitorUserAgent: nil, ipAddress: nil)

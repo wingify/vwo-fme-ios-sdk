@@ -19,9 +19,18 @@ import CoreData
 
 /**
  * Manages synchronization of event data with the server.
+ * Each instance is tied to a specific ServiceContainer for multi-instance support.
  */
 class SyncManager {
     static let shared = SyncManager()
+    
+    // Instance-specific ServiceContainer reference for multi-instance support
+    private weak var serviceContainer: ServiceContainer?
+    
+    // Instance-specific account identifiers
+    private var accountId: Int = 0
+    private var sdkKey: String = ""
+    
     private var dispatchTimer: DispatchSourceTimer?
     var timerNextFireDate = Date()
 
@@ -36,11 +45,22 @@ class SyncManager {
     private let backgroundQueue = DispatchQueue(label: "com.vwo.fme.timer.syncManager", qos: .background, attributes: .concurrent)
     private let coreDataStack = CoreDataStack.shared
     private let eventManager = EventDataManager.shared
-    private let initLock = NSLock()
+    // Concurrent queue for initialization (better performance than locks)
+    private let initQueue = DispatchQueue(label: "com.vwo.fme.syncmanager.init", attributes: .concurrent)
     
     var isOngoing: Bool = false
 
-    private init() {}
+    internal init() {}
+    
+    /**
+     * Sets the ServiceContainer reference for this SyncManager instance.
+     * - Parameter serviceContainer: The ServiceContainer instance
+     */
+    func setServiceContainer(_ serviceContainer: ServiceContainer) {
+        self.serviceContainer = serviceContainer
+        self.accountId = serviceContainer.getAccountId()
+        self.sdkKey = serviceContainer.getSdkKey()
+    }
     
     /**
      * Initializes the SyncManager with batch size and time interval.
@@ -50,14 +70,14 @@ class SyncManager {
      *   - timeInterval: Time interval for periodic syncs in milliseconds.
      */
     func initialize(minBatchSize: Int?, timeInterval: Int64?) {
-        initLock.lock()
-        defer { initLock.unlock() }
-        
-        self.isOnlineBatchingAllowed = self.checkOnlineBatchingAllowed(batchSize: minBatchSize, batchUploadInterval: timeInterval)
-        self.minimumEventCount = minBatchSize ?? 0
-        self.timeInterval = timeInterval ?? (isOnlineBatchingAllowed ? Constants.DEFAULT_BATCH_UPLOAD_INTERVAL : 0)
-        if self.timeInterval > 0 {
-            self.startSyncing()
+        initQueue.sync(flags: .barrier) { [weak self] in
+            guard let self = self else { return }
+            self.isOnlineBatchingAllowed = self.checkOnlineBatchingAllowed(batchSize: minBatchSize, batchUploadInterval: timeInterval)
+            self.minimumEventCount = minBatchSize ?? 0
+            self.timeInterval = timeInterval ?? (self.isOnlineBatchingAllowed ? Constants.DEFAULT_BATCH_UPLOAD_INTERVAL : 0)
+            if self.timeInterval > 0 {
+                self.startSyncing()
+            }
         }
     }
     
@@ -124,7 +144,9 @@ class SyncManager {
         }
         
         self.isOngoing = true
-        self.coreDataStack.fetchManagedObjects { [weak self] events, error in
+        
+        // Fetch events filtered by this instance's accountId and sdkKey
+        self.coreDataStack.fetchManagedObjects(accountId: Int64(self.accountId), sdkKey: self.sdkKey) { [weak self] events, error in
             guard let self = self else { return }
             guard let events = events, !events.isEmpty else {
                 self.isOngoing = false
@@ -141,18 +163,36 @@ class SyncManager {
             }
             
             let triggerForOnlineBatching = ignoreThreshold ? "time interval" : "minimum batch size"
+            
+            // Use instance-specific logger from ServiceContainer
+            let loggerService = self.serviceContainer?.getLoggerService()
+            
             if self.isOnlineBatchingAllowed {
-                LoggerService.log(level: .info, key: "BATCH_PROCESSING_STARTED", details: ["name": triggerForOnlineBatching])
+                if let logger = loggerService {
+                    logger.log(level: .info, key: "BATCH_PROCESSING_STARTED", details: ["name": triggerForOnlineBatching])
+                } else {
+                    // Fallback to static log if no instance found
+                    LoggerService.log(level: .info, key: "BATCH_PROCESSING_STARTED", details: ["name": triggerForOnlineBatching])
+                }
             }
-            self.eventManager.uploadEvents(events: events) { success, eventsData  in
+            
+            self.eventManager.uploadEvents(events: events, serviceContainer: self.serviceContainer) { success, eventsData  in
                 self.isOngoing = false
                 if success {
                     self.eventManager.deleteEvents(data: eventsData) { success in
                         if self.isOnlineBatchingAllowed {
-                            LoggerService.log(level: .info,
-                                              key: "BATCH_PROCESSING_FINISHED",
-                                              details: ["name": triggerForOnlineBatching,
-                                                        "status": success ? "success" : "failed"])
+                            if let logger = loggerService {
+                                logger.log(level: .info,
+                                          key: "BATCH_PROCESSING_FINISHED",
+                                          details: ["name": triggerForOnlineBatching,
+                                                    "status": success ? "success" : "failed"])
+                            } else {
+                                // Fallback to static log if no instance found
+                                LoggerService.log(level: .info,
+                                                  key: "BATCH_PROCESSING_FINISHED",
+                                                  details: ["name": triggerForOnlineBatching,
+                                                            "status": success ? "success" : "failed"])
+                            }
                         }
                     }
                 }

@@ -250,6 +250,12 @@ enum SDKState {
             vwoInstances.removeValue(forKey: accountKey)
         }
         setAccountState(accountKey: accountKey, state: .notInitialized)
+        
+        // Clean up SyncManager and AliasIdentifierManager for this account
+        if let accountId = accountId, let sdkKey = sdkKey {
+//            SyncManager.shared.removeAccount(accountId: accountId, sdkKey: sdkKey)
+            AliasIdentifierManager.removeSettings(accountId: accountId, sdkKey: sdkKey)
+        }
     }
     
     /**
@@ -380,7 +386,9 @@ enum SDKState {
     
     // Sets alias for a user
     public func setAlias(from userContext: VWOUserContext, to alias: String) {
-        AliasIdentifierManager.shared.setAlias(from: userContext, to: alias)
+        // Get ServiceContainer for this instance to ensure correct account context
+        let serviceContainer = vwoClient?.createServiceContainer()
+        AliasIdentifierManager.shared.setAlias(from: userContext, to: alias, serviceContainer: serviceContainer)
     }
     
 }

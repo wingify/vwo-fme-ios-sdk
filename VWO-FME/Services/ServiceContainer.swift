@@ -32,7 +32,7 @@ class ServiceContainer {
     // iOS equivalents for Android managers
     // Instance-based SegmentationManager for isolation
     private let segmentationManager: SegmentationManager
-    private let syncManager = SyncManager.shared
+    private let syncManager: SyncManager
     
     // Usage stats utility (singleton in iOS)
     let usageStats = UsageStatsUtil.shared
@@ -48,10 +48,40 @@ class ServiceContainer {
         self.hooksManager = HooksManager(callback: options.integrations)
         self.segmentationManager = SegmentationManager()
         
+        // Initialize syncManager with a temporary instance first (all stored properties must be initialized before using self)
+        // We'll set the serviceContainer reference after initialization
+        self.syncManager = SyncManager()
+        
+        // Now that all properties are initialized, we can use self
+        // Set the serviceContainer reference and register it
+        self.syncManager.setServiceContainer(self)
+        
+        // Initialize SyncManager with batch settings from options
+        let batchSize = options.batchMinSize
+        let batchTime = options.batchUploadTimeInterval
+        let isAllowed = syncManager.checkOnlineBatchingAllowed(batchSize: batchSize, batchUploadInterval: batchTime)
+        if isAllowed {
+            syncManager.initialize(minBatchSize: batchSize, timeInterval: batchTime)
+        }
+        // Use instance-specific logger to ensure correct prefix
+        loggerService?.log(level: .info, key: "ONLINE_BATCH_PROCESSING_STATUS", details: ["status": isAllowed ? "enabled" : "disabled"])
+        
         // Attach segment evaluator if provided
         if let segmentEvaluator = options.segmentEvaluator {
             self.segmentationManager.attachEvaluator(segmentEvaluator: segmentEvaluator)
         }
+        
+        // Set ServiceContainer reference in LoggerService for error event sending
+        loggerService?.setServiceContainer(self)
+        
+        // Register LoggerService instance with account key for static log prefix lookup
+        if let logger = loggerService {
+            let accountKey = "\(getAccountId())_\(getSdkKey())"
+            LoggerService.registerInstance(accountKey: accountKey, instance: logger)
+        }
+        
+        // Register ServiceContainer in EventDataManager for instance-specific operations
+        EventDataManager.registerServiceContainer(self)
     }
     
     // MARK: - LoggerService

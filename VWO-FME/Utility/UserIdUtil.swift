@@ -72,12 +72,28 @@ class UserIdUtil {
                 return updatedContext
             }
             
-            if AliasIdentifierManager.shared.isEnabled ?? false && AliasIdentifierManager.shared.isGatewayEnabled ?? false{
-            // Use semaphore to make async call synchronous
-            let semaphore = DispatchSemaphore(value: 0)
-            var resolvedId: String?
+            // Check alias settings for this specific account
+            let shouldUseAlias: Bool
+            if let container = serviceContainer {
+                let accountId = container.getAccountId()
+                let sdkKey = container.getSdkKey()
+                if let settings = AliasIdentifierManager.getSettings(accountId: accountId, sdkKey: sdkKey) {
+                    shouldUseAlias = settings.isEnabled && settings.isGatewayEnabled
+                } else {
+                    // No settings found for this account, alias feature is disabled
+                    shouldUseAlias = false
+                }
+            } else {
+                // No ServiceContainer available, cannot determine account - alias feature is disabled
+                shouldUseAlias = false
+            }
+            
+            if shouldUseAlias {
+                // Use semaphore to make async call synchronous
+                let semaphore = DispatchSemaphore(value: 0)
+                var resolvedId: String?
 
-                AliasIdentifierManager.shared.getAliasIfExistsAsync(tempID: userId) { userID in
+                AliasIdentifierManager.shared.getAliasIfExistsAsync(tempID: userId, serviceContainer: serviceContainer) { userID in
                     resolvedId = userID ?? userId
                     semaphore.signal()
                 }
@@ -92,7 +108,7 @@ class UserIdUtil {
                     updatedContext.id = userId
                     log(level: .info, key: "USER_ID_INFO", details: ["id": userId])
                 }
-            }else{
+            } else {
                 updatedContext.id = userId
                 log(level: .info, key: "USER_ID_INFO", details: ["id": userId])
             }

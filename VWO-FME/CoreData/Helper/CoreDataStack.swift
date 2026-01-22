@@ -121,14 +121,60 @@ class CoreDataStack {
     }
     
     /**
+     * Fetches managed objects from Core Data filtered by accountId and sdkKey.
+     *
+     * - Parameters:
+     *   - accountId: The account ID to filter by
+     *   - sdkKey: The SDK key to filter by
+     *   - completion: A closure that is called with the fetched objects or an error.
+     */
+    func fetchManagedObjects(accountId: Int64, sdkKey: String, completion: @escaping ([EventData]?, Error?) -> Void) {
+        coreDataQueue.async {
+            let fetchRequest: NSFetchRequest<EventData> = EventData.fetchRequest()
+            fetchRequest.predicate = NSPredicate(format: "accountId == %lld AND sdkKey == %@", accountId, sdkKey)
+            self.context.perform {
+                do {
+                    let result = try self.context.fetch(fetchRequest)
+                    completion(result, nil)
+                } catch {
+                    completion(nil, error)
+                }
+            }
+        }
+    }
+    
+    /**
      * Counts the number of entries in the Core Data store.
      *
      * - Parameter completion: A closure that is called with the count or an error.
      */
     func countEntries(completion: @escaping (Int?, Error?) -> Void) {
         coreDataQueue.async {
+            let fetchRequest: NSFetchRequest<EventData> = EventData.fetchRequest()
+            self.context.perform {
+                do {
+                    let result = try self.context.fetch(fetchRequest)
+                    completion(result.count, nil)
+                } catch {
+                    completion(nil, error)
+                }
+            }
+        }
+    }
+    
+    /**
+     * Counts the number of entries in the Core Data store filtered by accountId and sdkKey.
+     *
+     * - Parameters:
+     *   - accountId: The account ID to filter by
+     *   - sdkKey: The SDK key to filter by
+     *   - completion: A closure that is called with the count or an error.
+     */
+    func countEntries(accountId: Int64, sdkKey: String, completion: @escaping (Int?, Error?) -> Void) {
+        coreDataQueue.async {
             let fetchRequest: NSFetchRequest<NSNumber> = NSFetchRequest(entityName: self.entityName)
             fetchRequest.resultType = .countResultType
+            fetchRequest.predicate = NSPredicate(format: "accountId == %lld AND sdkKey == %@", accountId, sdkKey)
             self.context.perform {
                 do {
                     let countResult = try self.context.fetch(fetchRequest)

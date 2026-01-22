@@ -19,10 +19,18 @@ import Foundation
 class LoggerService {
     
     // Instance-specific prefix for multi-instance support
-    private let instancePrefix: String
+    // Made internal so static methods can access it for prefix lookup
+    internal let instancePrefix: String
+    
+    // Instance-specific log level for multi-instance support
+    private let instanceLogLevel: LogLevelEnum
+    
+    // Thread-safe storage for LoggerService instances by account key (for static log prefix lookup)
+    private static let instanceQueue = DispatchQueue(label: "com.vwo.fme.loggerservice.instances", attributes: .concurrent)
+    private static var _instances: [String: LoggerService] = [:]
     
     // Thread-safe static message dictionaries
-    private static let messageLock = NSLock()
+    private static let messageQueue = DispatchQueue(label: "com.vwo.fme.loggerservice.messages", attributes: .concurrent)
     private static var _debugMessages: [String: String] = [:]
     private static var _errorMessages: [String: String] = [:]
     private static var _infoMessages: [String: String] = [:]
@@ -31,70 +39,73 @@ class LoggerService {
     
     static var debugMessages: [String: String] {
         get {
-            messageLock.lock()
-            defer { messageLock.unlock() }
-            return _debugMessages
+            return messageQueue.sync {
+                return _debugMessages
+            }
         }
         set {
-            messageLock.lock()
-            defer { messageLock.unlock() }
-            _debugMessages = newValue
+            messageQueue.async(flags: .barrier) {
+                _debugMessages = newValue
+            }
         }
     }
     
     static var errorMessages: [String: String] {
         get {
-            messageLock.lock()
-            defer { messageLock.unlock() }
-            return _errorMessages
+            return messageQueue.sync {
+                return _errorMessages
+            }
         }
         set {
-            messageLock.lock()
-            defer { messageLock.unlock() }
-            _errorMessages = newValue
+            messageQueue.async(flags: .barrier) {
+                _errorMessages = newValue
+            }
         }
     }
     
     static var infoMessages: [String: String] {
         get {
-            messageLock.lock()
-            defer { messageLock.unlock() }
-            return _infoMessages
+            return messageQueue.sync {
+                return _infoMessages
+            }
         }
         set {
-            messageLock.lock()
-            defer { messageLock.unlock() }
-            _infoMessages = newValue
+            messageQueue.async(flags: .barrier) {
+                _infoMessages = newValue
+            }
         }
     }
     
     static var warningMessages: [String: String] {
         get {
-            messageLock.lock()
-            defer { messageLock.unlock() }
-            return _warningMessages
+            return messageQueue.sync {
+                return _warningMessages
+            }
         }
         set {
-            messageLock.lock()
-            defer { messageLock.unlock() }
-            _warningMessages = newValue
+            messageQueue.async(flags: .barrier) {
+                _warningMessages = newValue
+            }
         }
     }
     
     static var traceMessages: [String: String] {
         get {
-            messageLock.lock()
-            defer { messageLock.unlock() }
-            return _traceMessages
+            return messageQueue.sync {
+                return _traceMessages
+            }
         }
         set {
-            messageLock.lock()
-            defer { messageLock.unlock() }
-            _traceMessages = newValue
+            messageQueue.async(flags: .barrier) {
+                _traceMessages = newValue
+            }
         }
     }
     
-    init(config: [String: Any], logLevel: LogLevelEnum, logTransport: LogTransport?) {
+    init(config: [String: Any], logLevel: LogLevelEnum, logTransport: LogTransport?, accountId: Int? = nil, sdkKey: String? = nil) {
+        // Store instance-specific log level
+        self.instanceLogLevel = logLevel
+        
         // Initialize or reuse the shared LogManager instance with NO prefix
         var sharedConfig = config
         sharedConfig["prefix"] = ""
@@ -107,24 +118,50 @@ class LoggerService {
             self.instancePrefix = ""
         }
         
-        // Read the log files (only once) - thread-safe
-        LoggerService.messageLock.lock()
-        defer { LoggerService.messageLock.unlock() }
+        // Register this instance for static log prefix lookup
+        // Use provided accountId/sdkKey first, then fallback to SettingsManager
+        let accountKey: String?
+        if let accountId = accountId, let sdkKey = sdkKey {
+            accountKey = "\(accountId)_\(sdkKey)"
+        } else if let settingsManager = SettingsManager.instance {
+            accountKey = "\(settingsManager.accountId)_\(settingsManager.sdkKey)"
+        } else {
+            accountKey = nil
+        }
         
-        if LoggerService._debugMessages.isEmpty {
-            LoggerService._debugMessages = readLogFiles(fileName: "debug-messages.json")
-            LoggerService._infoMessages = readLogFiles(fileName: "info-messages.json")
-            LoggerService._errorMessages = readLogFiles(fileName: "error-messages.json")
-            LoggerService._warningMessages = readLogFiles(fileName: "warn-messages.json")
-            LoggerService._traceMessages = readLogFiles(fileName: "trace-messages.json")
+        if let accountKey = accountKey {
+            LoggerService.instanceQueue.async(flags: .barrier) {
+                LoggerService._instances[accountKey] = self
+            }
+        }
+        
+        // Read the log files (only once) - thread-safe
+        LoggerService.messageQueue.sync(flags: .barrier) {
+            if LoggerService._debugMessages.isEmpty {
+                LoggerService._debugMessages = readLogFiles(fileName: "debug-messages.json")
+                LoggerService._infoMessages = readLogFiles(fileName: "info-messages.json")
+                LoggerService._errorMessages = readLogFiles(fileName: "error-messages.json")
+                LoggerService._warningMessages = readLogFiles(fileName: "warn-messages.json")
+                LoggerService._traceMessages = readLogFiles(fileName: "trace-messages.json")
+            }
         }
     }
     
     /**
      * Thread-safe method to create LoggerService instance
      */
-    static func createInstance(config: [String: Any], logLevel: LogLevelEnum, logTransport: LogTransport?) -> LoggerService {
-        return LoggerService(config: config, logLevel: logLevel, logTransport: logTransport)
+    static func createInstance(config: [String: Any], logLevel: LogLevelEnum, logTransport: LogTransport?, accountId: Int? = nil, sdkKey: String? = nil) -> LoggerService {
+        return LoggerService(config: config, logLevel: logLevel, logTransport: logTransport, accountId: accountId, sdkKey: sdkKey)
+    }
+    
+    /**
+     * Registers a LoggerService instance with an account key for static log prefix lookup.
+     * This can be called multiple times to update the registration.
+     */
+    static func registerInstance(accountKey: String, instance: LoggerService) {
+        instanceQueue.async(flags: .barrier) {
+            _instances[accountKey] = instance
+        }
     }
     
     /**
@@ -168,28 +205,106 @@ class LoggerService {
         }
     }
     
+    /**
+     * Gets the prefix from the appropriate LoggerService instance for static logging.
+     * This allows static logs to use the correct instance prefix based on current SettingsManager.
+     */
+    private static func getCurrentInstancePrefix() -> String {
+        return instanceQueue.sync {
+            // First, try to get the instance using SettingsManager.instance
+            if let settingsManager = SettingsManager.instance {
+                let accountKey = "\(settingsManager.accountId)_\(settingsManager.sdkKey)"
+                if let instance = _instances[accountKey], !instance.instancePrefix.isEmpty {
+                    return instance.instancePrefix
+                }
+            }
+            
+            // Fallback: if we have only one instance with a non-empty prefix, use it
+            // This handles cases where SettingsManager.instance might not be set correctly
+            let instancesWithPrefix = _instances.values.filter { !$0.instancePrefix.isEmpty }
+            if instancesWithPrefix.count == 1 {
+                return instancesWithPrefix.first!.instancePrefix
+            }
+            
+            // If multiple instances exist, try to find the one that matches SettingsManager
+            // by checking all registered instances
+            if let settingsManager = SettingsManager.instance {
+                for (accountKey, instance) in _instances {
+                    let expectedKey = "\(settingsManager.accountId)_\(settingsManager.sdkKey)"
+                    if accountKey == expectedKey && !instance.instancePrefix.isEmpty {
+                        return instance.instancePrefix
+                    }
+                }
+            }
+            
+            return ""
+        }
+    }
+    
+    /**
+     * Gets a LoggerService instance by account key for batch processing logs.
+     * - Parameters:
+     *   - accountId: The account ID
+     *   - sdkKey: The SDK key
+     * - Returns: The LoggerService instance if found, nil otherwise
+     */
+    static func getInstance(accountId: Int, sdkKey: String) -> LoggerService? {
+        let accountKey = "\(accountId)_\(sdkKey)"
+        return instanceQueue.sync {
+            return _instances[accountKey]
+        }
+    }
+    
     static func log(level: LogLevelEnum, key: String, details: [String: String]?) {
         let logFile = self.getLogFile(level: level)
         let messageBuilder = LogMessageUtil.buildMessage(template: logFile[key], data: details)
+        
+        // Try to get the current instance prefix to prepend
+        let prefix = getCurrentInstancePrefix()
+        let finalMessage = prefix.isEmpty ? messageBuilder : "\(prefix): \(messageBuilder ?? "")"
+        
         guard let logManager = LogManager.instance else { return }
-        logManager.log(level: level, message: messageBuilder)
+        logManager.log(level: level, message: finalMessage)
     }
     
     static func log(level: LogLevelEnum, message: String?) {
+        // Try to get the current instance prefix to prepend
+        let prefix = getCurrentInstancePrefix()
+        let finalMessage = prefix.isEmpty ? message : "\(prefix): \(message ?? "")"
+        
         guard let logManager = LogManager.instance else { return }
-        logManager.log(level: level, message: message)
+        logManager.log(level: level, message: finalMessage)
     }
     
     // Instance methods that prepend instance prefix while using shared LogManager
+    // Store ServiceContainer reference for error event sending
+    private weak var serviceContainer: ServiceContainer?
+    
+    func setServiceContainer(_ container: ServiceContainer?) {
+        self.serviceContainer = container
+    }
+    
     func log(level: LogLevelEnum, key: String, details: [String: String]?) {
+        // Check log level using instance-specific level before logging
+        let configLevel = self.instanceLogLevel
+        let requiredLevel = level
+        let shouldLogMessage = configLevel.level <= requiredLevel.level
+        guard shouldLogMessage else { return }
+        
         let logFile = LoggerService.getLogFile(level: level)
         let messageBuilder = LogMessageUtil.buildMessage(template: logFile[key], data: details)
         let finalMessage = instancePrefix.isEmpty ? messageBuilder : "\(instancePrefix): \(messageBuilder ?? "")"
-        LogManager.instance?.log(level: level, message: finalMessage)
+        LogManager.instance?.log(level: level, message: finalMessage, serviceContainer: serviceContainer, skipLevelCheck: true)
     }
     
     func log(level: LogLevelEnum, message: String?) {
+        // Check log level using instance-specific level before logging
+        let configLevel = self.instanceLogLevel
+        let requiredLevel = level
+        let shouldLogMessage = configLevel.level <= requiredLevel.level
+        guard shouldLogMessage else { return }
+        
         let finalMessage = instancePrefix.isEmpty ? message : "\(instancePrefix): \(message ?? "")"
-        LogManager.instance?.log(level: level, message: finalMessage)
+        LogManager.instance?.log(level: level, message: finalMessage, serviceContainer: serviceContainer, skipLevelCheck: true)
     }
 }
