@@ -29,7 +29,15 @@ enum ApiEnum: String {
     /**
      * API endpoint for tracking user events.
      */
-    case track = "track"
+    case track = "trackEvent"
+    
+    case Init = "init"
+    
+    case onInit = "onInit"
+    
+    case setAttribute = "setAttribute"
+    
+    case updateSettings = "updateSettings"
     
     /**
      * API endpoint for setting user alias.
@@ -40,6 +48,7 @@ enum ApiEnum: String {
      * API endpoint for getting user alias.
      */
     case getUserAlias = "getAliasUserId"
+
 }
 
 enum HTTPMethod: String {

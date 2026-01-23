@@ -114,4 +114,59 @@ struct FunctionUtil {
             } ?? false
         }
     }
+    
+
+    /// Returns a human-readable, formatted string representation of an error object.
+    /// - Parameter error: The error to format. Can be of various types (Error, String, Dictionary, Codable, etc.).
+    /// - Returns: A formatted string based on the type of the input:
+    ///   - If `error` is an `Error`, returns its localized description.
+    ///   - If `error` is a `String`, returns it directly.
+    ///   - If `error` is a dictionary, tries to pretty-print it as JSON; if that fails, returns its description.
+    ///   - If `error` is `nil`, returns a default message.
+    ///   - If `error` conforms to `Encodable`, tries to encode it as pretty-printed JSON.
+    ///   - Otherwise, returns the string description of the object.
+   static func getFormattedErrorMessage(_ error: Any?) -> String {
+        switch error {
+        case let error as Error:
+            return error.localizedDescription
+
+        case let string as String:
+            return string
+
+        case let dict as [AnyHashable: Any]:
+            if let data = try? JSONSerialization.data(withJSONObject: dict, options: [.prettyPrinted]),
+               let jsonString = String(data: data, encoding: .utf8) {
+                return jsonString
+            }
+            return dict.description
+
+        case nil:
+            return "Error object was null"
+            
+        default:
+            // Try to encode any Codable object to JSON
+            if let codableObject = error as? Encodable {
+                let encoder = JSONEncoder()
+                encoder.outputFormatting = .prettyPrinted
+                if let data = try? encoder.encode(AnyEncodable(codableObject)),
+                   let jsonString = String(data: data, encoding: .utf8) {
+                    return jsonString
+                }
+            }
+            return String(describing: error)
+        }
+    }
+
+}
+
+struct AnyEncodable: Encodable {
+    private let encode: (Encoder) throws -> Void
+
+    init<T: Encodable>(_ wrapped: T) {
+        self.encode = wrapped.encode
+    }
+
+    func encode(to encoder: Encoder) throws {
+        try encode(encoder)
+    }
 }

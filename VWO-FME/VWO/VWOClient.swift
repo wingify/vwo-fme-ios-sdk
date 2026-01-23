@@ -121,7 +121,9 @@ class VWOClient {
             let hooksManager = serviceContainer.getHooksManager()
             return GetFlagAPI.getFlag(featureKey: featureKey, settings: procSettings, context: effectiveContext, hookManager: hooksManager, serviceContainer: serviceContainer, completion: completion)
         } catch {
-            serviceContainer.getLoggerService()?.log(level: .error, key: "API_THROW_ERROR", details: ["apiName": "getFlag", "err": error.localizedDescription])
+
+            serviceContainer.getLoggerService()?.errorLog(key: "API_THROW_ERROR",data: ["apiName":ApiEnum.getFlag.rawValue,"err": error.localizedDescription],debugData: ["an": ApiEnum.getFlag.rawValue])
+
             getFlag.setIsEnabled(isEnabled: false)
             completion(getFlag)
         }
@@ -141,12 +143,10 @@ class VWOClient {
             serviceContainer.getLoggerService()?.log(level: .debug, key: "API_CALLED", details: ["apiName": apiName])
             
             guard DataTypeUtil.isString(eventName) else {
-                serviceContainer.getLoggerService()?.log(level: .error,
-                                  key: "API_INVALID_PARAM",
-                                  details: ["apiName": apiName,
-                                            "key": "eventName",
-                                            "type": DataTypeUtil.getType(eventName),
-                                            "correctType": "String"])
+                serviceContainer.getLoggerService()?.errorLog(key: "INVALID_PARAM",data: ["apiName": apiName,
+                                                                       "key": "eventName",
+                                                                       "type": DataTypeUtil.getType(eventName),
+                                                                       "correctType": "String"],debugData: ["an": ApiEnum.track.rawValue])
                 
                 throw NSError(domain: "VWOClient", code: 400, userInfo: [NSLocalizedDescriptionKey: "TypeError: Event-name should be a string"])
             }
@@ -172,9 +172,7 @@ class VWOClient {
             let hooksManager = serviceContainer.getHooksManager()
             TrackEventAPI.track(settings: pSettings, eventName: eventName, context: effectiveContext, eventProperties: eventProperties, hooksManager: hooksManager, serviceContainer: serviceContainer)
         } catch {
-            serviceContainer.getLoggerService()?.log(level: .error,
-                              key: "API_THROW_ERROR",
-                              details: ["apiName": apiName, "err": error.localizedDescription])
+            serviceContainer.getLoggerService()?.errorLog(key: "API_THROW_ERROR",data: ["apiName":ApiEnum.track.rawValue,"err": error.localizedDescription],debugData: ["an": ApiEnum.track.rawValue])
             resultMap[eventName] = false
         }
     }
@@ -199,19 +197,37 @@ class VWOClient {
         do {
             serviceContainer.getLoggerService()?.log(level: .debug, key: "API_CALLED", details: ["apiName": apiName])
             
-            var mutableAttributes = attributes
-            
-            if mutableAttributes.isEmpty {
-                serviceContainer.getLoggerService()?.log(level: .warn,
-                                  key: "ATTRIBUTES_NOT_FOUND",
-                                  details: ["apiName": apiName,
-                                            "key": "attributes",
-                                            "expectedFormat": "a dictionary with expected keys and value types"])
-                throw NSError(domain: "TypeError: attributeMap should be a non empty map", code: 0, userInfo: nil)
+            if attributes.isEmpty {
+                serviceContainer.getLoggerService()?.errorLog(key: "ATTRIBUTES_NOT_FOUND",data: ["apiName": apiName,
+                                                                          "key": "attributes",
+                                                                          "expectedFormat": "a dictionary with expected keys and value types"],debugData: ["an": ApiEnum.setAttribute.rawValue])
+
+                return
             }
             
-            // Remove unsupported attribute values
-            mutableAttributes = try removeUnsupportedAttributeValues(attributes: mutableAttributes, apiName: apiName, serviceContainer: serviceContainer)
+            for (attributeKey, attributeValue) in attributes {
+                
+                let isValidType = DataTypeUtil.isString(attributeValue) || DataTypeUtil.isNumber(attributeValue) || DataTypeUtil.isBoolean(attributeValue)
+                let isBlankKey = DataTypeUtil.isblank(attributeKey)
+                
+                guard !isBlankKey else{
+                    serviceContainer.getLoggerService()?.errorLog(key: "INVALID_PARAM",data: ["key": "AttributeValue for attributeKey: \(attributeKey)",
+                                                                           "apiName": apiName,
+                                                                           "type": "Empty Key",
+                                                                           "correctType": "String, Number, Boolean"],debugData: ["an": ApiEnum.setAttribute.rawValue])
+
+                    throw NSError(domain: "TypeError: AttributeValue should be a String, Number or Boolean", code: 0, userInfo: nil)
+                }
+                
+                guard isValidType  else {
+                    serviceContainer.getLoggerService()?.errorLog(key: "INVALID_PARAM",data: ["key": "AttributeValue for attributeKey: \(attributeKey)",
+                                                                           "apiName": apiName,
+                                                                           "type": DataTypeUtil.getType(attributeValue),
+                                                                           "correctType": "String, Number, Boolean"],debugData: ["an": ApiEnum.setAttribute.rawValue])
+
+                    throw NSError(domain: "TypeError: AttributeValue should be a String, Number or Boolean", code: 0, userInfo: nil)
+                }
+            }
             
             guard let context = context else {
                 throw NSError(domain: Constants.VWOContextErrorMessage, code: 0, userInfo: nil)
@@ -230,9 +246,11 @@ class VWOClient {
                 return
             }
             
-            SetAttributeAPI.setAttributes(settings: processedSettings, attributes: mutableAttributes, context: effectiveContext, serviceContainer: serviceContainer)
+            SetAttributeAPI.setAttributes(settings: processedSettings, attributes: attributes, context: effectiveContext, serviceContainer: serviceContainer)
         } catch {
-            serviceContainer.getLoggerService()?.log(level: .error, key: "API_THROW_ERROR", details: ["apiName": apiName, "err": error.localizedDescription])
+
+            serviceContainer.getLoggerService()?.errorLog(key: "API_THROW_ERROR",data: ["apiName":ApiEnum.setAttribute.rawValue,"err": error.localizedDescription],debugData: ["an": ApiEnum.setAttribute.rawValue])
+
         }
     }
     
@@ -242,13 +260,10 @@ class VWOClient {
             if DataTypeUtil.isString(attributeValue) || DataTypeUtil.isNumber(attributeValue) || DataTypeUtil.isBoolean(attributeValue) {
                 validAttributes[attributeKey] = attributeValue
             } else {
-                serviceContainer.getLoggerService()?.log(level: .error,
-                                  key: "API_INVALID_PARAM",
-                                  details: ["apiName": apiName,
-                                            "key": "attribute value",
-                                            "type": DataTypeUtil.getType(attributeValue),
-                                            "correctType": "String, Number, Boolean"])
-                throw NSError(domain: "TypeError: attributeMap should values of type String, Number, Boolean", code: 0, userInfo: nil)
+                serviceContainer.getLoggerService()?.errorLog(key: "INVALID_PARAM",data: ["key": "attributeValue for attributeKey: \(attributeKey)",
+                                                                                          "type": DataTypeUtil.getType(attributeValue),
+                                                                                          "correctType": "String, Number, Boolean"],debugData: ["an": ApiEnum.setAttribute.rawValue])
+                
             }
         }
         return validAttributes

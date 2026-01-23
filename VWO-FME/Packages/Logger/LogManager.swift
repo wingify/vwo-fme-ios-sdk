@@ -135,7 +135,6 @@ internal class LogManager {
             osLogType = .default
         case .error:
             osLogType = .error
-            self.sendMessageEventIfNeeded(message: message, serviceContainer: serviceContainer)
         }
         
         // Format the message: Since LogManager is a singleton and prefix is always empty (set by LoggerService),
@@ -227,6 +226,36 @@ internal class LogManager {
         // Send event outside the queue to avoid blocking
         if shouldSendEvent {
             LogMessageUtil.sendMessageEvent(message: message, serviceContainer: serviceContainer)
+        }
+    }
+    
+     func errorLog(key: String, data: [String: Any]? = nil, debugData: [String: Any]? = nil,shouldSendToVWO: Bool ) {
+        // Lookup message template from errorMessages dictionary
+         let template = LoggerService.getLogFile(level: .error)
+        
+        // Format the message using the template and data
+        let message = LogMessageUtil.buildMessage(template: template[key], data: data) ?? "Unknown error"
+       
+         self.log(level: .error, message: message)
+         
+        // Conditionally send to VWO
+        if shouldSendToVWO {
+            var debugEventProps: [String: Any] = [:]
+
+            if let debugData = debugData {
+                debugEventProps.merge(debugData) { _, new in new }
+            }
+
+            if let data = data {
+                debugEventProps.merge(data) { _, new in new }
+            }
+
+            debugEventProps["msg_t"] = key
+            debugEventProps["lt"] = LogLevelEnum.error.rawValue
+            debugEventProps["cg"] = DebuggerCategoryEnum.ERROR.rawValue
+            debugEventProps["msg"] = message
+
+            DebuggerServiceUtil.sendDebugEventToVWO(eventProps: debugEventProps)
         }
     }
 }

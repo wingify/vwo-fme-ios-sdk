@@ -38,7 +38,7 @@ class EventsUtils {
         let payload = NetworkUtil.getSDKInitEventPayload(eventName: EventEnum.VWO_INIT_CALLED.rawValue, settingsFetchTime: settingsFetchTime, sdkInitTime: sdkInitTime)
 
         // Send the constructed payload via POST request
-        NetworkUtil.sendGatewayEvent(queryParams: queryParams, payload: payload)
+        NetworkUtil.sendGatewayEvent(queryParams: queryParams, payload: payload,eventName: EventEnum.VWO_INIT_CALLED.rawValue)
     }
 
     /// Sends a usage stats event to VWO.
@@ -65,7 +65,7 @@ class EventsUtils {
         )
         
         // Send the payload as a POST request
-        NetworkUtil.sendGatewayEvent(queryParams: queryParams, payload: payload)
+        NetworkUtil.sendMessagingEvent(properties: queryParams, payload: payload)
     }
 
 }

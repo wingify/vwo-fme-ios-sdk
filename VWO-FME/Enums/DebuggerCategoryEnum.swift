@@ -16,36 +16,15 @@
 
 import Foundation
 
-struct ResponseModel {
-    /**
-     * The HTTP status code of the response.
-     */
-    var statusCode: Int = 0
-
-    /**
-     * Error information, if any.
-     */
-    var errorMessage: Any?
-
-    /**
-     * The response headers.
-     */
-    var headers: [String: String]?
-
-    /**
-     * The response data as a string.
-     */
-    var data: String?
+enum DebuggerCategoryEnum: String {
     
-    var data2: Data?
+    case NETWORK = "network"
     
-    var error: APIError?
+    case DECISION = "decision"
     
-    var totalAttempts: Int = 0
-}
-
-extension ResponseModel {
-    func isResponseOK() -> Bool {
-        return (200...299).contains(self.statusCode)
-    }
+    case INITIALIZATION = "initialization"
+    
+    case RETRY = "retry"
+    
+    case ERROR = "error"
 }

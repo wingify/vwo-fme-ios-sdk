@@ -30,11 +30,16 @@ class GatewayServiceUtil {
      * @param endpoint The endpoint to send the request to
      * @return The response data from the gateway service
      */
-    static func getFromGatewayService(queryParams: [String: String], endpoint: String, completion: @escaping (ResponseModel?) -> Void) {
+    static func getFromGatewayService(queryParams: [String: String], endpoint: String,context: VWOUserContext?, completion: @escaping (ResponseModel?) -> Void) {
         
         let isUsingGatewayService = SettingsManager.instance?.isGatewayServiceProvided ?? false
         if isUsingGatewayService && UrlService.baseUrl.contains(Constants.HOST_NAME) {
-            LoggerService.log(level: .error, key: "GATEWAY_URL_ERROR", details: nil)
+            let debugEventProps: [String: Any] = [
+                "an": ApiEnum.getFlag.rawValue,
+                "uuid": context?.uuid ?? "",
+                "sId": context?.sessionId ?? 0
+            ]
+            LoggerService.errorLog(key: "INVALID_GATEWAY_URL", debugData: debugEventProps)
             completion(nil)
             return
         }

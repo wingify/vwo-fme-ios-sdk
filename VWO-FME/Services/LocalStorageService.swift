@@ -258,7 +258,7 @@ class StorageService {
             let timeExpiry = Date().currentTimeMillis() + Constants.LOCATION_EXPIRY
             self.saveUserDetailExpiry(timeInterval: timeExpiry)
         } catch {
-            LoggerService.log(level: .error, key: "STORING_DATA_ERROR", details: ["err": "\(error.localizedDescription)"])
+            LoggerService.log(level: .error, key: "ERROR_STORING_DATA_IN_STORAGE", details: ["err": "\(error.localizedDescription)"])
         }
     }
 
@@ -299,7 +299,7 @@ class StorageService {
             let jsonData = try JSONSerialization.data(withJSONObject: data, options: [])
             userDefaults.set(jsonData, forKey: Keys.usageStats)
         } catch {
-            LoggerService.log(level: .error, key: "STORING_DATA_ERROR", details: ["err": "\(error.localizedDescription)"])
+            LoggerService.log(level: .error, key: "ERROR_STORING_DATA_IN_STORAGE", details: ["err": "\(error.localizedDescription)"])
         }
     }
 
@@ -354,7 +354,7 @@ class StorageService {
      */
     func saveAttributeCheck(featureKey: String, listId: String, attribute: String, result: Bool, userId: String, customVariable: Bool) {
         if featureKey.isEmpty, listId.isEmpty, attribute.isEmpty, userId.isEmpty {
-            LoggerService.log(level: .error, key: "STORING_DATA_ERROR", details: ["err": "Invalid data"])
+            LoggerService.log(level: .error, key: "ERROR_STORING_DATA_IN_STORAGE", details: ["err": "Invalid data"])
             return
         }
 
@@ -476,7 +476,7 @@ class StorageService {
      */
     func setDataInStorage(data: [String: Any]) {
         guard let featureKey = data["featureKey"] as? String, let userId = data["userId"] as? String else {
-            LoggerService.log(level: .error, key: "STORING_DATA_ERROR", details: ["err": "Invalid data"])
+            LoggerService.errorLog(key: "ERROR_STORING_DATA_IN_STORAGE",data:["err":"Invalid data"] ,debugData: ["an":ApiEnum.getFlag.rawValue])
             return
         }
 
@@ -486,12 +486,12 @@ class StorageService {
         let experimentVariationId = data["experimentVariationId"] as? Int
 
         if let rolloutKey = rolloutKey, !rolloutKey.isEmpty, experimentKey == nil, rolloutVariationId == nil {
-            LoggerService.log(level: .error, key: "STORING_DATA_ERROR", details: ["key": "Variation:(rolloutKey, experimentKey or rolloutVariationId)"])
+            LoggerService.errorLog(key: "ERROR_STORING_DATA_IN_STORAGE",data:["key": "Variation:(rolloutKey, experimentKey or rolloutVariationId)"] ,debugData: ["an":ApiEnum.getFlag.rawValue])
             return
         }
 
         if let experimentKey = experimentKey, !experimentKey.isEmpty, experimentVariationId == nil {
-            LoggerService.log(level: .error, key: "STORING_DATA_ERROR", details: ["key": "Variation:(experimentKey or rolloutVariationId)"])
+            LoggerService.errorLog(key: "ERROR_STORING_DATA_IN_STORAGE",data:["key":"Variation:(experimentKey or rolloutVariationId)"] ,debugData: ["an":ApiEnum.getFlag.rawValue])
             return
         }
 

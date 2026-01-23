@@ -190,7 +190,7 @@ class LoggerService {
         return [:]
     }
     
-    private static func getLogFile(level: LogLevelEnum) -> [String: String] {
+    static func getLogFile(level: LogLevelEnum) -> [String: String] {
         switch level {
         case .trace:
             return LoggerService.traceMessages
@@ -265,6 +265,11 @@ class LoggerService {
         
         guard let logManager = LogManager.instance else { return }
         logManager.log(level: level, message: finalMessage)
+    }
+    
+     func errorLog(key: String, data: [String: Any]? = nil, debugData: [String: Any]? = nil,shouldSendToVWO: Bool  = true) {
+//        guard let logManager = LogManager.instance else { return }
+         LogManager.instance?.errorLog(key: key, data: data, debugData: debugData, shouldSendToVWO: shouldSendToVWO)
     }
     
     static func log(level: LogLevelEnum, message: String?) {

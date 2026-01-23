@@ -25,27 +25,27 @@ public enum LogLevelEnum: String {
     /**
      * Log level for detailed tracing information.
      */
-    case trace = "TRACE"
+    case trace = "trace"
     
     /**
      * Log level for debugging information.
      */
-    case debug = "DEBUG"
+    case debug = "debug"
     
     /**
      * Log level for general informational messages.
      */
-    case info = "INFO"
+    case info = "info"
     
     /**
      * Log level for warning messages.
      */
-    case warn = "WARN"
+    case warn = "warn"
     
     /**
      * Log level for error messages.
      */
-    case error = "ERROR"
+    case error = "error"
         
     internal var level: Int {
         switch self {

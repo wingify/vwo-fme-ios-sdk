@@ -241,9 +241,7 @@ class SettingsManager {
      */
     private func fetchSettings(completion: @escaping (Settings?) -> Void) {
         guard !sdkKey.isEmpty else {
-            LoggerService.log(level: .error,
-                              key: "SETTINGS_FETCH_ERROR",
-                              details: ["err":"SDK Key and Account ID are required to fetch settings. Aborting!"])
+            LoggerService.errorLog(key: "ERROR_FETCHING_SETTINGS", data: ["err":"SDK Key and Account ID are required to fetch settings. Aborting!"],debugData: ["an":ApiEnum.Init.rawValue])
             completion(nil)
             return
         }
@@ -285,7 +283,13 @@ class SettingsManager {
                     self.isSettingsValid = true
                     completion(settingsObj)
                 } else {
-                    LoggerService.log(level: .error, key: "SETTINGS_SCHEMA_INVALID", details: nil)
+                    LoggerService.errorLog(
+                        key: "INVALID_SETTINGS_SCHEMA",
+                        data: ["err": "Setting is invalid"],
+                        debugData: ["an": ApiEnum.Init.rawValue],
+                        shouldSendToVWO: false
+                    )
+
                     completion(nil)
                 }
             } else {
@@ -297,11 +301,11 @@ class SettingsManager {
                         self.isSettingsValid = true
                         completion(cachedSetting)
                     } else {
-                        LoggerService.log(level: .error, key: "SETTINGS_FETCH_ERROR", details: ["err": "\(result.errorMessage ?? "Unknown error")"])
+                        LoggerService.errorLog(key: "ERROR_FETCHING_SETTINGS", data: ["err":"\(result.errorMessage ?? "Unknown error")"],debugData: ["an":Constants.MOBILE_STORAGE])
                         completion(nil)
                     }
                 } else {
-                    LoggerService.log(level: .error, key: "SETTINGS_FETCH_ERROR", details: ["err": "\(result.errorMessage ?? "Unknown error")"])
+                    LoggerService.errorLog(key: "ERROR_FETCHING_SETTINGS", data: ["err":"\(result.errorMessage ?? "Unknown error")"],debugData: ["an":ApiEnum.Init.rawValue])
                     completion(nil)
                 }
             }

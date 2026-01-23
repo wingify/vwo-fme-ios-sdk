@@ -57,8 +57,10 @@ class SetAttributeAPI {
             settings: settings,
             userId: context.id,
             eventName: EventEnum.vwoSyncVisitorProp.rawValue,
-            attributes: attributes,
             serviceContainer: serviceContainer
+            sessionId: context.sessionId,
+            attributes: attributes
+
         )
 
         // Send the constructed properties and payload as a POST request
