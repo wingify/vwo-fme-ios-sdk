@@ -267,9 +267,12 @@ class LoggerService {
         logManager.log(level: level, message: finalMessage)
     }
     
-     func errorLog(key: String, data: [String: Any]? = nil, debugData: [String: Any]? = nil,shouldSendToVWO: Bool  = true) {
+     func errorLog(key: String, data: [String: Any]? = nil, debugData: [String: Any]? = nil, shouldSendToVWO: Bool = true) {
 //        guard let logManager = LogManager.instance else { return }
-         LogManager.instance?.errorLog(key: key, data: data, debugData: debugData, shouldSendToVWO: shouldSendToVWO)
+         // Get ServiceContainer from this LoggerService instance (set during ServiceContainer initialization)
+         // This ensures error logs are sent to the correct account in multi-instance scenarios
+         let serviceContainer = self.serviceContainer
+         LogManager.instance?.errorLog(key: key, data: data, debugData: debugData, shouldSendToVWO: shouldSendToVWO, serviceContainer: serviceContainer)
     }
     
     static func log(level: LogLevelEnum, message: String?) {

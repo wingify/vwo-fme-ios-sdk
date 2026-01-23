@@ -255,7 +255,7 @@ class GetFlagAPI {
                 debugEventProps["msg_t"] = Constants.FLAG_DECISION_GIVEN
                 // Update debug event props with decision keys
                 updateDebugEventProps(&debugEventProps, decision: decision)
-                DebuggerServiceUtil.sendDebugEventToVWO(eventProps: debugEventProps)
+                DebuggerServiceUtil.sendDebugEventToVWO(eventProps: debugEventProps, serviceContainer: serviceContainer)
             }
 
             /**

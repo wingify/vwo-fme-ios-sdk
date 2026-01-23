@@ -458,8 +458,15 @@ class NetworkUtil {
     
     
     // Sends a messaging event to DACDN
-    static func sendGatewayEvent(queryParams: [String: String], payload: [String: Any],eventName: String) {
-        let settingsManager = SettingsManager.instance
+    static func sendGatewayEvent(queryParams: [String: String], payload: [String: Any], eventName: String, serviceContainer: ServiceContainer? = nil) {
+        // Use ServiceContainer if provided, otherwise fallback to SettingsManager.instance
+        let settingsManager: SettingsManager?
+        if let container = serviceContainer {
+            settingsManager = container.getSettingsManager()
+        } else {
+            settingsManager = SettingsManager.instance
+        }
+        
         var request = RequestModel(url: UrlService.baseUrl,
                                    method: HTTPMethod.post.rawValue,
                                    path: UrlEnum.events.rawValue,
@@ -537,13 +544,25 @@ class NetworkUtil {
     }
     
     /// Returns the payload data for the debugger event.
-    /// - Parameter eventProps: The properties for the debugger event.
+    /// - Parameters:
+    ///   - eventProps: The properties for the debugger event.
+    ///   - serviceContainer: Optional ServiceContainer to use for account-specific context (for multi-instance support).
     /// - Returns: A dictionary containing the payload data.
-    static func getDebuggerEventPayload(eventProps: [String: Any] = [:]) -> [String: Any] {
-        let settingsManager = SettingsManager.instance
-        guard let accountId = settingsManager?.accountId, let sdkKey = settingsManager?.sdkKey else {
-            return [:] // Return an empty dictionary if either accountId or sdkKey is nil
+    static func getDebuggerEventPayload(eventProps: [String: Any] = [:], serviceContainer: ServiceContainer? = nil) -> [String: Any] {
+        // Use ServiceContainer if provided, otherwise fallback to SettingsManager.instance
+        let accountId: Int
+        let sdkKey: String
+        
+        if let container = serviceContainer {
+            accountId = container.getAccountId()
+            sdkKey = container.getSdkKey()
+        } else if let settingsManager = SettingsManager.instance {
+            accountId = settingsManager.accountId
+            sdkKey = settingsManager.sdkKey
+        } else {
+            return [:] // Return an empty dictionary if neither ServiceContainer nor SettingsManager is available
         }
+        
         var userId: String
         var shouldGenerateUUID = true
 
@@ -570,7 +589,7 @@ class NetworkUtil {
 
         properties.d?.event?.props = Props()
         var vwoMeta: [String: Any] = eventProps
-        vwoMeta["a"] = SettingsManager.instance?.accountId ?? ""
+        vwoMeta["a"] = accountId
         vwoMeta["product"] = Constants.PRODUCT_NAME
         vwoMeta["sn"] = SDKMetaUtil.name
         vwoMeta["sv"] = SDKMetaUtil.sdkVersion

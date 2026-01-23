@@ -229,14 +229,14 @@ internal class LogManager {
         }
     }
     
-     func errorLog(key: String, data: [String: Any]? = nil, debugData: [String: Any]? = nil,shouldSendToVWO: Bool ) {
+     func errorLog(key: String, data: [String: Any]? = nil, debugData: [String: Any]? = nil, shouldSendToVWO: Bool, serviceContainer: ServiceContainer? = nil) {
         // Lookup message template from errorMessages dictionary
          let template = LoggerService.getLogFile(level: .error)
         
         // Format the message using the template and data
         let message = LogMessageUtil.buildMessage(template: template[key], data: data) ?? "Unknown error"
        
-         self.log(level: .error, message: message)
+         self.log(level: .error, message: message, serviceContainer: serviceContainer)
          
         // Conditionally send to VWO
         if shouldSendToVWO {
@@ -255,7 +255,7 @@ internal class LogManager {
             debugEventProps["cg"] = DebuggerCategoryEnum.ERROR.rawValue
             debugEventProps["msg"] = message
 
-            DebuggerServiceUtil.sendDebugEventToVWO(eventProps: debugEventProps)
+            DebuggerServiceUtil.sendDebugEventToVWO(eventProps: debugEventProps, serviceContainer: serviceContainer)
         }
     }
 }
