@@ -284,6 +284,52 @@ class LoggerService {
         logManager.log(level: level, message: finalMessage)
     }
     
+    /**
+     * Static method for errorLog that retrieves the appropriate LoggerService instance
+     * based on the current SettingsManager.instance and calls the instance method.
+     * This allows static calls like LoggerService.errorLog(...) to work correctly.
+     */
+    static func errorLog(key: String, data: [String: Any]? = nil, debugData: [String: Any]? = nil, shouldSendToVWO: Bool = true) {
+        // Try to get the appropriate LoggerService instance
+        if let instance = getInstanceForStaticCall() {
+            // Use the instance method which has access to ServiceContainer
+            instance.errorLog(key: key, data: data, debugData: debugData, shouldSendToVWO: shouldSendToVWO)
+        } else {
+            // Fallback: use LogManager directly if no instance is found
+            // This maintains backward compatibility but won't have ServiceContainer context
+            LogManager.instance?.errorLog(key: key, data: data, debugData: debugData, shouldSendToVWO: shouldSendToVWO, serviceContainer: nil)
+        }
+    }
+    
+    /**
+     * Gets the appropriate LoggerService instance for static method calls.
+     * Uses SettingsManager.instance to determine which instance to use.
+     */
+    private static func getInstanceForStaticCall() -> LoggerService? {
+        return instanceQueue.sync {
+            // First, try to get the instance using SettingsManager.instance
+            if let settingsManager = SettingsManager.instance {
+                let accountKey = "\(settingsManager.accountId)_\(settingsManager.sdkKey)"
+                if let instance = _instances[accountKey] {
+                    return instance
+                }
+            }
+            
+            // Fallback: if we have only one instance, use it
+            if _instances.count == 1 {
+                return _instances.values.first
+            }
+            
+            // If multiple instances exist, try to find the one that matches SettingsManager
+            if let settingsManager = SettingsManager.instance {
+                let expectedKey = "\(settingsManager.accountId)_\(settingsManager.sdkKey)"
+                return _instances[expectedKey]
+            }
+            
+            return nil
+        }
+    }
+    
     // Instance methods that prepend instance prefix while using shared LogManager
     // Store ServiceContainer reference for error event sending
     private weak var serviceContainer: ServiceContainer?
