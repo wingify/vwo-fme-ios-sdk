@@ -268,11 +268,37 @@ class LoggerService {
     }
     
      func errorLog(key: String, data: [String: Any]? = nil, debugData: [String: Any]? = nil, shouldSendToVWO: Bool = true) {
-//        guard let logManager = LogManager.instance else { return }
-         // Get ServiceContainer from this LoggerService instance (set during ServiceContainer initialization)
-         // This ensures error logs are sent to the correct account in multi-instance scenarios
-         let serviceContainer = self.serviceContainer
-         LogManager.instance?.errorLog(key: key, data: data, debugData: debugData, shouldSendToVWO: shouldSendToVWO, serviceContainer: serviceContainer)
+        // Get ServiceContainer from this LoggerService instance (set during ServiceContainer initialization)
+        // This ensures error logs are sent to the correct account in multi-instance scenarios
+        let serviceContainer = self.serviceContainer
+        
+        // Build the message with instance prefix (similar to log() method)
+        let template = LoggerService.getLogFile(level: .error)
+        let message = LogMessageUtil.buildMessage(template: template[key], data: data) ?? "Unknown error"
+        let finalMessage = instancePrefix.isEmpty ? message : "\(instancePrefix): \(message)"
+        
+        // Log the message with prefix
+        LogManager.instance?.log(level: .error, message: finalMessage, serviceContainer: serviceContainer, skipLevelCheck: true)
+        
+        // Conditionally send to VWO
+        if shouldSendToVWO {
+            var debugEventProps: [String: Any] = [:]
+            
+            if let debugData = debugData {
+                debugEventProps.merge(debugData) { _, new in new }
+            }
+            
+            if let data = data {
+                debugEventProps.merge(data) { _, new in new }
+            }
+            
+            debugEventProps["msg_t"] = key
+            debugEventProps["lt"] = LogLevelEnum.error.rawValue
+            debugEventProps["cg"] = DebuggerCategoryEnum.ERROR.rawValue
+            debugEventProps["msg"] = message  // Use original message without prefix for VWO
+            
+            DebuggerServiceUtil.sendDebugEventToVWO(eventProps: debugEventProps, serviceContainer: serviceContainer)
+        }
     }
     
     static func log(level: LogLevelEnum, message: String?) {
@@ -295,9 +321,34 @@ class LoggerService {
             // Use the instance method which has access to ServiceContainer
             instance.errorLog(key: key, data: data, debugData: debugData, shouldSendToVWO: shouldSendToVWO)
         } else {
-            // Fallback: use LogManager directly if no instance is found
-            // This maintains backward compatibility but won't have ServiceContainer context
-            LogManager.instance?.errorLog(key: key, data: data, debugData: debugData, shouldSendToVWO: shouldSendToVWO, serviceContainer: nil)
+            // Fallback: build message with prefix if available, then use LogManager directly
+            let template = LoggerService.getLogFile(level: .error)
+            let message = LogMessageUtil.buildMessage(template: template[key], data: data) ?? "Unknown error"
+            let prefix = getCurrentInstancePrefix()
+            let finalMessage = prefix.isEmpty ? message : "\(prefix): \(message)"
+            
+            // Log with prefix
+            LogManager.instance?.log(level: .error, message: finalMessage, serviceContainer: nil, skipLevelCheck: true)
+            
+            // Conditionally send to VWO
+            if shouldSendToVWO {
+                var debugEventProps: [String: Any] = [:]
+                
+                if let debugData = debugData {
+                    debugEventProps.merge(debugData) { _, new in new }
+                }
+                
+                if let data = data {
+                    debugEventProps.merge(data) { _, new in new }
+                }
+                
+                debugEventProps["msg_t"] = key
+                debugEventProps["lt"] = LogLevelEnum.error.rawValue
+                debugEventProps["cg"] = DebuggerCategoryEnum.ERROR.rawValue
+                debugEventProps["msg"] = message
+                
+                DebuggerServiceUtil.sendDebugEventToVWO(eventProps: debugEventProps, serviceContainer: nil)
+            }
         }
     }
     

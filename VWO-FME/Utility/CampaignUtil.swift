@@ -21,11 +21,17 @@ class CampaignUtil {
     /**
      * Sets the variation allocation for a given campaign.
      *
-     * - Parameter campaign: The campaign for which the variation allocation is to be set.
+     * - Parameters:
+     *   - campaign: The campaign for which the variation allocation is to be set.
+     *   - serviceContainer: Optional ServiceContainer for instance-specific logging.
+     *   - loggerService: Optional LoggerService for direct instance-specific logging (takes precedence over serviceContainer).
      */
-    static func setVariationAllocation(_ campaign: inout Campaign) {
+    static func setVariationAllocation(_ campaign: inout Campaign, serviceContainer: ServiceContainer? = nil, loggerService: LoggerService? = nil) {
+        // Determine which logger to use: loggerService (direct) > serviceContainer > static logger
+        let effectiveLogger: LoggerService? = loggerService ?? serviceContainer?.getLoggerService()
+        
         if campaign.type == CampaignTypeEnum.rollout.rawValue || campaign.type == CampaignTypeEnum.personalize.rawValue {
-            handleRolloutCampaign(&campaign)
+            handleRolloutCampaign(&campaign, loggerService: effectiveLogger)
         } else {
             var currentAllocation = 0
             for i in 0..<campaign.variations!.count {
@@ -35,14 +41,26 @@ class CampaignUtil {
                 let stepFactor = assignRangeValues(&variation, currentAllocation: currentAllocation)
                 currentAllocation += stepFactor
                 
-                LoggerService.log(level: .info,
-                                  key: "VARIATION_RANGE_ALLOCATION",
-                                  details: ["campaignKey": campaign.key ?? "",
-                                            "variationKey": variation.name ?? "",
-                                            "variationWeight": "\(variation.weight)",
-                                            "startRange": "\(variation.startRangeVariation)",
-                                            "endRange": "\(variation.endRangeVariation)"
-                                           ])
+                // Use instance-specific logger if available, otherwise static logger
+                if let logger = effectiveLogger {
+                    logger.log(level: .info,
+                              key: "VARIATION_RANGE_ALLOCATION",
+                              details: ["campaignKey": campaign.key ?? "",
+                                        "variationKey": variation.name ?? "",
+                                        "variationWeight": "\(variation.weight)",
+                                        "startRange": "\(variation.startRangeVariation)",
+                                        "endRange": "\(variation.endRangeVariation)"
+                                       ])
+                } else {
+                    LoggerService.log(level: .info,
+                                      key: "VARIATION_RANGE_ALLOCATION",
+                                      details: ["campaignKey": campaign.key ?? "",
+                                                "variationKey": variation.name ?? "",
+                                                "variationWeight": "\(variation.weight)",
+                                                "startRange": "\(variation.startRangeVariation)",
+                                                "endRange": "\(variation.endRangeVariation)"
+                                               ])
+                }
                 campaign.variations![i] = variation
             }
         }
@@ -353,21 +371,35 @@ class CampaignUtil {
     /**
      * Handles the allocation of variations for rollout campaigns.
      *
-     * - Parameter campaign: The campaign for which the variations are allocated.
+     * - Parameters:
+     *   - campaign: The campaign for which the variations are allocated.
+     *   - loggerService: Optional LoggerService for instance-specific logging.
      */
-    private static func handleRolloutCampaign(_ campaign: inout Campaign) {
+    private static func handleRolloutCampaign(_ campaign: inout Campaign, loggerService: LoggerService? = nil) {
         for i in 0..<campaign.variations!.count {
             var variation = campaign.variations![i]
             let endRange = Int(variation.weight * 100)
             variation.startRangeVariation = 1
             variation.endRangeVariation = endRange
-            LoggerService.log(level: .info,
-                              key: "VARIATION_RANGE_ALLOCATION",
-                              details: ["campaignKey": campaign.key ?? "",
-                                        "variationKey": variation.name ?? "",
-                                        "variationWeight": "\(variation.weight)",
-                                        "startRange": "\(variation.startRangeVariation)",
-                                        "endRange": "\(variation.endRangeVariation)"])
+            
+            // Use instance-specific logger if available, otherwise static logger
+            if let logger = loggerService {
+                logger.log(level: .info,
+                          key: "VARIATION_RANGE_ALLOCATION",
+                          details: ["campaignKey": campaign.key ?? "",
+                                    "variationKey": variation.name ?? "",
+                                    "variationWeight": "\(variation.weight)",
+                                    "startRange": "\(variation.startRangeVariation)",
+                                    "endRange": "\(variation.endRangeVariation)"])
+            } else {
+                LoggerService.log(level: .info,
+                                  key: "VARIATION_RANGE_ALLOCATION",
+                                  details: ["campaignKey": campaign.key ?? "",
+                                            "variationKey": variation.name ?? "",
+                                            "variationWeight": "\(variation.weight)",
+                                            "startRange": "\(variation.startRangeVariation)",
+                                            "endRange": "\(variation.endRangeVariation)"])
+            }
             campaign.variations![i] = variation
         }
     }

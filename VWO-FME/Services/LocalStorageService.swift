@@ -24,10 +24,26 @@ import UIKit
  *
  * This class provides methods to save, load, and clear settings, version information,
  * and other data related to the application's local storage.
+ * 
+ * IMPORTANT: For multi-instance support, StorageService should be initialized with accountId/sdkKey
+ * to ensure each account has its own isolated storage. If not provided, it falls back to shared storage
+ * for backward compatibility.
  */
 class StorageService {
 
     private let userDefaults: UserDefaults
+    
+    // Account identifiers for multi-instance support
+    private var accountId: Int = 0
+    private var sdkKey: String = ""
+    
+    // Account key prefix for storage keys
+    private var accountKeyPrefix: String {
+        if accountId > 0 && !sdkKey.isEmpty {
+            return "\(accountId)_\(sdkKey)_"
+        }
+        return ""
+    }
 
     private struct Keys {
         static let settings = "com.vwo.fme.settings"
@@ -40,7 +56,13 @@ class StorageService {
         static let aliasID = "com.vwo.fme.aliasID"
         static let aliasMappings = "com.vwo.fme.aliasMappings"
         static let deviceIdKey = "com.vwo.fme.deviceIdKey"
-
+    }
+    
+    /**
+     * Helper method to get account-prefixed key
+     */
+    private func getAccountKey(_ baseKey: String) -> String {
+        return "\(accountKeyPrefix)\(baseKey)"
     }
 
     /**
@@ -48,13 +70,41 @@ class StorageService {
      *
      * This initializer attempts to create a UserDefaults instance with a specific suite name.
      * If it fails, the application will terminate with a fatal error.
+     * 
+     * - Parameters:
+     *   - accountId: Optional account ID for multi-instance support. If provided, storage keys will be prefixed with account info.
+     *   - sdkKey: Optional SDK key for multi-instance support. If provided, storage keys will be prefixed with account info.
      */
-    init() {
+    init(accountId: Int? = nil, sdkKey: String? = nil) {
         if let defaults = UserDefaults(suiteName: Constants.SDK_USERDEFAULT_SUITE) {
             self.userDefaults = defaults
         } else {
             fatalError("Unable to initialize UserDefaults with suite")
         }
+        
+        // Set account info if provided
+        if let accountId = accountId, let sdkKey = sdkKey {
+            self.accountId = accountId
+            self.sdkKey = sdkKey
+        } else {
+            // Fallback to SettingsManager for backward compatibility
+            if let settingsManager = SettingsManager.instance {
+                self.accountId = settingsManager.accountId
+                self.sdkKey = settingsManager.sdkKey
+            }
+        }
+    }
+    
+    /**
+     * Sets the account identifiers for this StorageService instance.
+     * This should be called when ServiceContainer is available.
+     * - Parameters:
+     *   - accountId: The account ID
+     *   - sdkKey: The SDK key
+     */
+    func setAccountInfo(accountId: Int, sdkKey: String) {
+        self.accountId = accountId
+        self.sdkKey = sdkKey
     }
 
     /**
@@ -66,7 +116,7 @@ class StorageService {
         let encoder = JSONEncoder()
         do {
             let data = try encoder.encode(settings)
-            userDefaults.set(data, forKey: Keys.settings)
+            userDefaults.set(data, forKey: getAccountKey(Keys.settings))
         } catch {
             LoggerService.log(level: .error, key: "SETTINGS_SCHEMA_INVALID", details: [:])
         }
@@ -78,7 +128,7 @@ class StorageService {
      * - Returns: The settings object if available, otherwise nil.
      */
     func loadSettings() -> Settings? {
-        if let data = userDefaults.data(forKey: Keys.settings) {
+        if let data = userDefaults.data(forKey: getAccountKey(Keys.settings)) {
             let decoder = JSONDecoder()
             do {
                 let settings = try decoder.decode(Settings.self, from: data)
@@ -94,7 +144,7 @@ class StorageService {
      * Clears the settings from local storage.
      */
     func clearSettings() {
-        userDefaults.removeObject(forKey: Keys.settings)
+        userDefaults.removeObject(forKey: getAccountKey(Keys.settings))
     }
 
     /**
@@ -103,8 +153,7 @@ class StorageService {
      * - Returns: The expiry time as an Int64 if available, otherwise nil.
      */
     func getSettingExpiry() -> Int64? {
-
-        let data = userDefaults.value(forKey: Keys.settingExpiry)
+        let data = userDefaults.value(forKey: getAccountKey(Keys.settingExpiry))
         if let expiryTime = data as? Int64 {
             return expiryTime
         }
@@ -118,7 +167,7 @@ class StorageService {
      * - Parameter aliasMappings: Array of alias mappings to be saved.
      */
     func setAliasMappings(aliasMappings: [[String: String]]) {
-        userDefaults.set(aliasMappings, forKey: Keys.aliasMappings)
+        userDefaults.set(aliasMappings, forKey: getAccountKey(Keys.aliasMappings))
     }
 
     /**
@@ -127,7 +176,7 @@ class StorageService {
      * - Returns: Array of alias mappings if available, otherwise nil.
      */
     func getAliasMappings() -> [[String: String]]? {
-        if let existingMappings = userDefaults.array(forKey: Keys.aliasMappings) as? [[String: String]] {
+        if let existingMappings = userDefaults.array(forKey: getAccountKey(Keys.aliasMappings)) as? [[String: String]] {
             return existingMappings
         }
         return nil
@@ -139,14 +188,14 @@ class StorageService {
      * - Parameter timeInterval: The expiry time to be saved.
      */
     func saveSettingExpiry(timeInterval: Int64) {
-        userDefaults.set(timeInterval, forKey: Keys.settingExpiry)
+        userDefaults.set(timeInterval, forKey: getAccountKey(Keys.settingExpiry))
     }
 
     /**
      * Clears the setting expiry time from local storage.
      */
     func clearSettingExpiry() {
-        userDefaults.removeObject(forKey: Keys.settingExpiry)
+        userDefaults.removeObject(forKey: getAccountKey(Keys.settingExpiry))
     }
 
     /**
@@ -155,7 +204,7 @@ class StorageService {
      * - Returns: The expiry time as an Int64 if available, otherwise nil.
      */
     func getUserDetailExpiry() -> Int64? {
-        let data = userDefaults.value(forKey: Keys.userDetailExpiry)
+        let data = userDefaults.value(forKey: getAccountKey(Keys.userDetailExpiry))
         if let expiryTime = data as? Int64 {
             return expiryTime
         }
@@ -168,14 +217,14 @@ class StorageService {
      * - Parameter timeInterval: The expiry time to be saved.
      */
     func saveUserDetailExpiry(timeInterval: Int64) {
-        userDefaults.set(timeInterval, forKey: Keys.userDetailExpiry)
+        userDefaults.set(timeInterval, forKey: getAccountKey(Keys.userDetailExpiry))
     }
 
     /**
      * Clears the user detail expiry time from local storage.
      */
     func clearUserDetailExpiry() {
-        userDefaults.removeObject(forKey: Keys.userDetailExpiry)
+        userDefaults.removeObject(forKey: getAccountKey(Keys.userDetailExpiry))
     }
 
     /**
@@ -232,7 +281,7 @@ class StorageService {
             return nil
         }
 
-        if let gatewayData = userDefaults.data(forKey: Keys.userDetail) {
+        if let gatewayData = userDefaults.data(forKey: getAccountKey(Keys.userDetail)) {
             let decoder = JSONDecoder()
             do {
                 let gatewayResponse = try decoder.decode(GatewayService.self, from: gatewayData)
@@ -253,7 +302,7 @@ class StorageService {
         let encoder = JSONEncoder()
         do {
             let data = try encoder.encode(userDetail)
-            userDefaults.set(data, forKey: Keys.userDetail)
+            userDefaults.set(data, forKey: getAccountKey(Keys.userDetail))
 
             let timeExpiry = Date().currentTimeMillis() + Constants.LOCATION_EXPIRY
             self.saveUserDetailExpiry(timeInterval: timeExpiry)
@@ -266,7 +315,7 @@ class StorageService {
      * Clears the user detail from local storage.
      */
     func clearUserDetail() {
-        userDefaults.removeObject(forKey: Keys.userDetail)
+        userDefaults.removeObject(forKey: getAccountKey(Keys.userDetail))
     }
 
     /**
@@ -375,17 +424,18 @@ class StorageService {
      * Generates a storage key for attribute check based on the provided parameters.
      *
      * - Parameters:
-     *   - featureKey: The key for the feature.
-     *   - listId: The list identifier.
-     *   - attribute: The attribute name.
-     *   - userId: The user identifier.
-     *   - customVariable: A flag indicating if a custom variable is used.
+     *   - featureKey: The key for the feature.
+     *   - listId: The list identifier.
+     *   - attribute: The attribute name.
+     *   - userId: The user identifier.
+     *   - customVariable: A flag indicating if a custom variable is used.
      * - Returns: A string representing the storage key.
      */
     func getStorageKeyForAttributeCheck(featureKey: String, listId: String, attribute: String, userId: String, customVariable: Bool) -> String {
         let keyDsl = customVariable ? "customVariable" : "vwoUserId"
-        let storageKey = "\(featureKey)_\(userId)_\(listId)_\(keyDsl)_\(attribute))"
-        return storageKey
+        // Include account prefix to ensure isolation between instances
+        let baseStorageKey = "\(featureKey)_\(userId)_\(listId)_\(keyDsl)_\(attribute))"
+        return getAccountKey(baseStorageKey)
     }
 
     /**
@@ -453,14 +503,17 @@ class StorageService {
         guard let featureKey = featureKey else { return nil }
         guard let userId = context.id else { return nil }
 
-        let storageKey = "\(featureKey)_\(userId)"
+        // Include account prefix to ensure isolation between instances
+        let baseStorageKey = "\(featureKey)_\(userId)"
+        let storageKey = getAccountKey(baseStorageKey)
+        
         if let connector = StorageConnectorProvider.shared.getStorageConnector() {
-            if let data = connector.get(forKey:storageKey) {
+            if let data = connector.get(forKey: storageKey) {
                 return data
             } else {
                 return nil
             }
-        }else{
+        } else {
             if let data = userDefaults.dictionary(forKey: storageKey) {
                 return data
             } else {
@@ -495,10 +548,13 @@ class StorageService {
             return
         }
 
-        let storageKey = "\(featureKey)_\(userId)"
+        // Include account prefix to ensure isolation between instances
+        let baseStorageKey = "\(featureKey)_\(userId)"
+        let storageKey = getAccountKey(baseStorageKey)
+        
         if let connector = StorageConnectorProvider.shared.getStorageConnector() {
-            connector.set( data, forKey: storageKey)
-        }else{
+            connector.set(data, forKey: storageKey)
+        } else {
             userDefaults.set(data, forKey: storageKey)
         }
     }

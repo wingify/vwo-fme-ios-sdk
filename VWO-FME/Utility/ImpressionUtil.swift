@@ -84,7 +84,8 @@ class ImpressionUtil {
                            "variationName": variationName,
                            "featureName": featureName,
                            "campaignType": campaignType
-                          ]
+                          ],
+            serviceContainer: serviceContainer
         )
     }
     

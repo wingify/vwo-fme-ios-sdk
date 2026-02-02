@@ -58,6 +58,7 @@ class SegmentationManager {
         evaluator?.context = context
         evaluator?.settings = settings
         evaluator?.feature = feature
+        evaluator?.serviceContainer = serviceContainer
 
         // if user agent and ipAddress both are null or empty, return
         if context.userAgent.isEmpty && context.ipAddress.isEmpty {
@@ -84,7 +85,7 @@ class SegmentationManager {
             dispatchGroup.enter()
             
             let params = GatewayServiceUtil.getQueryParams(queryParams)
-            GatewayServiceUtil.getFromGatewayService(queryParams: params, endpoint: UrlEnum.getUserData.rawValue, context: context) { gatewayResponse in
+            GatewayServiceUtil.getFromGatewayService(queryParams: params, endpoint: UrlEnum.getUserData.rawValue, context: context, serviceContainer: serviceContainer) { gatewayResponse in
                 if let modelData = gatewayResponse {
                     if let stringData = modelData.data {
                         do {

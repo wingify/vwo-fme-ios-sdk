@@ -20,6 +20,7 @@ class SegmentEvaluator {
     var context: VWOUserContext?
     var settings: Settings?
     var feature: Feature?
+    weak var serviceContainer: ServiceContainer?
 
     /**
      * Validates if the segmentation defined in the DSL is applicable based on the provided properties.
@@ -49,10 +50,10 @@ class SegmentEvaluator {
             return some(dslNodes: subDsl.arrayValue ?? [], customVariables: properties)
 
         case .customVariable:
-            return SegmentOperandEvaluator.evaluateCustomVariableDSL(subDsl.dictionaryValue ?? [:], properties, context, feature)
+            return SegmentOperandEvaluator.evaluateCustomVariableDSL(subDsl.dictionaryValue ?? [:], properties, context, feature, serviceContainer: serviceContainer)
 
         case .user:
-            return SegmentOperandEvaluator.evaluateUserDSL(subDsl.stringValue ?? "", properties, context, feature)
+            return SegmentOperandEvaluator.evaluateUserDSL(subDsl.stringValue ?? "", properties, context, feature, serviceContainer: serviceContainer)
 
         case .ua:
             return SegmentOperandEvaluator.evaluateUserAgentDSL(subDsl.stringValue ?? "", context)
@@ -262,7 +263,8 @@ class SegmentEvaluator {
      * @return A boolean indicating if the feature is enabled for the user.
      */
     func checkInUserStorage(featureKey: String, context: VWOUserContext) -> Bool {
-        let storageService = StorageService()
+        // Use instance-specific StorageService from serviceContainer
+        let storageService = self.serviceContainer?.storage ?? StorageService(accountId: 0, sdkKey: "")
         let storedDataMap = storageService.getFeatureFromStorage(featureKey: featureKey, context: context)
         
         guard let storedDataMap = storedDataMap else {

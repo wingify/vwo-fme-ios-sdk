@@ -67,7 +67,7 @@ class LogMessageUtil {
     static func sendMessageEvent(message: String, serviceContainer: ServiceContainer? = nil) {
         let properties = NetworkUtil.getEventsBaseProperties(eventName: EventEnum.vwoError.rawValue, visitorUserAgent: "", ipAddress: nil, serviceContainer: serviceContainer)
         let payload = NetworkUtil.getMessagingEventPayload(messageType: "error", message: message, eventName: EventEnum.vwoError.rawValue, serviceContainer: serviceContainer)
-        NetworkUtil.sendMessagingEvent(properties: properties, payload: payload)
+        NetworkUtil.sendMessagingEvent(properties: properties, payload: payload, serviceContainer: serviceContainer)
     }
     
 }

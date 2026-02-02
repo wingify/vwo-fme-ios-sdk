@@ -200,7 +200,7 @@ class MegUtil {
             
             // If a rule passes pre-segmentation, evaluate traffic
             if let ruleToTestForTraffic = ruleToTestForTraffic {
-                if let variation = DecisionUtil.evaluateTrafficAndGetVariation(settings: settings, campaign: ruleToTestForTraffic, userId: context.id) {
+                if let variation = DecisionUtil.evaluateTrafficAndGetVariation(settings: settings, campaign: ruleToTestForTraffic, userId: context.id, serviceContainer: serviceContainer) {
                     var rollOutInformation: [String: Any] = [:]
                     rollOutInformation["rolloutId"] = ruleToTestForTraffic.id
                     rollOutInformation["rolloutKey"] = ruleToTestForTraffic.key

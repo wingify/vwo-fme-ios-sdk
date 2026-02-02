@@ -278,7 +278,7 @@ class NetworkUtil {
 
     class func getTrackUserPayloadData(settings: Settings, userId: String?, eventName: String, campaignId: Int, variationId: Int, visitorUserAgent: String?, ipAddress: String?,sessionId: Int64?, context: VWOUserContext, serviceContainer: ServiceContainer? = nil) -> [String: Any] {
         var properties = NetworkUtil.getEventBasePayload(userId: userId, eventName: eventName, visitorUserAgent: visitorUserAgent, ipAddress: ipAddress,sessionId: sessionId)
-
+        
         properties.d?.event?.props?.id = campaignId
         properties.d?.event?.props?.variation = "\(variationId)"
         properties.d?.event?.props?.isFirst = 1
@@ -381,7 +381,7 @@ class NetworkUtil {
             sdkKey = container.getSdkKey()
         } else {
             // Fallback to static SettingsManager for backward compatibility
-            let settingManager = SettingsManager.instance
+        let settingManager = SettingsManager.instance
             stringAccountId = "\(settingManager?.accountId ?? 0)"
             sdkKey = "\(settingManager?.sdkKey ?? "")"
         }
@@ -437,16 +437,37 @@ class NetworkUtil {
 
     
     // Sends a messaging event to DACDN
-    static func sendMessagingEvent(properties: [String: String], payload: [String: Any]) {
+    static func sendMessagingEvent(properties: [String: String], payload: [String: Any], serviceContainer: ServiceContainer? = nil) {
+        // Use ServiceContainer if provided, otherwise fallback to SettingsManager
+        let baseUrl: String
+        let port: Int
+        let accountId: Int?
+        let sdkKey: String?
         
-        let request = RequestModel(url: Constants.HOST_NAME,
+        if let container = serviceContainer {
+            baseUrl = UrlService.getBaseUrl(serviceContainer: container)
+            port = container.getSettingsManager()?.port ?? 0
+            accountId = container.getAccountId()
+            sdkKey = container.getSdkKey()
+        } else {
+            baseUrl = Constants.HOST_NAME
+            port = SettingsManager.instance?.port ?? 0
+            accountId = SettingsManager.instance?.accountId
+            sdkKey = SettingsManager.instance?.sdkKey
+        }
+        
+        var request = RequestModel(url: baseUrl,
                                    method: HTTPMethod.post.rawValue,
                                    path: UrlEnum.events.rawValue,
                                    query: properties,
                                    body: payload,
                                    headers: nil,
                                    scheme: Constants.HTTPS_PROTOCOL,
-                                   port: 0)
+                                   port: port)
+        
+        // Set account info in request for multi-instance support
+        request.accountId = accountId
+        request.sdkKey = sdkKey
         
         NetworkManager.postAsync(request) { result in
             
@@ -467,7 +488,14 @@ class NetworkUtil {
             settingsManager = SettingsManager.instance
         }
         
-        var request = RequestModel(url: UrlService.baseUrl,
+        // Get instance-specific base URL
+        let baseUrl = UrlService.getBaseUrl(serviceContainer: serviceContainer)
+        
+        // Get account info for multi-instance support
+        let accountId = serviceContainer?.getAccountId()
+        let sdkKey = serviceContainer?.getSdkKey()
+        
+        var request = RequestModel(url: baseUrl,
                                    method: HTTPMethod.post.rawValue,
                                    path: UrlEnum.events.rawValue,
                                    query: queryParams,
@@ -477,6 +505,9 @@ class NetworkUtil {
                                    port: settingsManager?.port ?? 0)
         
         request.eventName = eventName
+        // Set account info in request for multi-instance support
+        request.accountId = accountId
+        request.sdkKey = sdkKey
         NetworkManager.postAsync(request) { result in
             
             if let error = result.errorMessage {
@@ -486,14 +517,35 @@ class NetworkUtil {
     }
     
     // Sends a POST request to the VWO server
-    static func sendPostApiRequest(properties: [String: String], payload: [String: Any], userAgent: String?, ipAddress: String?, campaignInfo: [String: Any]? = nil) {
+    static func sendPostApiRequest(properties: [String: String], payload: [String: Any], userAgent: String?, ipAddress: String?, campaignInfo: [String: Any]? = nil, serviceContainer: ServiceContainer? = nil) {
         NetworkManager.attachClient()
         
         let headers = createHeaders(userAgent: userAgent, ipAddress: ipAddress)
+        
+        // Use ServiceContainer if provided, otherwise fallback to SettingsManager
+        let baseUrl: String
+        let port: Int
+        let accountId: Int?
+        let sdkKey: String?
+        
+        if let container = serviceContainer {
+            baseUrl = UrlService.getBaseUrl(serviceContainer: container)
+            port = container.getSettingsManager()?.port ?? 0
+            accountId = container.getAccountId()
+            sdkKey = container.getSdkKey()
+        } else {
+            baseUrl = UrlService.baseUrl
+            port = SettingsManager.instance?.port ?? 0
+            accountId = SettingsManager.instance?.accountId
+            sdkKey = SettingsManager.instance?.sdkKey
+        }
     
-        var request = RequestModel(url: UrlService.baseUrl, method: HTTPMethod.post.rawValue, path: UrlEnum.events.rawValue, query: properties, body: payload, headers: headers, scheme: Constants.HTTPS_PROTOCOL, port: SettingsManager.instance?.port ?? 0)
+        var request = RequestModel(url: baseUrl, method: HTTPMethod.post.rawValue, path: UrlEnum.events.rawValue, query: properties, body: payload, headers: headers, scheme: Constants.HTTPS_PROTOCOL, port: port)
         
         request.campaignInfo = campaignInfo
+        // Set account info in request for multi-instance support
+        request.accountId = accountId
+        request.sdkKey = sdkKey
         
         NetworkManager.postAsync(request) { result in
                         

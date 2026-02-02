@@ -32,7 +32,7 @@ class SegmentOperandEvaluator {
      * @return `true` if the operand matches the user properties, `false` otherwise.
      */
     
-    static func evaluateCustomVariableDSL(_ dslOperandValue: [String: CodableValue], _ properties: [String: Any], _ context: VWOUserContext?, _ feature: Feature?) -> Bool {
+    static func evaluateCustomVariableDSL(_ dslOperandValue: [String: CodableValue], _ properties: [String: Any], _ context: VWOUserContext?, _ feature: Feature?, serviceContainer: ServiceContainer? = nil) -> Bool {
         guard let userId = context?.id else { return false }
         guard let entry = SegmentUtil.getKeyValue(dslOperandValue) else { return false }
         let operandKey = entry.0
@@ -57,7 +57,7 @@ class SegmentOperandEvaluator {
             let attributeValue = preProcessTagValue(tagValue as! String)
             
             var result = false
-            checkAttributeInList(listId: listId, attributeValue: attributeValue, userId: userId, featureKey: feature?.key ?? "", customVariable: true, context: context) { booleanValue in
+            checkAttributeInList(listId: listId, attributeValue: attributeValue, userId: userId, featureKey: feature?.key ?? "", customVariable: true, context: context, serviceContainer: serviceContainer) { booleanValue in
                 result = booleanValue
             }
             return result
@@ -131,7 +131,7 @@ class SegmentOperandEvaluator {
      * @param properties The user properties to evaluate against.
      * @return `true` if the operand matches the user properties, `false` otherwise.
      */
-    static func evaluateUserDSL(_ dslOperandValue: String, _ properties: [String: Any], _ context: VWOUserContext?, _ feature: Feature?) -> Bool {
+    static func evaluateUserDSL(_ dslOperandValue: String, _ properties: [String: Any], _ context: VWOUserContext?, _ feature: Feature?, serviceContainer: ServiceContainer? = nil) -> Bool {
         
         guard let userId = context?.id else {
             return false
@@ -162,7 +162,7 @@ class SegmentOperandEvaluator {
             }
             let attributeValue = preProcessTagValue(tagValue)
             var result = false
-            checkAttributeInList(listId: listId, attributeValue: attributeValue, userId: userId, featureKey: feature?.key ?? "", customVariable: false, context: context) { booleanValue in
+            checkAttributeInList(listId: listId, attributeValue: attributeValue, userId: userId, featureKey: feature?.key ?? "", customVariable: false, context: context, serviceContainer: serviceContainer) { booleanValue in
                 result = booleanValue
             }
             return result
@@ -447,9 +447,11 @@ class SegmentOperandEvaluator {
         featureKey: String,
         customVariable: Bool,
         context: VWOUserContext?,
+        serviceContainer: ServiceContainer? = nil,
         completion: @escaping (Bool) -> Void
     ) {
-        let storageService = StorageService()
+        // Use instance-specific StorageService
+        let storageService = serviceContainer?.storage ?? StorageService(accountId: serviceContainer?.getAccountId() ?? 0, sdkKey: serviceContainer?.getSdkKey() ?? "")
         
         // Check if the result is already cached
         if let cacheResult = storageService.getAttributeCheck(featureKey: featureKey, listId: listId, attribute: attributeValue, userId: userId, customVariable: customVariable) {
@@ -460,14 +462,22 @@ class SegmentOperandEvaluator {
         var queryParamsObj = [String: String]()
         queryParamsObj["attribute"] = attributeValue
         queryParamsObj["listId"] = listId
-        queryParamsObj["accountId"] = "\(SettingsManager.instance?.accountId ?? 0)"
+        
+        // Get accountId from ServiceContainer or SettingsManager
+        let accountId: Int
+        if let container = serviceContainer {
+            accountId = container.getAccountId()
+        } else {
+            accountId = SettingsManager.instance?.accountId ?? 0
+        }
+        queryParamsObj["accountId"] = "\(accountId)"
         
         var result = false
         let dispatchGroup = DispatchGroup()
         dispatchGroup.enter()
         
         // Make a web service call to check the attribute against the list
-        GatewayServiceUtil.getFromGatewayService(queryParams: queryParamsObj, endpoint: UrlEnum.attributeCheck.rawValue, context: context) { gatewayResponse in
+        GatewayServiceUtil.getFromGatewayService(queryParams: queryParamsObj, endpoint: UrlEnum.attributeCheck.rawValue, context: context, serviceContainer: serviceContainer) { gatewayResponse in
             if let modelData = gatewayResponse {
                 if let stringValue = modelData.data {
                     if let booleanValue = stringValue.toBool {

@@ -22,9 +22,10 @@ class CampaignDecisionService {
      * This method is used to check if the user is part of the campaign.
      * @param userId  User ID for which the check is to be performed.
      * @param campaign CampaignModel object containing the campaign settings.
+     * @param serviceContainer  Optional ServiceContainer for instance-specific logging.
      * @return  boolean value indicating if the user is part of the campaign.
      */
-    func isUserPartOfCampaign(userId: String?, campaign: Campaign?) -> Bool {
+    func isUserPartOfCampaign(userId: String?, campaign: Campaign?, serviceContainer: ServiceContainer? = nil) -> Bool {
         guard let campaign = campaign, let campaignId = campaign.id , let userId = userId else {
             return false
         }
@@ -47,15 +48,28 @@ class CampaignDecisionService {
         // Check if user is part of campaign
         let isUserPart = valueAssignedToUser != 0 && valueAssignedToUser <= Int(trafficAllocation)
         
-        LoggerService.log(
-            level: .info,
-            key: "USER_PART_OF_CAMPAIGN",
-            details: [
-                "userId": userId,
-                "campaignKey": campaign.type == CampaignTypeEnum.ab.rawValue ? "\(campaign.key ?? "--")" : "\(campaign.name ?? "--")_\(campaign.ruleKey ?? "--")",
-                "notPart": isUserPart ? "" : "not"
-            ]
-        )
+        // Use instance-specific logger if available, otherwise static logger
+        if let logger = serviceContainer?.getLoggerService() {
+            logger.log(
+                level: .info,
+                key: "USER_PART_OF_CAMPAIGN",
+                details: [
+                    "userId": userId,
+                    "campaignKey": campaign.type == CampaignTypeEnum.ab.rawValue ? "\(campaign.key ?? "--")" : "\(campaign.name ?? "--")_\(campaign.ruleKey ?? "--")",
+                    "notPart": isUserPart ? "" : "not"
+                ]
+            )
+        } else {
+            LoggerService.log(
+                level: .info,
+                key: "USER_PART_OF_CAMPAIGN",
+                details: [
+                    "userId": userId,
+                    "campaignKey": campaign.type == CampaignTypeEnum.ab.rawValue ? "\(campaign.key ?? "--")" : "\(campaign.name ?? "--")_\(campaign.ruleKey ?? "--")",
+                    "notPart": isUserPart ? "" : "not"
+                ]
+            )
+        }
         return isUserPart
     }
     
@@ -171,8 +185,8 @@ class CampaignDecisionService {
      * @param campaign  CampaignModel object containing the campaign settings.
      * @return  VariationModel object containing the variation allotted to the user.
      */
-    func getVariationAllotted(userId: String?, accountId: String, campaign: Campaign) -> Variation? {
-        let isUserPart = isUserPartOfCampaign(userId: userId, campaign: campaign)
+    func getVariationAllotted(userId: String?, accountId: String, campaign: Campaign, serviceContainer: ServiceContainer? = nil) -> Variation? {
+        let isUserPart = isUserPartOfCampaign(userId: userId, campaign: campaign, serviceContainer: serviceContainer)
         if campaign.type == CampaignTypeEnum.rollout.rawValue || campaign.type == CampaignTypeEnum.personalize.rawValue {
             return isUserPart ? campaign.variations?[0] : nil
         } else {

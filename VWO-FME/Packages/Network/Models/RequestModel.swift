@@ -28,7 +28,10 @@ struct RequestModel {
     var timeout: Int = 0
     internal var eventName: String = ""
     internal var lastError: String = ""
-    internal var campaignInfo: [String: Any]? 
+    internal var campaignInfo: [String: Any]?
+    // Account identifiers for multi-instance support
+    internal var accountId: Int? = nil
+    internal var sdkKey: String? = nil
     /**
      * A map containing various options for the request.
      */

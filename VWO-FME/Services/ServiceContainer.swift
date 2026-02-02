@@ -33,11 +33,13 @@ class ServiceContainer {
     // Instance-based SegmentationManager for isolation
     private let segmentationManager: SegmentationManager
     private let syncManager: SyncManager
+    private let aliasIdentifierManager: AliasIdentifierManager
     
     // Usage stats utility (singleton in iOS)
     let usageStats = UsageStatsUtil.shared
     
     // Optional storage service exposure if needed by callers
+    // Initialize with account info for multi-instance support
     internal var storage: StorageService? = StorageService()
     
     init(settingsManager: SettingsManager?, options: VWOInitOptions, settings: Settings?, loggerService: LoggerService?) {
@@ -51,10 +53,15 @@ class ServiceContainer {
         // Initialize syncManager with a temporary instance first (all stored properties must be initialized before using self)
         // We'll set the serviceContainer reference after initialization
         self.syncManager = SyncManager()
+        self.aliasIdentifierManager = AliasIdentifierManager()
         
         // Now that all properties are initialized, we can use self
         // Set the serviceContainer reference and register it
         self.syncManager.setServiceContainer(self)
+        self.aliasIdentifierManager.setServiceContainer(self, options: options)
+        
+        // Set account info in StorageService for multi-instance support
+        self.storage?.setAccountInfo(accountId: getAccountId(), sdkKey: getSdkKey())
         
         // Initialize SyncManager with batch settings from options
         let batchSize = options.batchMinSize
@@ -120,6 +127,11 @@ class ServiceContainer {
     // MARK: - Segmentation
     func getSegmentationManager() -> SegmentationManager {
         return segmentationManager
+    }
+    
+    // MARK: - AliasIdentifierManager
+    func getAliasIdentifierManager() -> AliasIdentifierManager {
+        return aliasIdentifierManager
     }
     
     // MARK: - Settings

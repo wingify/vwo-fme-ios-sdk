@@ -19,98 +19,83 @@ import Foundation
 
 class AliasIdentifierManager {
     
-    static let shared = AliasIdentifierManager()
+    // Static registry for backward compatibility (similar to LoggerService pattern)
+    private static var _instances: [String: AliasIdentifierManager] = [:]
+    private static let instanceQueue = DispatchQueue(label: "com.vwo.fme.aliasmanager.instances", attributes: .concurrent)
     
-    // Store alias settings per account for multi-instance support
-    // Key format: "accountId_sdkKey"
-    private static var accountSettings: [String: AccountAliasSettings] = [:]
-    private static let settingsQueue = DispatchQueue(label: "com.vwo.fme.aliasmanager.settings", attributes: .concurrent)
-    
-    /**
-     * Helper struct to store alias settings per account
-     */
-    private struct AccountAliasSettings {
-        let isEnabled: Bool
-        let isGatewayEnabled: Bool
-    }
-    
-    private init(){}
+    // Instance properties
+    var isEnabled: Bool = false
+    var isGatewayEnabled: Bool = false
+    private var accountId: Int = 0
+    private var sdkKey: String = ""
+    private weak var serviceContainer: ServiceContainer?
     
     /**
-     * Legacy computed properties for backward compatibility.
-     * These check SettingsManager.instance to determine which account's settings to return.
+     * Internal initializer for ServiceContainer to create instances
      */
-    var isEnabled: Bool? {
-        if let settingsManager = SettingsManager.instance {
-            if let settings = AliasIdentifierManager.getSettings(accountId: settingsManager.accountId, sdkKey: settingsManager.sdkKey) {
-                return settings.isEnabled
-            }
-        }
-        return nil
-    }
-    
-    var isGatewayEnabled: Bool? {
-        if let settingsManager = SettingsManager.instance {
-            if let settings = AliasIdentifierManager.getSettings(accountId: settingsManager.accountId, sdkKey: settingsManager.sdkKey) {
-                return settings.isGatewayEnabled
-            }
-        }
-        return nil
-    }
+    internal init() {}
     
     /**
-     * Sets alias settings for a specific account.
-     * - Parameters:
-     *   - accountId: The account ID
-     *   - sdkKey: The SDK key
-     *   - options: The VWOInitOptions containing alias configuration
+     * Sets the ServiceContainer reference and initializes settings from options
      */
-    static func setSettings(accountId: Int, sdkKey: String, options: VWOInitOptions?) {
-        let accountKey = "\(accountId)_\(sdkKey)"
-        let isEnabled = options?.isAliasingEnabled ?? false
-        let isGatewayEnabled = !(options?.gatewayService.isEmpty ?? true)
+    func setServiceContainer(_ container: ServiceContainer, options: VWOInitOptions?) {
+        self.serviceContainer = container
+        self.accountId = container.getAccountId()
+        self.sdkKey = container.getSdkKey()
+        self.isEnabled = options?.isAliasingEnabled ?? false
+        self.isGatewayEnabled = !(options?.gatewayService.isEmpty ?? true)
         
-        settingsQueue.async(flags: .barrier) {
-            accountSettings[accountKey] = AccountAliasSettings(
-                isEnabled: isEnabled,
-                isGatewayEnabled: isGatewayEnabled
-            )
+        // Register this instance for static lookup
+        let accountKey = "\(accountId)_\(sdkKey)"
+        AliasIdentifierManager.instanceQueue.async(flags: .barrier) {
+            AliasIdentifierManager._instances[accountKey] = self
         }
     }
     
     /**
-     * Removes alias settings for a specific account when an instance is cleared.
-     * - Parameters:
-     *   - accountId: The account ID
-     *   - sdkKey: The SDK key
+     * Legacy static shared instance for backward compatibility.
+     * Returns an instance based on SettingsManager.instance if available.
      */
-    static func removeSettings(accountId: Int, sdkKey: String) {
-        let accountKey = "\(accountId)_\(sdkKey)"
-        settingsQueue.async(flags: .barrier) {
-            accountSettings.removeValue(forKey: accountKey)
-        }
-    }
-    
-    /**
-     * Gets alias settings for a specific account.
-     * - Parameters:
-     *   - accountId: The account ID
-     *   - sdkKey: The SDK key
-     * - Returns: Tuple of (isEnabled, isGatewayEnabled) or nil if not found
-     */
-    static func getSettings(accountId: Int, sdkKey: String) -> (isEnabled: Bool, isGatewayEnabled: Bool)? {
-        let accountKey = "\(accountId)_\(sdkKey)"
-        return settingsQueue.sync {
-            guard let settings = accountSettings[accountKey] else {
-                return nil
+    static var shared: AliasIdentifierManager {
+        if let settingsManager = SettingsManager.instance {
+            let accountKey = "\(settingsManager.accountId)_\(settingsManager.sdkKey)"
+            return instanceQueue.sync {
+                if let instance = _instances[accountKey] {
+                    return instance
+                }
+                // Create a temporary instance for backward compatibility
+                let instance = AliasIdentifierManager()
+                instance.accountId = settingsManager.accountId
+                instance.sdkKey = settingsManager.sdkKey
+                return instance
             }
-            return (settings.isEnabled, settings.isGatewayEnabled)
+        }
+        // Fallback: create a temporary instance
+        return AliasIdentifierManager()
+    }
+    
+    /**
+     * Static method for backward compatibility - gets instance by account key
+     */
+    static func getInstance(accountId: Int, sdkKey: String) -> AliasIdentifierManager? {
+        let accountKey = "\(accountId)_\(sdkKey)"
+        return instanceQueue.sync {
+            return _instances[accountKey]
+        }
+    }
+    
+    /**
+     * Static method to remove instance from registry when account is cleared
+     */
+    static func removeInstance(accountId: Int, sdkKey: String) {
+        let accountKey = "\(accountId)_\(sdkKey)"
+        instanceQueue.async(flags: .barrier) {
+            _instances.removeValue(forKey: accountKey)
         }
     }
     
     /**
      * Legacy method for backward compatibility.
-     * Now stores settings per account instead of globally.
      * - Parameter options: The VWOInitOptions containing alias configuration
      */
     func setIsEnabled(options : VWOInitOptions?) {
@@ -118,7 +103,10 @@ class AliasIdentifierManager {
               let sdkKey = options?.sdkKey else {
             return
         }
-        AliasIdentifierManager.setSettings(accountId: accountId, sdkKey: sdkKey, options: options)
+        self.accountId = accountId
+        self.sdkKey = sdkKey
+        self.isEnabled = options?.isAliasingEnabled ?? false
+        self.isGatewayEnabled = !(options?.gatewayService.isEmpty ?? true)
     }
     
     
@@ -130,95 +118,80 @@ class AliasIdentifierManager {
      */
     func setAlias(from vwoUserContext: VWOUserContext, to alias: String, serviceContainer: ServiceContainer? = nil) {
         
-        // Get accountId and sdkKey from ServiceContainer or SettingsManager
-        let accountId: Int
-        let sdkKey: String
+        // Use provided serviceContainer or fallback to instance's serviceContainer
+        let container = serviceContainer ?? self.serviceContainer
         let loggerService: LoggerService?
+        let settingsManager: SettingsManager?
         
-        if let container = serviceContainer {
-            accountId = container.getAccountId()
-            sdkKey = container.getSdkKey()
+        if let container = container {
             loggerService = container.getLoggerService()
+            settingsManager = container.getSettingsManager()
         } else {
             // Fallback to SettingsManager for backward compatibility
-            guard let settingsManager = SettingsManager.instance else {
-                LoggerService.log(level: .error, key: "SETTINGS_MANAGER_NOT_INITIALIZED", details: [
+            guard let settingsManagerInstance = SettingsManager.instance else {
+                LoggerService.errorLog(key: "SETTINGS_MANAGER_NOT_INITIALIZED", data: [
                     "api": "setAlias"
                 ])
                 return
             }
-            accountId = settingsManager.accountId
-            sdkKey = settingsManager.sdkKey
             loggerService = nil
+            settingsManager = settingsManagerInstance
         }
         
-        // Check alias settings for this specific account
-        guard let settings = AliasIdentifierManager.getSettings(accountId: accountId, sdkKey: sdkKey) else {
+        // Check alias settings
+        guard isEnabled else {
             if let logger = loggerService {
-                logger.log(level: .error, key: "ALIAS_FEATURE_DISABLED", details: [:])
+                logger.errorLog(key: "ALIAS_FEATURE_DISABLED", data: [:])
             } else {
-                LoggerService.log(level: .error, key: "ALIAS_FEATURE_DISABLED", details: [:])
+                LoggerService.errorLog(key: "ALIAS_FEATURE_DISABLED", data: [:])
             }
             return
         }
         
-        guard settings.isEnabled else {
+        guard isGatewayEnabled else {
             if let logger = loggerService {
-                logger.log(level: .error, key: "ALIAS_FEATURE_DISABLED", details: [:])
+                logger.errorLog(key: "ALIAS_FEATURE_DISABLED_GATEWAY", data: [:])
             } else {
-                LoggerService.log(level: .error, key: "ALIAS_FEATURE_DISABLED", details: [:])
+                LoggerService.errorLog(key: "ALIAS_FEATURE_DISABLED_GATEWAY", data: [:])
             }
             return
-        }
-        
-        guard settings.isGatewayEnabled else {
-            if let logger = loggerService {
-                logger.log(level: .error, key: "ALIAS_FEATURE_DISABLED_GATEWAY", details: [:])
-            } else {
-                LoggerService.log(level: .error, key: "ALIAS_FEATURE_DISABLED_GATEWAY", details: [:])
-            }
-            return
-        }
-        
-        // Get SettingsManager for API calls
-        let settingsManager: SettingsManager?
-        if let container = serviceContainer {
-            settingsManager = container.getSettingsManager()
-        } else {
-            settingsManager = SettingsManager.instance
         }
         
         guard let settingsManager = settingsManager else {
             if let logger = loggerService {
-                logger.log(level: .error, key: "SETTINGS_MANAGER_NOT_INITIALIZED", details: [
+                logger.errorLog(key: "SETTINGS_MANAGER_NOT_INITIALIZED", data: [
                     "api": "setAlias"
                 ])
             } else {
-                LoggerService.log(level: .error, key: "SETTINGS_MANAGER_NOT_INITIALIZED", details: [
+                LoggerService.errorLog(key: "SETTINGS_MANAGER_NOT_INITIALIZED", data: [
                     "api": "setAlias"
                 ])
             }
             return
         }
         
+        // Get accountId and sdkKey for API calls
+        let accountId = container?.getAccountId() ?? self.accountId
+        let sdkKey = container?.getSdkKey() ?? self.sdkKey
+        
         // Get tempId from userContext
         guard let tempId = vwoUserContext.id,!tempId.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
             if let logger = loggerService {
-                logger.log(level: .error, key: "USER_ID_NULL", details: [:])
+                logger.errorLog(key: "USER_ID_NULL", data: [:])
             } else {
-                LoggerService.log(level: .error, key: "USER_ID_NULL", details: [:])
+                LoggerService.errorLog(key: "USER_ID_NULL", data: [:])
             }
             return
         }
         
         if tempId == alias {
             if let logger = loggerService {
-                logger.log(level: .error, key: "ALIAS_SAME_AS_TEMPID", details: [
+                logger.errorLog(key: "ALIAS_SAME_AS_TEMPID", data: [
                     "aliasId": alias,
                     "tempId": tempId
                 ])
             } else {
-                LoggerService.log(level: .error, key: "ALIAS_SAME_AS_TEMPID", details: [
+                LoggerService.errorLog(key: "ALIAS_SAME_AS_TEMPID", data: [
                     "aliasId": alias,
                     "tempId": tempId
                 ])
@@ -228,9 +201,9 @@ class AliasIdentifierManager {
         
         if alias.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty{
             if let logger = loggerService {
-                logger.log(level: .error, key: "ALIASES_CANNOT_BE_EMPTY", details: [:])
+                logger.errorLog(key: "ALIASES_CANNOT_BE_EMPTY", data: [:])
             } else {
-                LoggerService.log(level: .error, key: "ALIASES_CANNOT_BE_EMPTY", details: [:])
+                LoggerService.errorLog(key: "ALIASES_CANNOT_BE_EMPTY", data: [:])
             }
             return
         }
@@ -239,8 +212,9 @@ class AliasIdentifierManager {
         SetUserAliasAPI().setUserAlias(
             tempId: tempId,
             userId: alias,
-            accountId: settingsManager.accountId,
-            sdkKey: settingsManager.sdkKey
+            accountId: accountId,
+            sdkKey: sdkKey,
+            loggerService: loggerService
         ) { result in
             switch result {
             case .success(let response):
@@ -277,13 +251,13 @@ class AliasIdentifierManager {
             case .failure(let error):
                 // API call failed
                 if let logger = loggerService {
-                    logger.log(level: .error, key: "ALIAS_SET_API_ERROR", details: [
+                    logger.errorLog(key: "ALIAS_SET_API_ERROR", data: [
                         "tempId": tempId,
                         "userId": alias,
                         "error": error.localizedDescription
                     ])
                 } else {
-                    LoggerService.log(level: .error, key: "ALIAS_SET_API_ERROR", details: [
+                    LoggerService.errorLog(key: "ALIAS_SET_API_ERROR", data: [
                         "tempId": tempId,
                         "userId": alias,
                         "error": error.localizedDescription
@@ -300,8 +274,8 @@ class AliasIdentifierManager {
      * @param loggerService Optional LoggerService for instance-specific logging.
      */
     private func callGetAliasAfterSetAlias(alias: String, settingsManager: SettingsManager, loggerService: LoggerService? = nil) {
-        // Get all stored alias mappings
-        let storageService = StorageService()
+        // Get all stored alias mappings - use instance-specific StorageService
+        let storageService = self.serviceContainer?.storage ?? StorageService(accountId: self.accountId, sdkKey: self.sdkKey)
         let storedMappings = storageService.getAliasMappings() ?? []
         
         // Extract all existing aliasIds from stored mappings
@@ -323,7 +297,8 @@ class AliasIdentifierManager {
         GetUserAliasAPI().getUserAlias(
             userIds: uniqueAliasIds,
             accountId: settingsManager.accountId,
-            sdkKey: settingsManager.sdkKey
+            sdkKey: settingsManager.sdkKey,
+            loggerService: loggerService
         ) { result in
             switch result {
             case .success(let response):
@@ -339,7 +314,8 @@ class AliasIdentifierManager {
                 
                 // Store the new response from getAlias API
                 if !response.aliasMappings.isEmpty {
-                    let storageService = StorageService()
+                    // Use instance-specific StorageService
+                    let storageService = self.serviceContainer?.storage ?? StorageService(accountId: settingsManager.accountId, sdkKey: settingsManager.sdkKey)
                     var mappingsForStorage: [[String: String]] = []
                     
                     for mapping in response.aliasMappings {
@@ -356,11 +332,11 @@ class AliasIdentifierManager {
                 
             case .failure(let error):
                 if let logger = loggerService {
-                    logger.log(level: .error, key: "GET_ALIAS_AFTER_SET_ERROR", details: [
+                    logger.errorLog(key: "GET_ALIAS_AFTER_SET_ERROR", data: [
                         "error": error.localizedDescription
                     ])
                 } else {
-                    LoggerService.log(level: .error, key: "GET_ALIAS_AFTER_SET_ERROR", details: [
+                    LoggerService.errorLog(key: "GET_ALIAS_AFTER_SET_ERROR", data: [
                         "error": error.localizedDescription
                     ])
                 }
@@ -377,7 +353,9 @@ class AliasIdentifierManager {
      */
     func getAliasIfExistsAsync(tempID: String, serviceContainer: ServiceContainer? = nil, completion: @escaping (String?) -> Void) {
         // Check StorageService for existing alias mappings stored in exact API format
-        let storageService = StorageService()
+        // Use instance-specific StorageService
+        let container = serviceContainer ?? self.serviceContainer
+        let storageService = container?.storage ?? StorageService(accountId: self.accountId, sdkKey: self.sdkKey)
         let storedMappings: [[String: String]] = storageService.getAliasMappings() ?? []
         
         // Find the first mapping where userId matches the tempID
@@ -403,43 +381,34 @@ class AliasIdentifierManager {
      * @param completion Completion handler with success status and userId.
      */
     func fetchAliasIdentifier(forUserIds: [String], serviceContainer: ServiceContainer? = nil, completion: @escaping (Bool, String?) -> Void) {
-        // Get accountId and sdkKey from ServiceContainer or SettingsManager
-        let accountId: Int
-        let sdkKey: String
+        // Use provided serviceContainer or fallback to instance's serviceContainer
+        let container = serviceContainer ?? self.serviceContainer
         let loggerService: LoggerService?
+        let settingsManager: SettingsManager?
         
-        if let container = serviceContainer {
-            accountId = container.getAccountId()
-            sdkKey = container.getSdkKey()
+        if let container = container {
             loggerService = container.getLoggerService()
+            settingsManager = container.getSettingsManager()
         } else {
             // Fallback to SettingsManager for backward compatibility
-            guard let settingsManager = SettingsManager.instance else {
-                LoggerService.log(level: .error, key: "SETTINGS_MANAGER_NOT_INITIALIZED", details: [
+            guard let settingsManagerInstance = SettingsManager.instance else {
+                LoggerService.errorLog(key: "SETTINGS_MANAGER_NOT_INITIALIZED", data: [
                     "api": "fetchAliasIdentifier"
                 ])
                 completion(false, nil)
                 return
             }
-            accountId = settingsManager.accountId
-            sdkKey = settingsManager.sdkKey
             loggerService = nil
-        }
-        
-        let settingsManager: SettingsManager?
-        if let container = serviceContainer {
-            settingsManager = container.getSettingsManager()
-        } else {
-            settingsManager = SettingsManager.instance
+            settingsManager = settingsManagerInstance
         }
         
         guard let settingsManager = settingsManager else {
             if let logger = loggerService {
-                logger.log(level: .error, key: "SETTINGS_MANAGER_NOT_INITIALIZED", details: [
+                logger.errorLog(key: "SETTINGS_MANAGER_NOT_INITIALIZED", data: [
                     "api": "fetchAliasIdentifier"
                 ])
             } else {
-                LoggerService.log(level: .error, key: "SETTINGS_MANAGER_NOT_INITIALIZED", details: [
+                LoggerService.errorLog(key: "SETTINGS_MANAGER_NOT_INITIALIZED", data: [
                     "api": "fetchAliasIdentifier"
                 ])
             }
@@ -447,11 +416,16 @@ class AliasIdentifierManager {
             return
         }
         
+        // Get accountId and sdkKey for API calls
+        let accountId = container?.getAccountId() ?? self.accountId
+        let sdkKey = container?.getSdkKey() ?? self.sdkKey
+        
         // Call the getUserAlias API with array of userIds
         GetUserAliasAPI().getUserAlias(
             userIds: forUserIds,
-            accountId: settingsManager.accountId,
-            sdkKey: settingsManager.sdkKey
+            accountId: accountId,
+            sdkKey: sdkKey,
+            loggerService: loggerService
         ) { result in
             switch result {
             case .success(let response):
@@ -473,7 +447,9 @@ class AliasIdentifierManager {
                     }
                     
                     // Save the exact API response format to StorageService
-                    let storageService = StorageService()
+                    // Use instance-specific StorageService
+                    let container = serviceContainer ?? self.serviceContainer
+                    let storageService = container?.storage ?? StorageService(accountId: self.accountId, sdkKey: self.sdkKey)
                     storageService.setAliasMappings(aliasMappings: mappingsForStorage)
                     
                     
@@ -496,11 +472,11 @@ class AliasIdentifierManager {
                 
             case .failure(let error):
                 if let logger = loggerService {
-                    logger.log(level: .error, key: "GET_ALIAS_FAILED", details: [
+                    logger.errorLog(key: "GET_ALIAS_FAILED", data: [
                         "error": error.localizedDescription
                     ])
                 } else {
-                    LoggerService.log(level: .error, key: "GET_ALIAS_FAILED", details: [
+                    LoggerService.errorLog(key: "GET_ALIAS_FAILED", data: [
                         "error": error.localizedDescription
                     ])
                 }
@@ -528,7 +504,8 @@ class AliasIdentifierManager {
      * @param value The value (userId) to associate with the key.
      */
     func saveAliasMapping(key: String, value: String) {
-        let storageService = StorageService()
+        // Use instance-specific StorageService
+        let storageService = self.serviceContainer?.storage ?? StorageService(accountId: self.accountId, sdkKey: self.sdkKey)
         var existingMappings: [[String: String]] = storageService.getAliasMappings() ?? []
         
         // Check if a mapping with this userId already exists

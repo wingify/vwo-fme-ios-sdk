@@ -76,20 +76,44 @@ class NetworkManager {
         executorService.async {
             let payloadToStore = request.body ?? [:]
             
+            // Get account info from request (preferred) or extract from headers
+            let accountId = request.accountId
+            let sdkKey = request.sdkKey ?? request.headers?["Authorization"] ?? ""
+            
+            // Try to get ServiceContainer for this account to determine correct SyncManager
+            var serviceContainer: ServiceContainer? = nil
+            var syncManager: SyncManager? = nil
+            
+            if let accountId = accountId, !sdkKey.isEmpty {
+                serviceContainer = EventDataManager.getServiceContainer(accountId: accountId, sdkKey: sdkKey)
+                syncManager = serviceContainer?.getSyncManager()
+            }
+            
+            // Fallback to SyncManager.shared if ServiceContainer not found
+            let effectiveSyncManager = syncManager ?? SyncManager.shared
+            
             // Check if the request is for event batching
             let isEventBatchingRequest = request.path == Constants.EVENT_BATCH_ENDPOINT
             
             // If online batching is allowed and the request is not an event batching request
-            if SyncManager.shared.isOnlineBatchingAllowed && !isEventBatchingRequest {
-                // Store the event payload for later processing
-                EventDataManager.shared.createEvent(payload: payloadToStore)
+            if effectiveSyncManager.isOnlineBatchingAllowed && !isEventBatchingRequest {
+                // Store the event payload for later processing with account info
+                EventDataManager.shared.createEvent(
+                    payload: payloadToStore,
+                    sdkKey: sdkKey.isEmpty ? nil : sdkKey,
+                    accountId: accountId != nil ? Int64(accountId!) : nil
+                )
                 return
             } else {
                 post(request) { response in
                     // If the response is not successful and the request is not an event batching request
                     if !response.isResponseOK() && !isEventBatchingRequest {
-                        // Store the event payload for later processing
-                        EventDataManager.shared.createEvent(payload: payloadToStore)
+                        // Store the event payload for later processing with account info
+                        EventDataManager.shared.createEvent(
+                            payload: payloadToStore,
+                            sdkKey: sdkKey.isEmpty ? nil : sdkKey,
+                            accountId: accountId != nil ? Int64(accountId!) : nil
+                        )
                     }
                     completion(response)
                 }

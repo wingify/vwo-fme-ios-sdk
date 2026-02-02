@@ -236,25 +236,45 @@ class DecisionUtil {
     static func evaluateTrafficAndGetVariation(
         settings: Settings,
         campaign: Campaign,
-        userId: String?
+        userId: String?,
+        serviceContainer: ServiceContainer? = nil
     ) -> Variation? {
         let stringAccountId = "\(settings.accountId ?? 0)"
-        let variation = CampaignDecisionService().getVariationAllotted(userId: userId, accountId: stringAccountId, campaign: campaign)
+        let variation = CampaignDecisionService().getVariationAllotted(userId: userId, accountId: stringAccountId, campaign: campaign, serviceContainer: serviceContainer)
+        
+        // Use instance-specific logger if available, otherwise static logger
+        let logger = serviceContainer?.getLoggerService()
         
         if variation == nil {
+            if let logger = logger {
+                logger.log(level: .info,
+                          key: "USER_CAMPAIGN_BUCKET_INFO",
+                          details: ["userId": userId ?? "",
+                                    "campaignKey": campaign.type == CampaignTypeEnum.ab.rawValue ? "\(campaign.key ?? "--")" : "\(campaign.name ?? "--")_\(campaign.ruleKey ?? "--")",
+                                    "status": "did not get any variation"])
+            } else {
+                LoggerService.log(level: .info,
+                                  key: "USER_CAMPAIGN_BUCKET_INFO",
+                                  details: ["userId": userId ?? "",
+                                            "campaignKey": campaign.type == CampaignTypeEnum.ab.rawValue ? "\(campaign.key ?? "--")" : "\(campaign.name ?? "--")_\(campaign.ruleKey ?? "--")",
+                                            "status": "did not get any variation"])
+            }
+            return nil
+        }
+        
+        if let logger = logger {
+            logger.log(level: .info,
+                      key: "USER_CAMPAIGN_BUCKET_INFO",
+                      details: ["userId": userId ?? "",
+                                "campaignKey": campaign.type == CampaignTypeEnum.ab.rawValue ? "\(campaign.key ?? "--")" : "\(campaign.name ?? "--")_\(campaign.ruleKey ?? "--")",
+                                "status": "got variation: \(variation?.name ?? "--")"])
+        } else {
             LoggerService.log(level: .info,
                               key: "USER_CAMPAIGN_BUCKET_INFO",
                               details: ["userId": userId ?? "",
                                         "campaignKey": campaign.type == CampaignTypeEnum.ab.rawValue ? "\(campaign.key ?? "--")" : "\(campaign.name ?? "--")_\(campaign.ruleKey ?? "--")",
-                                        "status": "did not get any variation"])
-            return nil
+                                        "status": "got variation: \(variation?.name ?? "--")"])
         }
-        
-        LoggerService.log(level: .info,
-                          key: "USER_CAMPAIGN_BUCKET_INFO",
-                          details: ["userId": userId ?? "",
-                                    "campaignKey": campaign.type == CampaignTypeEnum.ab.rawValue ? "\(campaign.key ?? "--")" : "\(campaign.name ?? "--")_\(campaign.ruleKey ?? "--")",
-                                    "status": "got variation: \(variation?.name ?? "--")"])
         return variation
     }
     

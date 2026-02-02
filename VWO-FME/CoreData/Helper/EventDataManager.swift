@@ -59,7 +59,7 @@ class EventDataManager {
      *   - sdkKey: The SDK key
      * - Returns: The ServiceContainer if found, nil otherwise
      */
-    private static func getServiceContainer(accountId: Int, sdkKey: String) -> ServiceContainer? {
+    static func getServiceContainer(accountId: Int, sdkKey: String) -> ServiceContainer? {
         let accountKey = "\(accountId)_\(sdkKey)"
         return containersQueue.sync {
             return accountServiceContainers[accountKey]?.container
@@ -70,22 +70,58 @@ class EventDataManager {
      * Creates an event with the given payload and saves it to Core Data.
      *
      * - Parameter payload: A dictionary containing event data.
+     * - Parameter sdkKey: Optional SDK key. If not provided, will try to extract from payload or use SettingsManager.
+     * - Parameter accountId: Optional account ID. If not provided, will try to find from ServiceContainer registry using sdkKey.
      */
-    func createEvent(payload: [String: Any]) {
+    func createEvent(payload: [String: Any], sdkKey: String? = nil, accountId: Int64? = nil) {
         if payload.isEmpty { return }
         guard let payloadString = self.convertDictToString(payload) else {
             return
         }
         
         self.coreDataStack.context.perform {
+            // Try to get sdkKey from parameter, payload, or SettingsManager
+            var eventSdkKey: String = sdkKey ?? ""
+            if eventSdkKey.isEmpty {
+                // Try to extract from payload (if it contains account info)
+                if let accountInfo = payload["d"] as? [String: Any],
+                   let sdkKeyFromPayload = accountInfo["sdkKey"] as? String {
+                    eventSdkKey = sdkKeyFromPayload
+                } else {
+                    // Fallback to SettingsManager
+                    eventSdkKey = SettingsManager.instance?.sdkKey ?? ""
+                }
+            }
             
-            let settingManager = SettingsManager.instance
-            let sdkKey = settingManager?.sdkKey ?? ""
-            let accountId = Int64(settingManager?.accountId ?? 0)
+            // Try to get accountId from parameter, ServiceContainer registry, or SettingsManager
+            var eventAccountId: Int64 = accountId ?? 0
+            if eventAccountId == 0 && !eventSdkKey.isEmpty {
+                // Try to find ServiceContainer by sdkKey to get accountId
+                var foundAccountId: Int64 = 0
+                EventDataManager.containersQueue.sync {
+                    for (_, weakContainer) in EventDataManager.accountServiceContainers {
+                        if let container = weakContainer.container,
+                           container.getSdkKey() == eventSdkKey {
+                            foundAccountId = Int64(container.getAccountId())
+                            break
+                        }
+                    }
+                }
+                eventAccountId = foundAccountId
+            }
+            
+            // Final fallback to SettingsManager
+            if eventAccountId == 0 {
+                eventAccountId = Int64(SettingsManager.instance?.accountId ?? 0)
+            }
+            if eventSdkKey.isEmpty {
+                eventSdkKey = SettingsManager.instance?.sdkKey ?? ""
+            }
+            
             
             let eventData = EventData(context: self.coreDataStack.context)
-            eventData.sdkKey = sdkKey
-            eventData.accountId = accountId
+            eventData.sdkKey = eventSdkKey
+            eventData.accountId = eventAccountId
             eventData.payload = payloadString
             
             self.coreDataStack.saveContext { done, error in
@@ -136,7 +172,12 @@ class EventDataManager {
         
         let headers = ["Authorization": sdkKey]
         let properties = NetworkUtil.getBatchEventsBaseProperties()
-        let request = RequestModel(url: UrlService.baseUrl,
+        // Get instance-specific base URL
+        let baseUrl = UrlService.getBaseUrl(serviceContainer: serviceContainer)
+        // Get accountId for the request
+        let accountId = serviceContainer?.getAccountId()
+        
+        var request = RequestModel(url: baseUrl,
                                    method: HTTPMethod.post.rawValue,
                                    path: Constants.EVENT_BATCH_ENDPOINT,
                                    query: properties,
@@ -144,6 +185,9 @@ class EventDataManager {
                                    headers: headers,
                                    scheme: Constants.HTTPS_PROTOCOL,
                                    port: port)
+        // Set account info in request for multi-instance support
+        request.accountId = accountId
+        request.sdkKey = sdkKey
         
         NetworkManager.attachClient()
         NetworkManager.postAsync(request) { result in

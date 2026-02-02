@@ -45,16 +45,18 @@ class SettingsManager {
     private static let instanceQueue = DispatchQueue(label: "com.vwo.fme.settingsmanager.instances", attributes: .concurrent)
     
     // Backward compatibility: most recently created instance
+    // Use a serial queue for _instance access to prevent deadlocks
     private static var _instance: SettingsManager?
+    private static let instanceAccessQueue = DispatchQueue(label: "com.vwo.fme.settingsmanager.instance.access")
     
     static var instance: SettingsManager? {
         get {
-            return instanceQueue.sync {
+            return instanceAccessQueue.sync {
                 return _instance
             }
         }
         set {
-            instanceQueue.async(flags: .barrier) {
+            instanceAccessQueue.async {
                 _instance = newValue
             }
         }
@@ -85,11 +87,19 @@ class SettingsManager {
               let sdkKey = options.sdkKey else {
             // Fallback to old behavior if account info is missing
             return instanceQueue.sync(flags: .barrier) {
-                if let existing = _instance {
+                // Check _instance using the access queue to avoid deadlock
+                var existing: SettingsManager?
+                instanceAccessQueue.sync {
+                    existing = _instance
+                }
+                if let existing = existing {
                     return existing
                 }
                 let newInstance = SettingsManager(options: options)
-                _instance = newInstance
+                // Set _instance using the access queue to avoid deadlock
+                instanceAccessQueue.async {
+                    _instance = newInstance
+                }
                 return newInstance
             }
         }
@@ -97,22 +107,31 @@ class SettingsManager {
         // Generate account key for multi-instance support
         let accountKey = "\(accountId)_\(sdkKey)"
         
-        return instanceQueue.sync(flags: .barrier) {
+        let result = instanceQueue.sync(flags: .barrier) {
             // Check if instance exists for this account
             if let existing = instances[accountKey] {
                 // Verify it still matches (account ID and SDK key)
                 if existing.accountId == accountId && existing.sdkKey == sdkKey {
-                    _instance = existing // Update most recent for backward compatibility
+                    // Update most recent for backward compatibility (use separate queue to avoid deadlock)
+                    instanceAccessQueue.async {
+                        _instance = existing
+                    }
                     return existing
                 }
             }
             
             // Create new instance for this account
             let newInstance = SettingsManager(options: options)
+            // Set account info in StorageService for multi-instance support
+            newInstance.localStorageService.setAccountInfo(accountId: accountId, sdkKey: sdkKey)
             instances[accountKey] = newInstance
-            _instance = newInstance // Update most recent for backward compatibility
+            // Update most recent for backward compatibility (use separate queue to avoid deadlock)
+            instanceAccessQueue.async {
+                _instance = newInstance
+            }
             return newInstance
         }
+        return result
     }
     
     /// Creates or returns an existing instance of `SettingsManager` for the specific account with logger.

@@ -77,9 +77,10 @@ class SetUserAliasAPI {
      * @param userId Permanent user ID representing logged-in user state
      * @param accountId VWO account identifier
      * @param sdkKey SDK authentication key
+     * @param loggerService Optional LoggerService for instance-specific logging
      * @param completion Completion handler for the async result
      */
-    func setUserAlias(tempId: String, userId: String, accountId: Int, sdkKey: String, completion: @escaping (Result<SetUserAliasResponse, Error>) -> Void) {
+    func setUserAlias(tempId: String, userId: String, accountId: Int, sdkKey: String, loggerService: LoggerService? = nil, completion: @escaping (Result<SetUserAliasResponse, Error>) -> Void) {
         
         // Create request body with userId (logged-out state) and aliasId (logged-in state)
         let requestBody = [
@@ -125,33 +126,61 @@ class SetUserAliasAPI {
                             completion(.success(response))
                         } else {
                             // If response doesn't contain isAliasSet, treat as failure
-                            LoggerService.log(level: .error, key: "ALIAS_SET_API_ERROR", details: [
-                                "error": "Invalid response format - missing isAliasSet field",
-                                "tempId": tempId
-                            ])
+                            if let logger = loggerService {
+                                logger.errorLog(key: "ALIAS_SET_API_ERROR", data: [
+                                    "error": "Invalid response format - missing isAliasSet field",
+                                    "tempId": tempId
+                                ])
+                            } else {
+                                LoggerService.errorLog(key: "ALIAS_SET_API_ERROR", data: [
+                                    "error": "Invalid response format - missing isAliasSet field",
+                                    "tempId": tempId
+                                ])
+                            }
                             let error = NSError(domain: "SetUserAliasAPI", code: 0, userInfo: [NSLocalizedDescriptionKey: "Invalid response format - missing isAliasSet field"])
                             completion(.failure(error))
                         }
                     } catch {
-                        LoggerService.log(level: .error, key: "ALIAS_SET_API_ERROR", details: [
-                            "error": error.localizedDescription,
-                            "tempId": tempId
-                        ])
+                        if let logger = loggerService {
+                            logger.errorLog(key: "ALIAS_SET_API_ERROR", data: [
+                                "error": error.localizedDescription,
+                                "tempId": tempId
+                            ])
+                        } else {
+                            LoggerService.errorLog(key: "ALIAS_SET_API_ERROR", data: [
+                                "error": error.localizedDescription,
+                                "tempId": tempId
+                            ])
+                        }
                         completion(.failure(error))
                     }
                 } else {
-                    LoggerService.log(level: .error, key: "ALIAS_SET_API_ERROR", details: [
-                        "error": "No data received",
-                        "tempId": tempId
-                    ])
+                    if let logger = loggerService {
+                        logger.errorLog(key: "ALIAS_SET_API_ERROR", data: [
+                            "error": "No data received",
+                            "tempId": tempId
+                        ])
+                    } else {
+                        LoggerService.errorLog(key: "ALIAS_SET_API_ERROR", data: [
+                            "error": "No data received",
+                            "tempId": tempId
+                        ])
+                    }
                     let error = NSError(domain: "SetUserAliasAPI", code: 0, userInfo: [NSLocalizedDescriptionKey: "No data received"])
                     completion(.failure(error))
                 }
             } else {
-                LoggerService.log(level: .error, key: "ALIAS_SET_API_ERROR", details: [
-                    "error": "Request failed with status code: \(response.statusCode)",
-                    "tempId": tempId
-                ])
+                if let logger = loggerService {
+                    logger.errorLog(key: "ALIAS_SET_API_ERROR", data: [
+                        "error": "Request failed with status code: \(response.statusCode)",
+                        "tempId": tempId
+                    ])
+                } else {
+                    LoggerService.errorLog(key: "ALIAS_SET_API_ERROR", data: [
+                        "error": "Request failed with status code: \(response.statusCode)",
+                        "tempId": tempId
+                    ])
+                }
                 let error = NSError(domain: "SetUserAliasAPI", code: response.statusCode, userInfo: [NSLocalizedDescriptionKey: "Request failed with status code: \(response.statusCode)"])
                 completion(.failure(error))
             }

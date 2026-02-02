@@ -171,7 +171,7 @@ class GetFlagAPI {
                 // Evaluate the passed rollout rule traffic and get the variation
                 if !rolloutRulesToEvaluate.isEmpty {
                     let passedRolloutCampaign = rolloutRulesToEvaluate[0]
-                    let variation = DecisionUtil.evaluateTrafficAndGetVariation(settings: settings, campaign: passedRolloutCampaign, userId: context.id)
+                    let variation = DecisionUtil.evaluateTrafficAndGetVariation(settings: settings, campaign: passedRolloutCampaign, userId: context.id, serviceContainer: serviceContainer)
                     if let variation = variation {
                         getFlag.setIsEnabled(isEnabled: true)
                         getFlag.setVariables(variation.variables)
@@ -223,7 +223,7 @@ class GetFlagAPI {
                 // Evaluate the passed experiment rule traffic and get the variation
                 if !experimentRulesToEvaluate.isEmpty {
                     let campaign = experimentRulesToEvaluate[0]
-                    let variation = DecisionUtil.evaluateTrafficAndGetVariation(settings: settings, campaign: campaign, userId: context.id)
+                    let variation = DecisionUtil.evaluateTrafficAndGetVariation(settings: settings, campaign: campaign, userId: context.id, serviceContainer: serviceContainer)
                     if let variation = variation {
                         getFlag.setIsEnabled(isEnabled: true)
                         getFlag.setVariables(variation.variables)

@@ -29,14 +29,18 @@ class VWOClient {
     init(options: VWOInitOptions?, settingObj: Settings?) {
         self.options = options
         if var settingToProcess = settingObj {
-            SettingsUtil.processSettings(&settingToProcess)
+            // Create ServiceContainer with unprocessed settings to get LoggerService for instance-specific logging
+            // ServiceContainer can accept unprocessed settings - we'll update it with processed settings later
+            let tempServiceContainer = createServiceContainer()
+            
+            // Process settings with ServiceContainer for instance-specific logging
+            SettingsUtil.processSettings(&settingToProcess, serviceContainer: tempServiceContainer)
             self.processedSettings = settingToProcess
             // init url version with collection prefix
             UrlService.initialize(collectionPrefix: settingToProcess .collectionPrefix)
             
-            // Create ServiceContainer and log
-            let serviceContainer = createServiceContainer()
-            serviceContainer?.getLoggerService()?.log(level: .info, key: "CLIENT_INITIALIZED", details: nil)
+            // Log initialization
+            tempServiceContainer?.getLoggerService()?.log(level: .info, key: "CLIENT_INITIALIZED", details: nil)
         } else {
             LoggerService.log(level: .error, message: "Exception occurred while parsing settings")
         }
@@ -47,14 +51,18 @@ class VWOClient {
         self.vwoBuilder = vwoBuilder
         
         if var settingToProcess = settingObj {
-            SettingsUtil.processSettings(&settingToProcess)
+            // Create ServiceContainer with unprocessed settings to get LoggerService for instance-specific logging
+            // ServiceContainer can accept unprocessed settings - we'll update it with processed settings later
+            let tempServiceContainer = createServiceContainer()
+            
+            // Process settings with ServiceContainer for instance-specific logging
+            SettingsUtil.processSettings(&settingToProcess, serviceContainer: tempServiceContainer)
             self.processedSettings = settingToProcess
             // init url version with collection prefix
             UrlService.initialize(collectionPrefix: settingToProcess .collectionPrefix)
             
-            // Create ServiceContainer and log
-            let serviceContainer = createServiceContainer()
-            serviceContainer?.getLoggerService()?.log(level: .info, key: "CLIENT_INITIALIZED", details: nil)
+            // Log initialization
+            tempServiceContainer?.getLoggerService()?.log(level: .info, key: "CLIENT_INITIALIZED", details: nil)
         } else {
             LoggerService.log(level: .error, message: "Exception occurred while parsing settings")
         }
@@ -77,7 +85,9 @@ class VWOClient {
     // Update the settings
     func updateSettings(newSettings: Settings?) {
         if var newSettings = newSettings {
-            SettingsUtil.processSettings(&newSettings)
+            // Get ServiceContainer if available for instance-specific logging
+            let serviceContainer = createServiceContainer()
+            SettingsUtil.processSettings(&newSettings, serviceContainer: serviceContainer)
             self.processedSettings = newSettings
         }
     }

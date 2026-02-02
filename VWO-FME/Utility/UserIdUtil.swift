@@ -74,18 +74,16 @@ class UserIdUtil {
             
             // Check alias settings for this specific account
             let shouldUseAlias: Bool
+            let aliasManager: AliasIdentifierManager
+            
             if let container = serviceContainer {
-                let accountId = container.getAccountId()
-                let sdkKey = container.getSdkKey()
-                if let settings = AliasIdentifierManager.getSettings(accountId: accountId, sdkKey: sdkKey) {
-                    shouldUseAlias = settings.isEnabled && settings.isGatewayEnabled
-                } else {
-                    // No settings found for this account, alias feature is disabled
-                    shouldUseAlias = false
-                }
+                // Use instance-specific alias manager from ServiceContainer
+                aliasManager = container.getAliasIdentifierManager()
+                shouldUseAlias = aliasManager.isEnabled && aliasManager.isGatewayEnabled
             } else {
-                // No ServiceContainer available, cannot determine account - alias feature is disabled
-                shouldUseAlias = false
+                // Fallback to shared for backward compatibility
+                aliasManager = AliasIdentifierManager.shared
+                shouldUseAlias = aliasManager.isEnabled && aliasManager.isGatewayEnabled
             }
             
             if shouldUseAlias {
@@ -93,7 +91,7 @@ class UserIdUtil {
                 let semaphore = DispatchSemaphore(value: 0)
                 var resolvedId: String?
 
-                AliasIdentifierManager.shared.getAliasIfExistsAsync(tempID: userId, serviceContainer: serviceContainer) { userID in
+                aliasManager.getAliasIfExistsAsync(tempID: userId, serviceContainer: serviceContainer) { userID in
                     resolvedId = userID ?? userId
                     semaphore.signal()
                 }

@@ -37,13 +37,8 @@ class VWOBuilder {
         self.options = options
         UsageStatsUtil.shared.setUsageStats(options: options)
         
-        // Register alias settings per account for multi-instance support
-        if let accountId = options?.accountId, let sdkKey = options?.sdkKey {
-            AliasIdentifierManager.setSettings(accountId: accountId, sdkKey: sdkKey, options: options)
-        } else {
-            // Fallback to legacy method for backward compatibility
-            AliasIdentifierManager.shared.setIsEnabled(options: options)
-        }
+        // Alias settings are now managed by ServiceContainer when it's created
+        // No need to set them here as they'll be initialized in ServiceContainer.init()
     }
 
     // Set VWOClient instance

@@ -26,14 +26,17 @@ class SettingsUtil {
     /**
      * Processes the given settings by updating campaigns and adding necessary flags.
      *
-     * - Parameter settings: The settings to be processed.
+     * - Parameters:
+     *   - settings: The settings to be processed.
+     *   - serviceContainer: Optional ServiceContainer for instance-specific logging.
      */
-    static func processSettings(_ settings: inout Settings) {
+    static func processSettings(_ settings: inout Settings, serviceContainer: ServiceContainer? = nil) {
         guard var campaigns = settings.campaigns else { return }
         
         // Iterate over each campaign and set variation allocation
+        // Use ServiceContainer to get LoggerService for instance-specific logging
         for i in 0..<campaigns.count {
-            CampaignUtil.setVariationAllocation(&campaigns[i])
+            CampaignUtil.setVariationAllocation(&campaigns[i], serviceContainer: serviceContainer)
         }
         settings.campaigns = campaigns
         
