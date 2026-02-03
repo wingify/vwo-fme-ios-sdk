@@ -36,54 +36,126 @@ class SettingsManager {
 
     var isGatewayServiceProvided: Bool = false
     private var localStorageService = StorageService()
+    
+    // Instance-specific logger for multi-instance support
+    private weak var loggerService: LoggerService?
 
-    // Simple thread-safe singleton
+    // Multi-instance support: store instances per account
+    private static var instances: [String: SettingsManager] = [:]
+    private static let instanceQueue = DispatchQueue(label: "com.vwo.fme.settingsmanager.instances", attributes: .concurrent)
+    
+    // Backward compatibility: most recently created instance
+    // Use a serial queue for _instance access to prevent deadlocks
     private static var _instance: SettingsManager?
-    private static let lock = NSLock()
+    private static let instanceAccessQueue = DispatchQueue(label: "com.vwo.fme.settingsmanager.instance.access")
     
     static var instance: SettingsManager? {
         get {
-            return _instance
+            return instanceAccessQueue.sync {
+                return _instance
+            }
         }
         set {
-            _instance = newValue
+            instanceAccessQueue.async {
+                _instance = newValue
+            }
         }
     }
     
-    /// Creates or returns the existing singleton instance of `SettingsManager`.
+    /// Sets the logger service for this SettingsManager instance.
+    /// - Parameter logger: The LoggerService instance to use for logging
+    func setLoggerService(_ logger: LoggerService?) {
+        self.loggerService = logger
+    }
+    
+    /// Creates or returns an existing instance of `SettingsManager` for the specific account.
     ///
-    /// This is a **thread-safe** factory method to initialize or retrieve the shared instance of the `SettingsManager`,
-    /// which is responsible for handling SDK configuration and settings. It ensures a single, consistent instance
-    /// across the application lifecycle, even in multi-threaded environments.
+    /// This method supports multi-instance usage by creating separate `SettingsManager` instances
+    /// for each account (identified by accountId and sdkKey). This ensures proper isolation
+    /// between different VWO accounts.
     ///
     /// - Parameter options: An instance of `VWOInitOptions` containing initialization parameters like account ID,
     ///   SDK key, logging level, and other configuration values.
     ///
-    /// - Returns: A shared `SettingsManager` instance initialized with the provided options.
+    /// - Returns: A `SettingsManager` instance specific to the provided account.
     ///
     /// - Note:
-    ///   Uses a lightweight double-checked locking pattern to minimize overhead once the instance is initialized.
-    ///   Safe to call multiple times; the same instance will be returned.
+    ///   Uses a thread-safe dictionary to store instances per account.
+    ///   Each account gets its own instance to ensure proper isolation.
     static func createInstance(options: VWOInitOptions) -> SettingsManager {
-        // Quick check without lock first
-        if let existing = _instance {
-            return existing
+        guard let accountId = options.accountId,
+              let sdkKey = options.sdkKey else {
+            // Fallback to old behavior if account info is missing
+            return instanceQueue.sync(flags: .barrier) {
+                // Check _instance using the access queue to avoid deadlock
+                var existing: SettingsManager?
+                instanceAccessQueue.sync {
+                    existing = _instance
+                }
+                if let existing = existing {
+                    return existing
+                }
+                let newInstance = SettingsManager(options: options)
+                // Set _instance using the access queue to avoid deadlock
+                instanceAccessQueue.async {
+                    _instance = newInstance
+                }
+                return newInstance
+            }
         }
         
-        // Only lock when we need to create
-        lock.lock()
-        defer { 
-            lock.unlock()
-        }
+        // Generate account key for multi-instance support
+        let accountKey = "\(accountId)_\(sdkKey)"
         
-        // Check again after acquiring lock
-        if let existing = _instance {
-            return existing
+        let result = instanceQueue.sync(flags: .barrier) {
+            // Check if instance exists for this account
+            if let existing = instances[accountKey] {
+                // Verify it still matches (account ID and SDK key)
+                if existing.accountId == accountId && existing.sdkKey == sdkKey {
+                    // Update most recent for backward compatibility (use separate queue to avoid deadlock)
+                    instanceAccessQueue.async {
+                        _instance = existing
+                    }
+                    return existing
+                }
+            }
+            
+            // Create new instance for this account
+            let newInstance = SettingsManager(options: options)
+            // Set account info in StorageService for multi-instance support
+            newInstance.localStorageService.setAccountInfo(accountId: accountId, sdkKey: sdkKey)
+            instances[accountKey] = newInstance
+            // Update most recent for backward compatibility (use separate queue to avoid deadlock)
+            instanceAccessQueue.async {
+                _instance = newInstance
+            }
+            return newInstance
         }
-        
-        // Create and store the instance
-        _instance = SettingsManager(options: options)
-        return _instance!
+        return result
+    }
+    
+    /// Creates or returns an existing instance of `SettingsManager` for the specific account with logger.
+    ///
+    /// - Parameters:
+    ///   - options: An instance of `VWOInitOptions` containing initialization parameters
+    ///   - logger: Optional LoggerService instance for instance-specific logging
+    /// - Returns: A `SettingsManager` instance specific to the provided account
+    static func createInstance(options: VWOInitOptions, logger: LoggerService?) -> SettingsManager {
+        let instance = createInstance(options: options)
+        instance.setLoggerService(logger)
+        return instance
+    }
+    
+    /// Gets an existing instance for a specific account
+    /// - Parameters:
+    ///   - accountId: The account ID
+    ///   - sdkKey: The SDK key
+    /// - Returns: The SettingsManager instance for this account, or nil if not found
+    static func getInstance(accountId: Int, sdkKey: String) -> SettingsManager? {
+        let accountKey = "\(accountId)_\(sdkKey)"
+        return instanceQueue.sync {
+            return instances[accountKey]
+        }
     }
     
     /**
@@ -166,9 +238,16 @@ class SettingsManager {
      */
     private func fetchFromCacheOrServer(completion: @escaping (Settings?) -> Void) {
         if self.canUseCachedSettings(), let settingObj = self.getSettingFromUserDefaults() {
-                LoggerService.log(level: .info, key: "SETTINGS_FETCH_SUCCESS", details: [:])
+                // Use instance-specific logger if available, otherwise fallback to static logger
+                self.loggerService?.log(level: .info, key: "SETTINGS_FETCH_SUCCESS", details: [:]) ?? LoggerService.log(level: .info, key: "SETTINGS_FETCH_SUCCESS", details: [:])
                 completion(settingObj)
         } else {
+            // Cache expired or no cached settings - log and fetch from server
+            // Only log if cache expiry is enabled (cachedSettingsExpiryInterval > 0) and cache was invalid
+            if self.cachedSettingsExpiryInterval > 0 && !self.isCachedSettingValid() {
+                // Use instance-specific logger if available, otherwise fallback to static logger
+                self.loggerService?.log(level: .info, key: "SETTINGS_CACHE_EXPIRED", details: [:]) ?? LoggerService.log(level: .info, key: "SETTINGS_CACHE_EXPIRED", details: [:])
+            }
             self.fetchAndCacheServerSettings(completion: completion)
         }
     }
@@ -215,7 +294,8 @@ class SettingsManager {
             let error = result.errorMessage
             if let data = result.data2, error == nil {
                 if let settingsObj = try? JSONDecoder().decode(Settings.self, from: data) {
-                    LoggerService.log(level: .info, key: "SETTINGS_FETCH_SUCCESS", details: [:])
+                    // Use instance-specific logger if available, otherwise fallback to static logger
+                    self.loggerService?.log(level: .info, key: "SETTINGS_FETCH_SUCCESS", details: [:]) ?? LoggerService.log(level: .info, key: "SETTINGS_FETCH_SUCCESS", details: [:])
                     self.saveSettingInUserDefaults(settingObj: settingsObj)
                     self.saveSettingExpiryInUserDefault()
                     self.settingsFetchTime = Date().currentTimeMillis() - startTime
@@ -234,7 +314,8 @@ class SettingsManager {
             } else {
                 if result.error == .noNetwork {
                     if let cachedSetting = self.getSettingFromUserDefaults() {
-                        LoggerService.log(level: .info, key: "SETTINGS_FETCH_SUCCESS", details: [:])
+                        // Use instance-specific logger if available, otherwise fallback to static logger
+                        self.loggerService?.log(level: .info, key: "SETTINGS_FETCH_SUCCESS", details: [:]) ?? LoggerService.log(level: .info, key: "SETTINGS_FETCH_SUCCESS", details: [:])
                         self.settingsFetchTime = Date().currentTimeMillis() - startTime
                         self.isSettingsValid = true
                         completion(cachedSetting)

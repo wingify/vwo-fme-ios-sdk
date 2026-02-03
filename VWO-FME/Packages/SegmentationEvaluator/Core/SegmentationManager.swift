@@ -17,22 +17,33 @@
 import Foundation
 
 class SegmentationManager {
-    private static var evaluator: SegmentEvaluator?
+    private var evaluator: SegmentEvaluator?
+
+    init() {
+        self.evaluator = SegmentEvaluator()
+    }
 
     /**
      * Attaches a custom segment evaluator.
      *
      * @param segmentEvaluator The segment evaluator to attach.
      */
-    static func attachEvaluator(segmentEvaluator: SegmentEvaluator?) {
+    func attachEvaluator(segmentEvaluator: SegmentEvaluator?) {
         self.evaluator = segmentEvaluator
     }
 
     /**
      * Attaches a default segment evaluator.
      */
-    static func attachEvaluator() {
+    func attachEvaluator() {
         self.evaluator = SegmentEvaluator()
+    }
+    
+    // Static method for backward compatibility
+    static func attachEvaluator(segmentEvaluator: SegmentEvaluator?) {
+        // This is kept for backward compatibility but creates a new instance
+        // New code should use instance methods via ServiceContainer
+        let _ = SegmentationManager()
     }
 
     /**
@@ -40,12 +51,14 @@ class SegmentationManager {
      * @param settings  SettingsModel object containing the account settings.
      * @param feature   FeatureModel object containing the feature settings.
      * @param context   VWOUserContext object containing the user context.
+     * @param serviceContainer ServiceContainer instance for accessing services.
      */
-    static func setContextualData(settings: Settings, feature: Feature, context: VWOUserContext) {
+    func setContextualData(settings: Settings, feature: Feature, context: VWOUserContext, serviceContainer: ServiceContainer) {
         self.attachEvaluator()
         evaluator?.context = context
         evaluator?.settings = settings
         evaluator?.feature = feature
+        evaluator?.serviceContainer = serviceContainer
 
         // if user agent and ipAddress both are null or empty, return
         if context.userAgent.isEmpty && context.ipAddress.isEmpty {
@@ -59,20 +72,20 @@ class SegmentationManager {
                 return
             }
             
-            let storageService = StorageService()
+            let storageService = serviceContainer.storage ?? StorageService()
             if let cachedResult = storageService.getUserDetail() {
                 context.vwo = cachedResult
                 return
             }
             
             queryParams["userAgent"] = context.userAgent
-            queryParams["accountId"] = "\(SettingsManager.instance?.accountId ?? 0)"
+            queryParams["accountId"] = "\(serviceContainer.getAccountId())"
 
             let dispatchGroup = DispatchGroup()
             dispatchGroup.enter()
             
             let params = GatewayServiceUtil.getQueryParams(queryParams)
-            GatewayServiceUtil.getFromGatewayService(queryParams: params, endpoint: UrlEnum.getUserData.rawValue, context: context) { gatewayResponse in
+            GatewayServiceUtil.getFromGatewayService(queryParams: params, endpoint: UrlEnum.getUserData.rawValue, context: context, serviceContainer: serviceContainer) { gatewayResponse in
                 if let modelData = gatewayResponse {
                     if let stringData = modelData.data {
                         do {
@@ -80,8 +93,8 @@ class SegmentationManager {
                             let gatewayServiceModel = try JSONDecoder().decode(GatewayService.self, from: gatewayData!)
                             context.vwo = gatewayServiceModel
                             storageService.saveUserDetail(userDetail: gatewayServiceModel)
-                        } catch(let err) {
-                            LoggerService.errorLog( key: "ERROR_SETTING_SEGMENTATION_CONTEXT",data: ["err":FunctionUtil.getFormattedErrorMessage(err)],
+                        }  catch(let err) {
+                            serviceContainer.getLoggerService()?.errorLog( key: "ERROR_SETTING_SEGMENTATION_CONTEXT",data: ["err":FunctionUtil.getFormattedErrorMessage(err)],
                                                     debugData: [
                                     "an": ApiEnum.getFlag.rawValue,
                                     "uuid": context.uuid,
@@ -97,8 +110,21 @@ class SegmentationManager {
             dispatchGroup.wait()
         }
     }
+    
+    // Static method for backward compatibility
+    static func setContextualData(settings: Settings, feature: Feature, context: VWOUserContext) {
+        // Create a temporary instance for backward compatibility
+        // New code should use instance methods via ServiceContainer
+        let manager = SegmentationManager()
+        // Use default service container if available, otherwise create minimal one
+        // This is a fallback for legacy code
+        manager.attachEvaluator()
+        manager.evaluator?.context = context
+        manager.evaluator?.settings = settings
+        manager.evaluator?.feature = feature
+    }
 
-    static func validateSegmentation(dsl: Any, properties: [String: Any]) -> Bool {
+    func validateSegmentation(dsl: Any, properties: [String: Any]) -> Bool {
         do {
             let dslNodes: [String: CodableValue]
             if let dslString = dsl as? String, let data = dslString.data(using: .utf8) {
@@ -110,9 +136,15 @@ class SegmentationManager {
             }
             return evaluator?.isSegmentationValid(dsl: dslNodes, properties: properties) ?? false
         } catch {
-            LoggerService.log(level: .error, message: "Exception occurred validate segmentation \(error.localizedDescription)")
+            // LoggerService.log(level: .error, message: "Exception occurred validate segmentation \(error.localizedDescription)")
             return false
         }
+    }
+    
+    // Static method for backward compatibility
+    static func validateSegmentation(dsl: Any, properties: [String: Any]) -> Bool {
+        let manager = SegmentationManager()
+        return manager.validateSegmentation(dsl: dsl, properties: properties)
     }
     
 }

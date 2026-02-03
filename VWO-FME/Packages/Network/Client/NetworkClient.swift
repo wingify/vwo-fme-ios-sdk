@@ -105,6 +105,25 @@ class NetworkClient: NetworkClientInterface {
         return "\(scheme)://\(hostname)\(path)"
     }
     
+    /**
+     * Determines the maximum retry count based on the request and response.
+     * 
+     * - Parameters:
+     *   - request: The request model containing request information
+     *   - response: Optional response model containing status code information
+     * - Returns: The maximum number of retry attempts
+     */
+    private func getMaxRetryCount(request: RequestModel, response: ResponseModel? = nil) -> Int {
+        let isSettingsEndpoint = (request.path?.contains(Constants.SETTINGS_ENDPOINT) ?? false)
+        
+        if isSettingsEndpoint, let response = response, (response.statusCode != Constants.HTTP_STATUS_CODE_200) {
+            return Constants.SETTINGS_MAX_RETRY_ATTEMPTS
+        }
+        
+        // Assume max retry count is MAX_RETRY_ATTEMPTS for SETTINGS_ENDPOINT,
+        // we can only effectively determine actual retry based on status code
+        return Constants.MAX_RETRY_ATTEMPTS
+    }
     
     private func performRequestWithRetry( request: URLRequest,originalRequestModel: RequestModel, completion: @escaping (ResponseModel) -> Void, retryCount: Int = 4,delay: TimeInterval = 1.0,
                                           attempt: Int = 1) {
@@ -142,7 +161,10 @@ class NetworkClient: NetworkClientInterface {
 
                 let newDelay = delay * 2
                 DispatchQueue.global().asyncAfter(deadline: .now() + delay) {
-                    self.performRequestWithRetry(request: request,originalRequestModel: updatedRequestModel,completion: completion,retryCount: retryCount - 1,delay: newDelay,attempt: attempt + 1)
+                    // Check if we should stop retrying (settings API with 400/401)
+                    let maxRetries = self.getMaxRetryCount(request: updatedRequestModel, response: responseModel)
+                    let nextRetryCount = (maxRetries == Constants.SETTINGS_MAX_RETRY_ATTEMPTS) ? 0 : retryCount - 1
+                    self.performRequestWithRetry(request: request,originalRequestModel: updatedRequestModel,completion: completion,retryCount: nextRetryCount,delay: newDelay,attempt: attempt + 1)
                 }
             } else {
                 responseModel.errorMessage = APIError.responseUnsuccessful.localizedDescription
@@ -225,11 +247,14 @@ class NetworkClient: NetworkClientInterface {
 
                 let newDelay = delay * 2
                 DispatchQueue.global().asyncAfter(deadline: .now() + delay) {
+                    
+                    let maxRetries = self.getMaxRetryCount(request: updatedRequestModel, response: responseModel)
+                    let nextRetryCount = (maxRetries == Constants.SETTINGS_MAX_RETRY_ATTEMPTS) ? 0 : retryCount - 1
                     self.performRequestWithRetry(
                         request: request,
                         originalRequestModel: updatedRequestModel,
                         completion: completion,
-                        retryCount: retryCount - 1,
+                        retryCount: nextRetryCount,
                         delay: newDelay,
                         attempt: attempt + 1
                     )
@@ -251,6 +276,19 @@ class NetworkClient: NetworkClientInterface {
                         ],
                         debugData: updatedRequestModel.getExtraInfo(),
                         shouldSendToVWO: false
+                    )
+                }
+                
+                // Check for invalid credentials
+                let isSettingsEndpoint = (updatedRequestModel.path?.contains(Constants.SETTINGS_ENDPOINT) ?? false)
+                if isSettingsEndpoint && (responseModel.statusCode != Constants.HTTP_STATUS_CODE_200) {
+                    LoggerService.log(level: .error, key: "INVALID_CREDENTIALS", details: nil)
+                    LoggerService.errorLog(
+                        key: "INVALID_CREDENTIALS",
+                        data: [
+                            "endPoint": updatedRequestModel.path ?? "",
+                            "err": responseModel.error?.localizedDescription ?? ""
+                        ]
                     )
                 }
 

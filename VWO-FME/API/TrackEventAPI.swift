@@ -24,6 +24,7 @@ class TrackEventAPI {
      * @param context The user context model containing user-specific data.
      * @param eventProperties event properties for the event
      * @param hooksManager The hooks manager instance.
+     * @param serviceContainer ServiceContainer instance for service access.
      * @return Boolean indicating if the event was successfully tracked.
      */
     static func track(
@@ -31,19 +32,21 @@ class TrackEventAPI {
         eventName: String,
         context: VWOUserContext,
         eventProperties: [String: Any],
-        hooksManager: HooksManager
+        hooksManager: HooksManager,
+        serviceContainer: ServiceContainer
     ) {
         let doesEventBelongToAnyFeature = FunctionUtil.doesEventBelongToAnyFeature(eventName: eventName, settings: settings)
         if doesEventBelongToAnyFeature {
-            createAndSendImpressionForTrack(settings: settings, eventName: eventName, context: context, eventProperties: eventProperties)
+            createAndSendImpressionForTrack(settings: settings, eventName: eventName, context: context, eventProperties: eventProperties, serviceContainer: serviceContainer)
             var objectToReturn: [String: Any] = [:]
             objectToReturn["eventName"] = eventName
             objectToReturn["api"] = ApiEnum.track.rawValue
             hooksManager.set(properties: objectToReturn)
             hooksManager.execute(properties: hooksManager.get())
         } else {
+
             // Log an error if the event does not exist
-            LoggerService.errorLog(
+            serviceContainer.getLoggerService()?.errorLog(
                 key: "EVENT_NOT_FOUND",
                 data: ["eventName": eventName],
                 debugData: [
@@ -70,13 +73,15 @@ class TrackEventAPI {
         settings: Settings,
         eventName: String,
         context: VWOUserContext,
-        eventProperties: [String: Any]
+        eventProperties: [String: Any],
+        serviceContainer: ServiceContainer
     ) {
         // Get base properties for the event
         let properties = NetworkUtil.getEventsBaseProperties(
             eventName: eventName,
             visitorUserAgent: ImpressionUtil.encodeURIComponent(context.userAgent),
-            ipAddress: context.ipAddress
+            ipAddress: context.ipAddress,
+            serviceContainer: serviceContainer
         )
 
         // Construct payload data for tracking the user
@@ -85,10 +90,11 @@ class TrackEventAPI {
             userId: context.id,
             eventName: eventName,
             context: context,
-            eventProperties: eventProperties
+            eventProperties: eventProperties,
+            serviceContainer: serviceContainer
         )
 
         // Send the constructed properties and payload as a POST request
-        NetworkUtil.sendPostApiRequest(properties: properties, payload: payload, userAgent: context.userAgent, ipAddress: context.ipAddress)
+        NetworkUtil.sendPostApiRequest(properties: properties, payload: payload, userAgent: context.userAgent, ipAddress: context.ipAddress, serviceContainer: serviceContainer)
     }
 }

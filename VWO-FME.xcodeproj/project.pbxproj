@@ -25,11 +25,12 @@
 		BA5DD5E32E2655CE00D3A127 /* DeviceIDUtilTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = BA5DD5E22E2655CE00D3A127 /* DeviceIDUtilTests.swift */; };
 		BA5DD5E52E321FED00D3A127 /* SdkMetaInfo.swift in Sources */ = {isa = PBXBuildFile; fileRef = BA5DD5E42E321FDF00D3A127 /* SdkMetaInfo.swift */; };
 		BA5DD5E72E3225DC00D3A127 /* EventsUtils.swift in Sources */ = {isa = PBXBuildFile; fileRef = BA5DD5E62E3225D200D3A127 /* EventsUtils.swift */; };
+		BA6CF04F2E431F9E00FE5740 /* DeviceUtil.swift in Sources */ = {isa = PBXBuildFile; fileRef = BA6CF04D2E431E8700FE5740 /* DeviceUtil.swift */; };
+		BA7E952C2EB33F1D00D28A7F /* ServiceContainer.swift in Sources */ = {isa = PBXBuildFile; fileRef = BA7E952B2EB33F1D00D28A7F /* ServiceContainer.swift */; };
 		BA76097B2E704B8300E1EDA9 /* DebuggerCategoryEnum.swift in Sources */ = {isa = PBXBuildFile; fileRef = BA76097A2E704B8300E1EDA9 /* DebuggerCategoryEnum.swift */; };
 		BA76097D2E70503400E1EDA9 /* DebuggerServiceUtil.swift in Sources */ = {isa = PBXBuildFile; fileRef = BA76097C2E70502300E1EDA9 /* DebuggerServiceUtil.swift */; };
 		BA8309F02E212D94001804F0 /* DeviceIDUtil.swift in Sources */ = {isa = PBXBuildFile; fileRef = BA8309EF2E212D87001804F0 /* DeviceIDUtil.swift */; };
 		BACCE91B2E49FC3400901FCC /* AliasIdentifierManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = BACCE91A2E49FC3400901FCC /* AliasIdentifierManager.swift */; };
-		BA6CF04F2E431F9E00FE5740 /* DeviceUtil.swift in Sources */ = {isa = PBXBuildFile; fileRef = BA6CF04D2E431E8700FE5740 /* DeviceUtil.swift */; };
 		BAD427462E12763800C5C011 /* VWOStorageConnector.swift in Sources */ = {isa = PBXBuildFile; fileRef = BAD427452E12763800C5C011 /* VWOStorageConnector.swift */; };
 		BAD427492E12766100C5C011 /* StorageConnectorProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = BAD427472E12766100C5C011 /* StorageConnectorProvider.swift */; };
 		BAE6CFE72E4384880041118A /* SegmentOperandEvaluatorTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = BAE6CFE62E4384880041118A /* SegmentOperandEvaluatorTests.swift */; };
@@ -189,11 +190,12 @@
 		BA5DD5E22E2655CE00D3A127 /* DeviceIDUtilTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeviceIDUtilTests.swift; sourceTree = "<group>"; };
 		BA5DD5E42E321FDF00D3A127 /* SdkMetaInfo.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SdkMetaInfo.swift; sourceTree = "<group>"; };
 		BA5DD5E62E3225D200D3A127 /* EventsUtils.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EventsUtils.swift; sourceTree = "<group>"; };
+		BA6CF04D2E431E8700FE5740 /* DeviceUtil.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeviceUtil.swift; sourceTree = "<group>"; };
+		BA7E952B2EB33F1D00D28A7F /* ServiceContainer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ServiceContainer.swift; sourceTree = "<group>"; };
 		BA76097A2E704B8300E1EDA9 /* DebuggerCategoryEnum.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DebuggerCategoryEnum.swift; sourceTree = "<group>"; };
 		BA76097C2E70502300E1EDA9 /* DebuggerServiceUtil.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DebuggerServiceUtil.swift; sourceTree = "<group>"; };
 		BA8309EF2E212D87001804F0 /* DeviceIDUtil.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeviceIDUtil.swift; sourceTree = "<group>"; };
 		BACCE91A2E49FC3400901FCC /* AliasIdentifierManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AliasIdentifierManager.swift; sourceTree = "<group>"; };
-		BA6CF04D2E431E8700FE5740 /* DeviceUtil.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeviceUtil.swift; sourceTree = "<group>"; };
 		BAD427452E12763800C5C011 /* VWOStorageConnector.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VWOStorageConnector.swift; sourceTree = "<group>"; };
 		BAD427472E12766100C5C011 /* StorageConnectorProvider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StorageConnectorProvider.swift; sourceTree = "<group>"; };
 		BAE6CFE62E4384880041118A /* SegmentOperandEvaluatorTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SegmentOperandEvaluatorTests.swift; sourceTree = "<group>"; };
@@ -550,6 +552,7 @@
 		EB06C7F32C90246300A25E07 /* Services */ = {
 			isa = PBXGroup;
 			children = (
+				BA7E952B2EB33F1D00D28A7F /* ServiceContainer.swift */,
 				EB06C7F52C90246E00A25E07 /* CampaignDecisionService.swift */,
 				EB06C7F42C90246E00A25E07 /* HooksManager.swift */,
 				EB06C7F82C90246E00A25E07 /* LoggerService.swift */,
@@ -1140,6 +1143,7 @@
 				EB06C8A02C90274C00A25E07 /* EventArchPayload.swift in Sources */,
 				EB06C7B92C9023E500A25E07 /* Metric.swift in Sources */,
 				EB8D4B0F2D2BE96800DB924A /* NetworkMonitor.swift in Sources */,
+				BA7E952C2EB33F1D00D28A7F /* ServiceContainer.swift in Sources */,
 				EB06C7DD2C90243300A25E07 /* SettingUtil.swift in Sources */,
 				EB06C87F2C90269F00A25E07 /* GlobalRequestModel.swift in Sources */,
 				EB5500862CA51C3C00A8B729 /* GetFlagAPI.swift in Sources */,

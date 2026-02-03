@@ -27,13 +27,13 @@ final class EnumTests: XCTestCase {
     
     func testTrackRawValue() {
         // Test that the raw value of track is correct
-        XCTAssertEqual(ApiEnum.track.rawValue, "track", "The raw value of track should be 'track'")
+        XCTAssertEqual(ApiEnum.track.rawValue, "trackEvent", "The raw value of track should be 'track'")
     }
     
     func testEnumInitialization() {
         // Test that the enum can be initialized with a valid raw value
         XCTAssertEqual(ApiEnum(rawValue: "getFlag"), .getFlag, "ApiEnum should initialize to .getFlag with raw value 'getFlag'")
-        XCTAssertEqual(ApiEnum(rawValue: "track"), .track, "ApiEnum should initialize to .track with raw value 'track'")
+        XCTAssertEqual(ApiEnum(rawValue: "trackEvent"), .track, "ApiEnum should initialize to .track with raw value 'track'")
         
         // Test that the enum returns nil for an invalid raw value
         XCTAssertNil(ApiEnum(rawValue: "invalid"), "ApiEnum should return nil for an invalid raw value")

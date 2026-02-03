@@ -57,6 +57,6 @@
   "ALIAS_FEATURE_DISABLED_GATEWAY": "Alias feature is disabled. Configure Gateway Service while initializing the SDK",
   "ALIAS_SAME_AS_TEMPID": "Alias ID:{aliasId} should not be same as temp Id:{tempId}",
   "ALIASES_CANNOT_BE_EMPTY": "Alias ID cannot be empty or blank",
-  "USERID_CANNOT_BE_BLANK": "User ID cannot be blank"
-
+  "USERID_CANNOT_BE_BLANK": "User ID cannot be blank",
+  "INVALID_CREDENTIALS": "Invalid Account ID, SDK Key, or both provided during initialization."
 }

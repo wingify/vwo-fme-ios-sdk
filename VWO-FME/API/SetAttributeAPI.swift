@@ -23,9 +23,10 @@ class SetAttributeAPI {
      * @param settings The settings model containing configuration.
      * @param attributes Dictionary of all the attributes to set.
      * @param context  The user context model containing user-specific data.
+     * @param serviceContainer ServiceContainer instance for service access.
      */
-    static func setAttributes(settings: Settings, attributes: [String: Any], context: VWOUserContext) {
-        createAndSendImpressionForSetAttribute(settings: settings, attributes: attributes, context: context)
+    static func setAttributes(settings: Settings, attributes: [String: Any], context: VWOUserContext, serviceContainer: ServiceContainer) {
+        createAndSendImpressionForSetAttribute(settings: settings, attributes: attributes, context: context, serviceContainer: serviceContainer)
     }
     
     /**
@@ -40,13 +41,15 @@ class SetAttributeAPI {
     private static func createAndSendImpressionForSetAttribute(
         settings: Settings,
         attributes: [String: Any],
-        context: VWOUserContext
+        context: VWOUserContext,
+        serviceContainer: ServiceContainer
     ) {
         // Get base properties for the event
         let properties = NetworkUtil.getEventsBaseProperties(
             eventName: EventEnum.vwoSyncVisitorProp.rawValue,
             visitorUserAgent: ImpressionUtil.encodeURIComponent(context.userAgent),
-            ipAddress: context.ipAddress
+            ipAddress: context.ipAddress,
+            serviceContainer: serviceContainer
         )
 
         // Construct payload data for tracking the user
@@ -55,10 +58,12 @@ class SetAttributeAPI {
             userId: context.id,
             eventName: EventEnum.vwoSyncVisitorProp.rawValue,
             sessionId: context.sessionId,
-            attributes: attributes
+            attributes: attributes,
+            serviceContainer:serviceContainer
+
         )
 
         // Send the constructed properties and payload as a POST request
-        NetworkUtil.sendPostApiRequest(properties: properties, payload: payload, userAgent: context.userAgent, ipAddress: context.ipAddress)
+        NetworkUtil.sendPostApiRequest(properties: properties, payload: payload, userAgent: context.userAgent, ipAddress: context.ipAddress, serviceContainer: serviceContainer)
     }
 }

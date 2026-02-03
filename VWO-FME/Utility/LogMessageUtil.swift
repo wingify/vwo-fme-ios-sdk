@@ -58,15 +58,16 @@ class LogMessageUtil {
      *
      * - Parameters:
      *   - message: The message to be sent as part of the event.
+     *   - serviceContainer: Optional ServiceContainer to use for error event sending (for multi-instance support).
      *
      * This method constructs the necessary properties and payload for the event using utility functions,
      * and then sends the event using the `NetworkUtil.sendMessagingEvent` method.
      * The event is categorized as an "error" type and uses the `vwoError` enum value as event name.
      */
-    static func sendMessageEvent(message: String) {
-        let properties = NetworkUtil.getEventsBaseProperties(eventName: EventEnum.vwoError.rawValue, visitorUserAgent: "", ipAddress: nil)
-        let payload = NetworkUtil.getMessagingEventPayload(messageType: "error", message: message, eventName: EventEnum.vwoError.rawValue)
-        NetworkUtil.sendMessagingEvent(properties: properties, payload: payload)
+    static func sendMessageEvent(message: String, serviceContainer: ServiceContainer? = nil) {
+        let properties = NetworkUtil.getEventsBaseProperties(eventName: EventEnum.vwoError.rawValue, visitorUserAgent: "", ipAddress: nil, serviceContainer: serviceContainer)
+        let payload = NetworkUtil.getMessagingEventPayload(messageType: "error", message: message, eventName: EventEnum.vwoError.rawValue, serviceContainer: serviceContainer)
+        NetworkUtil.sendMessagingEvent(properties: properties, payload: payload, serviceContainer: serviceContainer)
     }
     
 }

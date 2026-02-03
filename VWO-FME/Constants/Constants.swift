@@ -20,7 +20,7 @@ struct Constants {
     static let defaultString: String = ""
     static let PLATFORM: String = "ios"
 
-    static let SDK_VERSION: String = "1.13.0"
+    static let SDK_VERSION: String = "1.14.0"
 
     static let MAX_TRAFFIC_PERCENT: Int = 100
     static let MAX_TRAFFIC_VALUE: Int = 10000
@@ -74,6 +74,11 @@ struct Constants {
     static let MANUFACTURER = "vwo_mfr"
     static let DEVICE_MODEL = "vwo_dm"
     static let LOCALE = "vwo_loc"
+    
+    static let SETTINGS_MAX_RETRY_ATTEMPTS = 1
+    static let MAX_RETRY_ATTEMPTS = 4
+    static let HTTP_STATUS_CODE_200 = 200
+    
 }
 
 public typealias VWOInitCompletionHandler = (Result<String, Error>) -> Void

@@ -35,8 +35,15 @@ class NetworkUtil {
     }
     
     // Generates the URL for the event
-    private static func generateEventUrl() -> String {
-        return Constants.HTTPS_PROTOCOL + UrlService.baseUrl + UrlEnum.events.rawValue
+    private static func generateEventUrl(serviceContainer: ServiceContainer? = nil) -> String {
+        let baseUrl: String
+        if let container = serviceContainer {
+            baseUrl = container.getBaseUrl()
+        } else {
+            // Fallback to static UrlService for backward compatibility
+            baseUrl = UrlService.baseUrl
+        }
+        return Constants.HTTPS_PROTOCOL + baseUrl + UrlEnum.events.rawValue
     }
     
     // Generates a message ID for the event
@@ -84,19 +91,29 @@ class NetworkUtil {
     }
     
     // Creates the base properties for the event arch APIs
-    static func getEventsBaseProperties(eventName: String, visitorUserAgent: String?, ipAddress: String?, isUsageStatsEvent: Bool? = false, usageStatsAccountId: Int? = 0) -> [String: String] {
-        let settingManager = SettingsManager.instance
-        let accountIdString = "\(SettingsManager.instance?.accountId ?? 0)"
-        let sdkKey = "\(settingManager?.sdkKey ?? "")"
+    static func getEventsBaseProperties(eventName: String, visitorUserAgent: String?, ipAddress: String?, isUsageStatsEvent: Bool? = false, usageStatsAccountId: Int? = 0, serviceContainer: ServiceContainer? = nil) -> [String: String] {
+        let accountIdString: String
+        let sdkKey: String
+        
+        if let container = serviceContainer {
+            accountIdString = "\(container.getAccountId())"
+            sdkKey = container.getSdkKey()
+        } else {
+            // Fallback to static SettingsManager for backward compatibility
+            let settingManager = SettingsManager.instance
+            accountIdString = "\(settingManager?.accountId ?? 0)"
+            sdkKey = settingManager?.sdkKey ?? ""
+        }
+        
         if let visitorUserAgent = visitorUserAgent {
-            let requestQueryParams = RequestQueryParams(en: eventName, a: accountIdString, env: sdkKey, visitorUa: visitorUserAgent, visitorIp: ipAddress ?? "", url: generateEventUrl())
+            var requestQueryParams = RequestQueryParams(en: eventName, a: accountIdString, env: sdkKey, visitorUa: visitorUserAgent, visitorIp: ipAddress ?? "", url: generateEventUrl(serviceContainer: serviceContainer))
             if (isUsageStatsEvent ?? false) {
                 requestQueryParams.env = nil
-                requestQueryParams.a = "\(String(describing: usageStatsAccountId))"
+                requestQueryParams.a = "\(usageStatsAccountId ?? 0)"
             }
             return requestQueryParams.queryParams
         }else{
-            let requestQueryParams = RequestQueryParams(en: eventName, a: accountIdString, env: sdkKey, visitorUa: "", visitorIp: ipAddress ?? "", url: generateEventUrl())
+            let requestQueryParams = RequestQueryParams(en: eventName, a: accountIdString, env: sdkKey, visitorUa: "", visitorIp: ipAddress ?? "", url: generateEventUrl(serviceContainer: serviceContainer))
             if (isUsageStatsEvent ?? false) {
                 requestQueryParams.env = nil
                 if let usageStatsAccountId = usageStatsAccountId {
@@ -109,24 +126,39 @@ class NetworkUtil {
         
     }
     
-    static func getBatchEventsBaseProperties() -> [String:String] {
-        let settingManager = SettingsManager.instance
-        let accountId = "\(settingManager?.accountId ?? 0)"
-        let sdkKey = "\(settingManager?.sdkKey ?? "")"
+    static func getBatchEventsBaseProperties(serviceContainer: ServiceContainer? = nil) -> [String:String] {
+        let accountId: String
+        let sdkKey: String
+        
+        if let container = serviceContainer {
+            accountId = "\(container.getAccountId())"
+            sdkKey = container.getSdkKey()
+        } else {
+            // Fallback to static SettingsManager for backward compatibility
+            let settingManager = SettingsManager.instance
+            accountId = "\(settingManager?.accountId ?? 0)"
+            sdkKey = settingManager?.sdkKey ?? ""
+        }
+        
         let requestQueryParam = EventBatchQueryParams(i: sdkKey, env: sdkKey, a: accountId)
         return requestQueryParam.queryParams
     }
     
     // Creates the base payload for the event arch APIs
-    static func getEventBasePayload(userId: String?, eventName: String, visitorUserAgent: String?, ipAddress: String?, isUsageStatsEvent: Bool? = false, usageStatsAccountId: Int? = 0, shouldGenerateUUID : Bool? = true, sessionId : Int64? = nil) -> EventArchPayload {
+    static func getEventBasePayload(userId: String?, eventName: String, visitorUserAgent: String?, ipAddress: String?, isUsageStatsEvent: Bool? = false, usageStatsAccountId: Int? = 0, shouldGenerateUUID : Bool? = true, sessionId : Int64? = nil, serviceContainer: ServiceContainer? = nil) -> EventArchPayload {
         
         var stringAccountId : String
         
         if (isUsageStatsEvent ?? false) {
             stringAccountId = "\(String(describing: usageStatsAccountId))"
         } else {
-            let settingManager = SettingsManager.instance
-            stringAccountId = "\(settingManager?.accountId ?? 0)"
+            // Use ServiceContainer if provided, otherwise fallback to SettingsManager
+            if let container = serviceContainer {
+                stringAccountId = "\(container.getAccountId())"
+            } else {
+                let settingManager = SettingsManager.instance
+                stringAccountId = "\(settingManager?.accountId ?? 0)"
+            }
         }
         
         var uuid: String
@@ -154,11 +186,11 @@ class NetworkUtil {
             eventArchData.visitorIpAddress = ipAddress
         }
         
-        let event = NetworkUtil.createEvent(eventName: eventName, isUsageStatsEvent: isUsageStatsEvent)
+        let event = NetworkUtil.createEvent(eventName: eventName, isUsageStatsEvent: isUsageStatsEvent, serviceContainer: serviceContainer)
         eventArchData.event = event
         
         if !(isUsageStatsEvent ?? false){
-            let visitor = NetworkUtil.createVisitor(isUsageStatsEvent: isUsageStatsEvent)
+            let visitor = NetworkUtil.createVisitor(isUsageStatsEvent: isUsageStatsEvent, serviceContainer: serviceContainer)
             eventArchData.visitor = visitor
         }
     
@@ -168,9 +200,9 @@ class NetworkUtil {
     }
     
     // Creates the event model for the event arch APIs
-    private static func createEvent(eventName: String, isUsageStatsEvent: Bool? = false) -> Event {
+    private static func createEvent(eventName: String, isUsageStatsEvent: Bool? = false, serviceContainer: ServiceContainer? = nil) -> Event {
         var event = Event()
-        let props = createProps(isUsageStatsEvent: isUsageStatsEvent)
+        let props = createProps(isUsageStatsEvent: isUsageStatsEvent, serviceContainer: serviceContainer)
         event.props = props
         event.name = eventName
         event.time = Date().currentTimeMillis()
@@ -178,21 +210,31 @@ class NetworkUtil {
     }
     
     // Creates the props model for the event arch APIs
-    private static func createProps(isUsageStatsEvent: Bool? = false) -> Props {
+    private static func createProps(isUsageStatsEvent: Bool? = false, serviceContainer: ServiceContainer? = nil) -> Props {
         var props = Props()
         props.vwoSdkName = SDKMetaUtil.name
         props.vwoSdkVersion = SDKMetaUtil.version
         if (!(isUsageStatsEvent ?? false)) {
-            props.vwoEnvKey = SettingsManager.instance?.sdkKey ?? nil
+            // Use ServiceContainer if provided, otherwise fallback to SettingsManager
+            if let container = serviceContainer {
+                props.vwoEnvKey = container.getSdkKey()
+            } else {
+                props.vwoEnvKey = SettingsManager.instance?.sdkKey ?? nil
+            }
         }
         return props
     }
     
     // Creates the visitor model for the event arch APIs
-    private static func createVisitor(isUsageStatsEvent: Bool? = false) -> Visitor {
+    private static func createVisitor(isUsageStatsEvent: Bool? = false, serviceContainer: ServiceContainer? = nil) -> Visitor {
         var visitorProps: [String: Any] = [:]
         if (!(isUsageStatsEvent ?? false)) {
-            visitorProps[Constants.VWO_FS_ENVIRONMENT] = SettingsManager.instance?.sdkKey ?? Constants.defaultString
+            // Use ServiceContainer if provided, otherwise fallback to SettingsManager
+            if let container = serviceContainer {
+                visitorProps[Constants.VWO_FS_ENVIRONMENT] = container.getSdkKey()
+            } else {
+                visitorProps[Constants.VWO_FS_ENVIRONMENT] = SettingsManager.instance?.sdkKey ?? Constants.defaultString
+            }
         }
         let visitor = Visitor(props: visitorProps)
         return visitor
@@ -248,8 +290,9 @@ class NetworkUtil {
 
     
     // Returns the payload data for the track user API
-    class func getTrackUserPayloadData(settings: Settings, userId: String?, eventName: String, campaignId: Int, variationId: Int, visitorUserAgent: String?, ipAddress: String?,sessionId: Int64?, context: VWOUserContext) -> [String: Any] {
-        var properties = NetworkUtil.getEventBasePayload(userId: userId, eventName: eventName, visitorUserAgent: visitorUserAgent, ipAddress: ipAddress,sessionId: sessionId)
+
+    class func getTrackUserPayloadData(settings: Settings, userId: String?, eventName: String, campaignId: Int, variationId: Int, visitorUserAgent: String?, ipAddress: String?,sessionId: Int64?, context: VWOUserContext, serviceContainer: ServiceContainer? = nil) -> [String: Any] {
+        var properties = NetworkUtil.getEventBasePayload(userId: userId, eventName: eventName, visitorUserAgent: visitorUserAgent, ipAddress: ipAddress, sessionId: sessionId, serviceContainer: serviceContainer)
         
         properties.d?.event?.props?.id = campaignId
         properties.d?.event?.props?.variation = "\(variationId)"
@@ -265,11 +308,20 @@ class NetworkUtil {
             NetworkUtil.addCustomVariablesToVisitorProps(properties: &properties, context: context)
         }
 
-        LoggerService.log(level: .debug, 
-                          key: "IMPRESSION_FOR_TRACK_USER",
-                          details: ["accountId": "\(String(describing: settings.accountId))",
-                                    "userId": userId ?? "",
-                                    "campaignId": "\(String(describing: campaignId))"])
+        // Use instance logger if available, otherwise static logger
+        if let container = serviceContainer, let logger = container.getLoggerService() {
+            logger.log(level: .debug, 
+                      key: "IMPRESSION_FOR_TRACK_USER",
+                      details: ["accountId": "\(String(describing: settings.accountId))",
+                                "userId": userId ?? "",
+                                "campaignId": "\(String(describing: campaignId))"])
+        } else {
+            LoggerService.log(level: .debug, 
+                              key: "IMPRESSION_FOR_TRACK_USER",
+                              details: ["accountId": "\(String(describing: settings.accountId))",
+                                        "userId": userId ?? "",
+                                        "campaignId": "\(String(describing: campaignId))"])
+        }
         
         let payloadDict = properties.toDictionary()
         let cleanedPayload = removeNullValues(originalMap: payloadDict)
@@ -277,16 +329,27 @@ class NetworkUtil {
     }
     
     // Returns the payload data for the goal API
-    static func getTrackGoalPayloadData(settings: Settings, userId: String?, eventName: String, context: VWOUserContext, eventProperties: [String: Any]) -> [String: Any] {
-        var properties = NetworkUtil.getEventBasePayload(userId: userId, eventName: eventName, visitorUserAgent: context.userAgent, ipAddress: context.ipAddress,sessionId: context.sessionId)
+
+    static func getTrackGoalPayloadData(settings: Settings, userId: String?, eventName: String, context: VWOUserContext, eventProperties: [String: Any], serviceContainer: ServiceContainer? = nil) -> [String: Any] {
+        var properties = NetworkUtil.getEventBasePayload(userId: userId, eventName: eventName, visitorUserAgent: context.userAgent, ipAddress: context.ipAddress, sessionId: context.sessionId, serviceContainer: serviceContainer)
+
         properties.d?.event?.props?.setIsCustomEvent(true)
         properties.d?.event?.props?.setAdditionalProperties(eventProperties)
         
-        LoggerService.log(level: .debug,
-                          key: "IMPRESSION_FOR_TRACK_GOAL",
-                          details: ["eventName": eventName,
-                                    "accountId": String(describing: settings.accountId),
-                                    "userId": userId ?? ""])
+        // Use instance logger if available, otherwise static logger
+        if let container = serviceContainer, let logger = container.getLoggerService() {
+            logger.log(level: .debug,
+                      key: "IMPRESSION_FOR_TRACK_GOAL",
+                      details: ["eventName": eventName,
+                                "accountId": String(describing: settings.accountId),
+                                "userId": userId ?? ""])
+        } else {
+            LoggerService.log(level: .debug,
+                              key: "IMPRESSION_FOR_TRACK_GOAL",
+                              details: ["eventName": eventName,
+                                        "accountId": String(describing: settings.accountId),
+                                        "userId": userId ?? ""])
+        }
                 
         let payloadDict: [String: Any] = properties.toDictionary()
         let cleanedPayload = removeNullValues(originalMap: payloadDict)
@@ -294,17 +357,28 @@ class NetworkUtil {
     }
     
     // Returns the payload data for the attribute API
-    static func getAttributePayloadData(settings: Settings, userId: String?, eventName: String,sessionId: Int64?, attributes: [String: Any]) -> [String: Any] {
-        var properties = NetworkUtil.getEventBasePayload(userId: userId, eventName: eventName, visitorUserAgent: nil, ipAddress: nil,sessionId: sessionId)
+
+    static func getAttributePayloadData(settings: Settings, userId: String?, eventName: String,sessionId: Int64?, attributes: [String: Any], serviceContainer: ServiceContainer? = nil) -> [String: Any] {
+        var properties = NetworkUtil.getEventBasePayload(userId: userId, eventName: eventName, visitorUserAgent: nil, ipAddress: nil, sessionId: sessionId, serviceContainer: serviceContainer)
+
         properties.d?.event?.props?.setIsCustomEvent(true)
         let visitorProp: [String: Any] = attributes
         properties.d?.visitor?.props = visitorProp
                 
-        LoggerService.log(level: .debug,
-                          key: "IMPRESSION_FOR_SYNC_VISITOR_PROP",
-                          details: ["eventName": eventName,
-                                    "accountId": String(describing: settings.accountId),
-                                    "userId": userId ?? ""])
+        // Use instance logger if available, otherwise static logger
+        if let container = serviceContainer, let logger = container.getLoggerService() {
+            logger.log(level: .debug,
+                      key: "IMPRESSION_FOR_SYNC_VISITOR_PROP",
+                      details: ["eventName": eventName,
+                                "accountId": String(describing: settings.accountId),
+                                "userId": userId ?? ""])
+        } else {
+            LoggerService.log(level: .debug,
+                              key: "IMPRESSION_FOR_SYNC_VISITOR_PROP",
+                              details: ["eventName": eventName,
+                                        "accountId": String(describing: settings.accountId),
+                                        "userId": userId ?? ""])
+        }
 
         
         let payloadDict: [String: Any] = properties.toDictionary()
@@ -313,13 +387,22 @@ class NetworkUtil {
     }
     
     // Returns the payload data for the messaging event
-    static func getMessagingEventPayload(messageType: String, message: String, eventName: String) -> [String: Any] {
+    static func getMessagingEventPayload(messageType: String, message: String, eventName: String, serviceContainer: ServiceContainer? = nil) -> [String: Any] {
+        let stringAccountId: String
+        let sdkKey: String
+        
+        if let container = serviceContainer {
+            stringAccountId = "\(container.getAccountId())"
+            sdkKey = container.getSdkKey()
+        } else {
+            // Fallback to static SettingsManager for backward compatibility
         let settingManager = SettingsManager.instance
-        let stringAccountId = "\(settingManager?.accountId ?? 0)"
-        let sdkKey = "\(settingManager?.sdkKey ?? "")"
+            stringAccountId = "\(settingManager?.accountId ?? 0)"
+            sdkKey = "\(settingManager?.sdkKey ?? "")"
+        }
         
         let userId = stringAccountId + "_" + sdkKey
-        var properties = NetworkUtil.getEventBasePayload(userId: userId, eventName: eventName, visitorUserAgent: nil, ipAddress: nil)
+        var properties = NetworkUtil.getEventBasePayload(userId: userId, eventName: eventName, visitorUserAgent: nil, ipAddress: nil, serviceContainer: serviceContainer)
         properties.d?.event?.props?.setProduct(Constants.PRODUCT_NAME)
         
         var data = [String: Any]()
@@ -337,14 +420,23 @@ class NetworkUtil {
     }
     
 
-    static func getSDKInitEventPayload(eventName: String, settingsFetchTime: Int64? = nil, sdkInitTime: Int64? = nil) -> [String: Any] {
-        let settingsManager = SettingsManager.instance
-        guard let accountId = settingsManager?.accountId, let sdkKey = settingsManager?.sdkKey else {
-            return [:] // Return an empty dictionary if either accountId or sdkKey is nil
+    static func getSDKInitEventPayload(eventName: String, settingsFetchTime: Int64? = nil, sdkInitTime: Int64? = nil, serviceContainer: ServiceContainer? = nil) -> [String: Any] {
+        // Use ServiceContainer if provided, otherwise fallback to SettingsManager
+        let accountId: Int
+        let sdkKey: String
+        
+        if let container = serviceContainer {
+            accountId = container.getAccountId()
+            sdkKey = container.getSdkKey()
+        } else if let settingsManager = SettingsManager.instance {
+            accountId = settingsManager.accountId
+            sdkKey = settingsManager.sdkKey
+        } else {
+            return [:] // Return an empty dictionary if neither ServiceContainer nor SettingsManager is available
         }
         
         let uniqueKey = "\(accountId)_\(sdkKey)"
-        var properties = NetworkUtil.getEventBasePayload(userId: uniqueKey, eventName: eventName, visitorUserAgent: nil, ipAddress: nil)
+        var properties = NetworkUtil.getEventBasePayload(userId: uniqueKey, eventName: eventName, visitorUserAgent: nil, ipAddress: nil, serviceContainer: serviceContainer)
         
         // Set the required fields as specified
         properties.d?.event?.props?.additionalProperties = [Constants.VWO_FS_ENVIRONMENT: sdkKey]
@@ -369,16 +461,37 @@ class NetworkUtil {
 
     
     // Sends a messaging event to DACDN
-    static func sendMessagingEvent(properties: [String: String], payload: [String: Any]) {
+    static func sendMessagingEvent(properties: [String: String], payload: [String: Any], serviceContainer: ServiceContainer? = nil) {
+        // Use ServiceContainer if provided, otherwise fallback to SettingsManager
+        let baseUrl: String
+        let port: Int
+        let accountId: Int?
+        let sdkKey: String?
         
-        let request = RequestModel(url: Constants.HOST_NAME,
+        if let container = serviceContainer {
+            baseUrl = UrlService.getBaseUrl(serviceContainer: container)
+            port = container.getSettingsManager()?.port ?? 0
+            accountId = container.getAccountId()
+            sdkKey = container.getSdkKey()
+        } else {
+            baseUrl = Constants.HOST_NAME
+            port = SettingsManager.instance?.port ?? 0
+            accountId = SettingsManager.instance?.accountId
+            sdkKey = SettingsManager.instance?.sdkKey
+        }
+        
+        var request = RequestModel(url: baseUrl,
                                    method: HTTPMethod.post.rawValue,
                                    path: UrlEnum.events.rawValue,
                                    query: properties,
                                    body: payload,
                                    headers: nil,
                                    scheme: Constants.HTTPS_PROTOCOL,
-                                   port: 0)
+                                   port: port)
+        
+        // Set account info in request for multi-instance support
+        request.accountId = accountId
+        request.sdkKey = sdkKey
         
         NetworkManager.postAsync(request) { result in
             
@@ -390,9 +503,23 @@ class NetworkUtil {
     
     
     // Sends a messaging event to DACDN
-    static func sendGatewayEvent(queryParams: [String: String], payload: [String: Any],eventName: String) {
-        let settingsManager = SettingsManager.instance
-        var request = RequestModel(url: UrlService.baseUrl,
+    static func sendGatewayEvent(queryParams: [String: String], payload: [String: Any], eventName: String, serviceContainer: ServiceContainer? = nil) {
+        // Use ServiceContainer if provided, otherwise fallback to SettingsManager.instance
+        let settingsManager: SettingsManager?
+        if let container = serviceContainer {
+            settingsManager = container.getSettingsManager()
+        } else {
+            settingsManager = SettingsManager.instance
+        }
+        
+        // Get instance-specific base URL
+        let baseUrl = UrlService.getBaseUrl(serviceContainer: serviceContainer)
+        
+        // Get account info for multi-instance support
+        let accountId = serviceContainer?.getAccountId()
+        let sdkKey = serviceContainer?.getSdkKey()
+        
+        var request = RequestModel(url: baseUrl,
                                    method: HTTPMethod.post.rawValue,
                                    path: UrlEnum.events.rawValue,
                                    query: queryParams,
@@ -402,6 +529,9 @@ class NetworkUtil {
                                    port: settingsManager?.port ?? 0)
         
         request.eventName = eventName
+        // Set account info in request for multi-instance support
+        request.accountId = accountId
+        request.sdkKey = sdkKey
         NetworkManager.postAsync(request) { result in
             
             if let error = result.errorMessage {
@@ -411,14 +541,35 @@ class NetworkUtil {
     }
     
     // Sends a POST request to the VWO server
-    static func sendPostApiRequest(properties: [String: String], payload: [String: Any], userAgent: String?, ipAddress: String?, campaignInfo: [String: Any]? = nil) {
+    static func sendPostApiRequest(properties: [String: String], payload: [String: Any], userAgent: String?, ipAddress: String?, campaignInfo: [String: Any]? = nil, serviceContainer: ServiceContainer? = nil) {
         NetworkManager.attachClient()
         
         let headers = createHeaders(userAgent: userAgent, ipAddress: ipAddress)
+        
+        // Use ServiceContainer if provided, otherwise fallback to SettingsManager
+        let baseUrl: String
+        let port: Int
+        let accountId: Int?
+        let sdkKey: String?
+        
+        if let container = serviceContainer {
+            baseUrl = UrlService.getBaseUrl(serviceContainer: container)
+            port = container.getSettingsManager()?.port ?? 0
+            accountId = container.getAccountId()
+            sdkKey = container.getSdkKey()
+        } else {
+            baseUrl = UrlService.baseUrl
+            port = SettingsManager.instance?.port ?? 0
+            accountId = SettingsManager.instance?.accountId
+            sdkKey = SettingsManager.instance?.sdkKey
+        }
     
-        var request = RequestModel(url: UrlService.baseUrl, method: HTTPMethod.post.rawValue, path: UrlEnum.events.rawValue, query: properties, body: payload, headers: headers, scheme: Constants.HTTPS_PROTOCOL, port: SettingsManager.instance?.port ?? 0)
+        var request = RequestModel(url: baseUrl, method: HTTPMethod.post.rawValue, path: UrlEnum.events.rawValue, query: properties, body: payload, headers: headers, scheme: Constants.HTTPS_PROTOCOL, port: port)
         
         request.campaignInfo = campaignInfo
+        // Set account info in request for multi-instance support
+        request.accountId = accountId
+        request.sdkKey = sdkKey
         
         NetworkManager.postAsync(request) { result in
                         
@@ -469,13 +620,25 @@ class NetworkUtil {
     }
     
     /// Returns the payload data for the debugger event.
-    /// - Parameter eventProps: The properties for the debugger event.
+    /// - Parameters:
+    ///   - eventProps: The properties for the debugger event.
+    ///   - serviceContainer: Optional ServiceContainer to use for account-specific context (for multi-instance support).
     /// - Returns: A dictionary containing the payload data.
-    static func getDebuggerEventPayload(eventProps: [String: Any] = [:]) -> [String: Any] {
-        let settingsManager = SettingsManager.instance
-        guard let accountId = settingsManager?.accountId, let sdkKey = settingsManager?.sdkKey else {
-            return [:] // Return an empty dictionary if either accountId or sdkKey is nil
+    static func getDebuggerEventPayload(eventProps: [String: Any] = [:], serviceContainer: ServiceContainer? = nil) -> [String: Any] {
+        // Use ServiceContainer if provided, otherwise fallback to SettingsManager.instance
+        let accountId: Int
+        let sdkKey: String
+        
+        if let container = serviceContainer {
+            accountId = container.getAccountId()
+            sdkKey = container.getSdkKey()
+        } else if let settingsManager = SettingsManager.instance {
+            accountId = settingsManager.accountId
+            sdkKey = settingsManager.sdkKey
+        } else {
+            return [:] // Return an empty dictionary if neither ServiceContainer nor SettingsManager is available
         }
+        
         var userId: String
         var shouldGenerateUUID = true
 
@@ -487,7 +650,7 @@ class NetworkUtil {
         }
 
         // Generate base payload
-        var properties = NetworkUtil.getEventBasePayload(userId: userId, eventName: EventEnum.VWO_DEBUGGER_EVENT.rawValue, visitorUserAgent: nil, ipAddress: nil, shouldGenerateUUID : shouldGenerateUUID)
+        var properties = NetworkUtil.getEventBasePayload(userId: userId, eventName: EventEnum.VWO_DEBUGGER_EVENT.rawValue, visitorUserAgent: nil, ipAddress: nil, shouldGenerateUUID: shouldGenerateUUID, serviceContainer: serviceContainer)
 
       
 
@@ -502,7 +665,7 @@ class NetworkUtil {
 
         properties.d?.event?.props = Props()
         var vwoMeta: [String: Any] = eventProps
-        vwoMeta["a"] = SettingsManager.instance?.accountId ?? ""
+        vwoMeta["a"] = accountId
         vwoMeta["product"] = Constants.PRODUCT_NAME
         vwoMeta["sn"] = SDKMetaUtil.name
         vwoMeta["sv"] = SDKMetaUtil.sdkVersion

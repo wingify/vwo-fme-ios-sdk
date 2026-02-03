@@ -35,10 +35,18 @@ class UrlService {
         }
     }
 
-    static var baseUrl: String {
-        /**
-         * Returns the base URL for the API requests
-         */
+    /**
+     * Returns the base URL for the API requests
+     * - Parameter serviceContainer: Optional ServiceContainer for instance-specific gateway service configuration
+     * - Returns: The base URL string
+     */
+    static func getBaseUrl(serviceContainer: ServiceContainer? = nil) -> String {
+        // If ServiceContainer is provided, use instance-specific configuration
+        if let container = serviceContainer {
+            return container.getBaseUrl()
+        }
+        
+        // Fallback to static behavior for backward compatibility
         let baseUrl: String = SettingsManager.instance?.hostname ?? ""
 
         if SettingsManager.instance?.isGatewayServiceProvided == true {
@@ -51,5 +59,13 @@ class UrlService {
         }
 
         return baseUrl
+    }
+    
+    /**
+     * Legacy static property for backward compatibility
+     * Uses SettingsManager.instance which may not be instance-specific
+     */
+    static var baseUrl: String {
+        return getBaseUrl(serviceContainer: nil)
     }
 }

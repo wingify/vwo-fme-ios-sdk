@@ -41,25 +41,57 @@ class UserIdUtil {
     
     /**
      * @param context The user context to process and update
+     * @param serviceContainer Optional ServiceContainer for instance-specific logging
      * @return Updated user context with resolved user ID
      */
-    func getUserId(context: VWOUserContext) -> VWOUserContext {
+    func getUserId(context: VWOUserContext, serviceContainer: ServiceContainer? = nil) -> VWOUserContext {
+        
+        // Helper function to log using instance logger if available, otherwise static logger
+        func log(level: LogLevelEnum, key: String, details: [String: String]? = nil) {
+            if let container = serviceContainer, let logger = container.getLoggerService() {
+                logger.log(level: level, key: key, details: details)
+            } else {
+                LoggerService.log(level: level, key: key, details: details)
+            }
+        }
+        
+        func logMessage(level: LogLevelEnum, message: String?) {
+            if let container = serviceContainer, let logger = container.getLoggerService() {
+                logger.log(level: level, message: message)
+            } else {
+                LoggerService.log(level: level, message: message)
+            }
+        }
         
         let updatedContext = context
         
         if let userId = updatedContext.id {
             
           if  userId.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty{
-                LoggerService.log(level: .error, key: "USERID_CANNOT_BE_BlANK", details: [:])
+                log(level: .error, key: "USERID_CANNOT_BE_BlANK", details: [:])
                 return updatedContext
             }
             
-            if AliasIdentifierManager.shared.isEnabled ?? false && AliasIdentifierManager.shared.isGatewayEnabled ?? false{
-            // Use semaphore to make async call synchronous
-            let semaphore = DispatchSemaphore(value: 0)
-            var resolvedId: String?
+            // Check alias settings for this specific account
+            let shouldUseAlias: Bool
+            let aliasManager: AliasIdentifierManager
+            
+            if let container = serviceContainer {
+                // Use instance-specific alias manager from ServiceContainer
+                aliasManager = container.getAliasIdentifierManager()
+                shouldUseAlias = aliasManager.isEnabled && aliasManager.isGatewayEnabled
+            } else {
+                // Fallback to shared for backward compatibility
+                aliasManager = AliasIdentifierManager.shared
+                shouldUseAlias = aliasManager.isEnabled && aliasManager.isGatewayEnabled
+            }
+            
+            if shouldUseAlias {
+                // Use semaphore to make async call synchronous
+                let semaphore = DispatchSemaphore(value: 0)
+                var resolvedId: String?
 
-                AliasIdentifierManager.shared.getAliasIfExistsAsync(tempID: userId) { userID in
+                aliasManager.getAliasIfExistsAsync(tempID: userId, serviceContainer: serviceContainer) { userID in
                     resolvedId = userID ?? userId
                     semaphore.signal()
                 }
@@ -69,22 +101,22 @@ class UserIdUtil {
                 
                 if let aliasID = resolvedId {
                     updatedContext.id = aliasID
-                    LoggerService.log(level: .info, key: "USER_ID_INFO", details: ["id": aliasID])
+                    log(level: .info, key: "USER_ID_INFO", details: ["id": aliasID])
                 } else {
                     updatedContext.id = userId
-                    LoggerService.log(level: .info, key: "USER_ID_INFO", details: ["id": userId])
+                    log(level: .info, key: "USER_ID_INFO", details: ["id": userId])
                 }
-            }else{
+            } else {
                 updatedContext.id = userId
-                LoggerService.log(level: .info, key: "USER_ID_INFO", details: ["id": userId])
+                log(level: .info, key: "USER_ID_INFO", details: ["id": userId])
             }
         } else if updatedContext.shouldUseDeviceIdAsUserId {
             if let deviceId = DeviceIDUtil().getDeviceID() {
                 updatedContext.id = deviceId
-                LoggerService.log(level: .info, key: "USER_ID_INFO", details: ["id": deviceId])
+                log(level: .info, key: "USER_ID_INFO", details: ["id": deviceId])
             }
         } else {
-            LoggerService.log(level: .error, message: "USER_ID_NULL")
+            logMessage(level: .error, message: "USER_ID_NULL")
         }
         
         return updatedContext

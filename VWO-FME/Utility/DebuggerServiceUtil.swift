@@ -46,17 +46,19 @@ class DebuggerServiceUtil {
     }
     
     /// Sends a debug event to VWO.
-    /// - Parameter eventProps: The properties for the event.
-    static func sendDebugEventToVWO(eventProps: [String: Any] = [:]) {
+    /// - Parameters:
+    ///   - eventProps: The properties for the event.
+    ///   - serviceContainer: Optional ServiceContainer to use for account-specific context (for multi-instance support).
+    static func sendDebugEventToVWO(eventProps: [String: Any] = [:], serviceContainer: ServiceContainer? = nil) {
         
         // Create query parameters
-        let properties = NetworkUtil.getEventsBaseProperties(eventName: EventEnum.VWO_DEBUGGER_EVENT.rawValue,visitorUserAgent: nil,ipAddress: nil)
+        let properties = NetworkUtil.getEventsBaseProperties(eventName: EventEnum.VWO_DEBUGGER_EVENT.rawValue, visitorUserAgent: nil, ipAddress: nil, serviceContainer: serviceContainer)
         
         // Create payload
-        let payload = NetworkUtil.getDebuggerEventPayload(eventProps: eventProps)
+        let payload = NetworkUtil.getDebuggerEventPayload(eventProps: eventProps, serviceContainer: serviceContainer)
         
         // Send event
-        NetworkUtil.sendGatewayEvent(queryParams: properties, payload: payload, eventName: EventEnum.VWO_DEBUGGER_EVENT.rawValue)
+        NetworkUtil.sendGatewayEvent(queryParams: properties, payload: payload, eventName: EventEnum.VWO_DEBUGGER_EVENT.rawValue, serviceContainer: serviceContainer)
         
     }
 }

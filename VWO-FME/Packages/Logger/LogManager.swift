@@ -33,18 +33,25 @@ internal class LogManager {
     private var prefix: String = ""
     private let logTransport: LogTransport?
     private var sentMessages: Set<String> = []
+    // Concurrent queue for thread-safe access to sentMessages (better performance than locks)
+    // Reads can happen concurrently, writes are serialized with barriers
+    private let sentMessagesQueue = DispatchQueue(label: "com.vwo.fme.logmanager.sentMessages", attributes: .concurrent)
 
     
     // Thread-safe singleton implementation
     private static var _instance: LogManager?
-    private static let lock = NSLock()
+    private static let instanceQueue = DispatchQueue(label: "com.vwo.fme.logmanager.instance", attributes: .concurrent)
     
     static var instance: LogManager? {
         get {
-            return _instance
+            return instanceQueue.sync {
+                return _instance
+            }
         }
         set {
-            _instance = newValue
+            instanceQueue.async(flags: .barrier) {
+                _instance = newValue
+            }
         }
     }
     
@@ -62,26 +69,24 @@ internal class LogManager {
     /// - Returns: A shared `LogManager` instance configured with the provided settings.
     ///
     /// - Note:
-    ///   This method uses double-checked locking to optimize performance by avoiding unnecessary locking
-    ///   after the instance has been initialized.
+    ///   This method uses double-checked locking pattern with concurrent queue to optimize performance.
     static func createInstance(config: [String: Any], logLevel: LogLevelEnum, logTransport: LogTransport?) -> LogManager {
-        // Quick check without lock first
-        if let existing = _instance {
+        // Quick check without barrier first (concurrent read)
+        if let existing = instanceQueue.sync(execute: { _instance }) {
             return existing
         }
         
-        // Only lock when we need to create
-        lock.lock()
-        defer { lock.unlock() }
-        
-        // Check again after acquiring lock
-        if let existing = _instance {
-            return existing
+        // Use barrier to ensure only one thread creates the instance
+        return instanceQueue.sync(flags: .barrier) {
+            // Check again after acquiring barrier
+            if let existing = _instance {
+                return existing
+            }
+            
+            // Create and store the instance
+            _instance = LogManager(config: config, logLevel: logLevel, logTransport: logTransport)
+            return _instance!
         }
-        
-        // Create and store the instance
-        _instance = LogManager(config: config, logLevel: logLevel, logTransport: logTransport)
-        return _instance!
     }
     
     /**
@@ -117,8 +122,9 @@ internal class LogManager {
      * - Parameters:
      *   - level: The log level for the message.
      *   - message: The message to be logged.
+     *   - serviceContainer: Optional ServiceContainer to use for error event sending (for multi-instance support).
      */
-    private func logMessage(level: LogLevelEnum, message: String?) {
+    private func logMessage(level: LogLevelEnum, message: String?, serviceContainer: ServiceContainer?) {
         var osLogType: OSLogType = .default
         switch level {
         case .trace, .debug:
@@ -130,7 +136,11 @@ internal class LogManager {
         case .error:
             osLogType = .error
         }
-        let formatMessage = "\(prefix.isEmpty ? "\(tag)" : "\(prefix)"): \(level.levelIndicator): \(message ?? "")"
+        
+        // Format the message: Since LogManager is a singleton and prefix is always empty (set by LoggerService),
+        // we always use the tag. The message may already contain an instance prefix from LoggerService.
+        let messageText = message ?? ""
+        let formatMessage = "\(tag): \(level.levelIndicator): \(messageText)"
         
         if let logTransport = self.logTransport {
             logTransport.log(logType: level.rawValue, message: formatMessage)
@@ -152,8 +162,32 @@ internal class LogManager {
         let requiredLevel = level
         let shouldLogMessage = configLevel.level <= requiredLevel.level
         if shouldLogMessage {
-            self.logMessage(level: level, message: message)
+            self.logMessage(level: level, message: message, serviceContainer: nil)
         }
+    }
+    
+    /**
+     * Logs a message if the specified log level is enabled.
+     * This overload accepts a ServiceContainer to ensure error events are sent with the correct account context.
+     *
+     * - Parameters:
+     *   - level: The log level for the message.
+     *   - message: The message to be logged.
+     *   - serviceContainer: Optional ServiceContainer to use for error event sending (for multi-instance support).
+     *   - skipLevelCheck: If true, skips the log level check (for use when level is already checked in LoggerService).
+     */
+    func log(level: LogLevelEnum, message: String?, serviceContainer: ServiceContainer?, skipLevelCheck: Bool = false) {
+        guard let message = message else { return }
+        
+        // Only check level if not already checked in LoggerService
+        if !skipLevelCheck {
+            let configLevel = self.level
+            let requiredLevel = level
+            let shouldLogMessage = configLevel.level <= requiredLevel.level
+            guard shouldLogMessage else { return }
+        }
+        
+        self.logMessage(level: level, message: message, serviceContainer: serviceContainer)
     }
     
     /**
@@ -163,24 +197,46 @@ internal class LogManager {
      * been previously sent. If all conditions are met, it sends the message event
      * and records the message to prevent future duplicate sends.
      *
-     * - Parameter message: The message to be sent as an event. If the message is
-     *   nil or empty, the method does nothing.
+     * Uses a concurrent queue with barriers for thread-safe access, allowing concurrent reads
+     * while serializing writes. This provides better performance than locks and prevents
+     * blocking during initialization of multiple instances.
+     *
+     * - Parameters:
+     *   - message: The message to be sent as an event. If the message is
+     *     nil or empty, the method does nothing.
+     *   - serviceContainer: Optional ServiceContainer to use for error event sending (for multi-instance support).
      */
-    private func sendMessageEventIfNeeded(message: String?) {
-        if let message = message, !message.isEmpty, !sentMessages.contains(message) {
-            sentMessages.insert(message)
-            LogMessageUtil.sendMessageEvent(message: message)
+    private func sendMessageEventIfNeeded(message: String?, serviceContainer: ServiceContainer?) {
+        guard let message = message, !message.isEmpty else { return }
+        
+        // Use concurrent queue with barrier for thread-safe access
+        // Concurrent reads are allowed, but writes are serialized with barriers
+        // This provides better performance than locks and doesn't block other operations
+        var shouldSendEvent = false
+        
+        // Atomic check-and-insert using barrier to ensure thread safety
+        sentMessagesQueue.sync(flags: .barrier) { [weak self] in
+            guard let self = self else { return }
+            if !self.sentMessages.contains(message) {
+                self.sentMessages.insert(message)
+                shouldSendEvent = true
+            }
+        }
+        
+        // Send event outside the queue to avoid blocking
+        if shouldSendEvent {
+            LogMessageUtil.sendMessageEvent(message: message, serviceContainer: serviceContainer)
         }
     }
     
-     func errorLog(key: String, data: [String: Any]? = nil, debugData: [String: Any]? = nil,shouldSendToVWO: Bool ) {
+     func errorLog(key: String, data: [String: Any]? = nil, debugData: [String: Any]? = nil, shouldSendToVWO: Bool, serviceContainer: ServiceContainer? = nil) {
         // Lookup message template from errorMessages dictionary
          let template = LoggerService.getLogFile(level: .error)
         
         // Format the message using the template and data
         let message = LogMessageUtil.buildMessage(template: template[key], data: data) ?? "Unknown error"
        
-         self.log(level: .error, message: message)
+         self.log(level: .error, message: message, serviceContainer: serviceContainer)
          
         // Conditionally send to VWO
         if shouldSendToVWO {
@@ -199,7 +255,7 @@ internal class LogManager {
             debugEventProps["cg"] = DebuggerCategoryEnum.ERROR.rawValue
             debugEventProps["msg"] = message
 
-            DebuggerServiceUtil.sendDebugEventToVWO(eventProps: debugEventProps)
+            DebuggerServiceUtil.sendDebugEventToVWO(eventProps: debugEventProps, serviceContainer: serviceContainer)
         }
     }
 }

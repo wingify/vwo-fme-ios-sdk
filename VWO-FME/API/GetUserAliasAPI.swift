@@ -73,9 +73,10 @@ class GetUserAliasAPI {
      * @param userIds Array of temporary user IDs to resolve
      * @param accountId VWO account identifier
      * @param sdkKey SDK authentication key
+     * @param loggerService Optional LoggerService for instance-specific logging
      * @param completion Completion handler for the async result
      */
-    func getUserAlias(userIds: [String], accountId: Int, sdkKey: String, completion: @escaping (Result<GetUserAliasResponse, Error>) -> Void) {
+    func getUserAlias(userIds: [String], accountId: Int, sdkKey: String, loggerService: LoggerService? = nil, completion: @escaping (Result<GetUserAliasResponse, Error>) -> Void) {
         
         // Create query parameters with array of userIds in JSON format
         let queryParams: [String: String] = [
@@ -98,6 +99,7 @@ class GetUserAliasAPI {
         // Create network client and make request
         let networkClient = NetworkClient()
         networkClient.GET(request: requestModel) { response in
+            print(response)
             if response.isResponseOK() {
                 if let data = response.data2 {
                     do {
@@ -108,29 +110,54 @@ class GetUserAliasAPI {
                         let response = GetUserAliasResponse(aliasMappings: aliasMappings)
                         
                         // Log success
-                        LoggerService.log(level: .info, key: "GET_ALIAS_SUCCESS", details: ["ids": userIds.joined(separator: ",")])
+                        if let logger = loggerService {
+                            logger.log(level: .info, key: "GET_ALIAS_SUCCESS", details: ["ids": userIds.joined(separator: ",")])
+                        } else {
+                            LoggerService.log(level: .info, key: "GET_ALIAS_SUCCESS", details: ["ids": userIds.joined(separator: ",")])
+                        }
                         
                         completion(.success(response))
                     } catch {
-                        LoggerService.log(level: .error, key: "GET_ALIAS_FAILED", details: [
-                            "error": error.localizedDescription,
-                            "ids": userIds.joined(separator: ",")
-                        ])
+                        if let logger = loggerService {
+                            logger.errorLog(key: "GET_ALIAS_FAILED", data: [
+                                "error": error.localizedDescription,
+                                "ids": userIds.joined(separator: ",")
+                            ])
+                        } else {
+                            LoggerService.errorLog(key: "GET_ALIAS_FAILED", data: [
+                                "error": error.localizedDescription,
+                                "ids": userIds.joined(separator: ",")
+                            ])
+                        }
                         completion(.failure(error))
                     }
                 } else {
-                    LoggerService.log(level: .error, key: "GET_ALIAS_FAILED", details: [
-                        "error": "No data received",
-                        "ids": userIds.joined(separator: ",")
-                    ])
+                    if let logger = loggerService {
+                        logger.errorLog(key: "GET_ALIAS_FAILED", data: [
+                            "error": "No data received",
+                            "ids": userIds.joined(separator: ",")
+                        ])
+                    } else {
+                        LoggerService.errorLog(key: "GET_ALIAS_FAILED", data: [
+                            "error": "No data received",
+                            "ids": userIds.joined(separator: ",")
+                        ])
+                    }
                     let error = NSError(domain: "GetUserAliasAPI", code: 0, userInfo: [NSLocalizedDescriptionKey: "No data received"])
                     completion(.failure(error))
                 }
             } else {
-                LoggerService.log(level: .error, key: "GET_ALIAS_FAILED", details: [
-                    "error": "Request failed with status code: \(response.statusCode)",
-                    "ids": userIds.joined(separator: ",")
-                ])
+                if let logger = loggerService {
+                    logger.errorLog(key: "GET_ALIAS_FAILED", data: [
+                        "error": "Request failed with status code: \(response.statusCode)",
+                        "ids": userIds.joined(separator: ",")
+                    ])
+                } else {
+                    LoggerService.errorLog(key: "GET_ALIAS_FAILED", data: [
+                        "error": "Request failed with status code: \(response.statusCode)",
+                        "ids": userIds.joined(separator: ",")
+                    ])
+                }
                 let error = NSError(domain: "GetUserAliasAPI", code: response.statusCode, userInfo: [NSLocalizedDescriptionKey: "Request failed with status code: \(response.statusCode)"])
                 completion(.failure(error))
             }

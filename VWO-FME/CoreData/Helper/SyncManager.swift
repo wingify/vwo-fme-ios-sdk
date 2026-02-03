@@ -19,9 +19,76 @@ import CoreData
 
 /**
  * Manages synchronization of event data with the server.
+ * Each instance is tied to a specific ServiceContainer for multi-instance support.
+ * 
+ * IMPORTANT: For multi-instance support, use the SyncManager instance from ServiceContainer,
+ * not the static `shared` singleton. The `shared` singleton is kept only for backward compatibility
+ * and should not be used in new multi-instance code.
+ * 
+ * Each instance maintains its own:
+ * - Timer (dispatchTimer)
+ * - Account identifiers (accountId, sdkKey)
+ * - Batch settings (minimumEventCount, timeInterval)
+ * - Background queue (unique per instance)
+ * 
+ * Calling `stopSyncing()` on an instance will only stop that instance's timer,
+ * not affecting other instances.
  */
 class SyncManager {
-    static let shared = SyncManager()
+    // Static registry for backward compatibility (similar to AliasIdentifierManager pattern)
+    private static var _instances: [String: SyncManager] = [:]
+    private static let instanceQueue = DispatchQueue(label: "com.vwo.fme.syncmanager.instances", attributes: .concurrent)
+    
+    /**
+     * Legacy singleton for backward compatibility.
+     * Returns an instance based on SettingsManager.instance if available.
+     * WARNING: In multi-instance scenarios, prefer using SyncManager from ServiceContainer.
+     */
+    static var shared: SyncManager {
+        if let settingsManager = SettingsManager.instance {
+            let accountKey = "\(settingsManager.accountId)_\(settingsManager.sdkKey)"
+            return instanceQueue.sync {
+                if let instance = _instances[accountKey] {
+                    return instance
+                }
+                // Create a temporary instance for backward compatibility
+                let instance = SyncManager()
+                instance.accountId = settingsManager.accountId
+                instance.sdkKey = settingsManager.sdkKey
+                return instance
+            }
+        }
+        // Fallback: create a temporary instance
+        return SyncManager()
+    }
+    
+    /**
+     * Static method for backward compatibility - gets instance by account key
+     */
+    static func getInstance(accountId: Int, sdkKey: String) -> SyncManager? {
+        let accountKey = "\(accountId)_\(sdkKey)"
+        return instanceQueue.sync {
+            return _instances[accountKey]
+        }
+    }
+    
+    /**
+     * Static method to remove instance from registry when account is cleared
+     */
+    static func removeInstance(accountId: Int, sdkKey: String) {
+        let accountKey = "\(accountId)_\(sdkKey)"
+        instanceQueue.async(flags: .barrier) {
+            _instances.removeValue(forKey: accountKey)
+        }
+    }
+    
+    // Instance-specific ServiceContainer reference for multi-instance support
+    private weak var serviceContainer: ServiceContainer?
+    
+    // Instance-specific account identifiers
+    private var accountId: Int = 0
+    private var sdkKey: String = ""
+    
     private var dispatchTimer: DispatchSourceTimer?
     var timerNextFireDate = Date()
 
@@ -33,14 +100,36 @@ class SyncManager {
     
     // Flag indicating if online batching is allowed
     var isOnlineBatchingAllowed : Bool = false
-    private let backgroundQueue = DispatchQueue(label: "com.vwo.fme.timer.syncManager", qos: .background, attributes: .concurrent)
+    // Instance-specific background queue for timer (unique per instance to avoid conflicts)
+    private let backgroundQueue: DispatchQueue
     private let coreDataStack = CoreDataStack.shared
     private let eventManager = EventDataManager.shared
-    private let initLock = NSLock()
+    // Concurrent queue for initialization (better performance than locks)
+    private let initQueue = DispatchQueue(label: "com.vwo.fme.syncmanager.init", attributes: .concurrent)
     
     var isOngoing: Bool = false
 
-    private init() {}
+    internal init() {
+        // Create instance-specific serial queue for timer (DispatchSourceTimer should use serial queue)
+        let uniqueId = UUID().uuidString
+        self.backgroundQueue = DispatchQueue(label: "com.vwo.fme.timer.syncManager.\(uniqueId)", qos: .background)
+    }
+    
+    /**
+     * Sets the ServiceContainer reference for this SyncManager instance.
+     * - Parameter serviceContainer: The ServiceContainer instance
+     */
+    func setServiceContainer(_ serviceContainer: ServiceContainer) {
+        self.serviceContainer = serviceContainer
+        self.accountId = serviceContainer.getAccountId()
+        self.sdkKey = serviceContainer.getSdkKey()
+        
+        // Register this instance for static lookup
+        let accountKey = "\(accountId)_\(sdkKey)"
+        SyncManager.instanceQueue.async(flags: .barrier) {
+            SyncManager._instances[accountKey] = self
+        }
+    }
     
     /**
      * Initializes the SyncManager with batch size and time interval.
@@ -50,14 +139,14 @@ class SyncManager {
      *   - timeInterval: Time interval for periodic syncs in milliseconds.
      */
     func initialize(minBatchSize: Int?, timeInterval: Int64?) {
-        initLock.lock()
-        defer { initLock.unlock() }
-        
-        self.isOnlineBatchingAllowed = self.checkOnlineBatchingAllowed(batchSize: minBatchSize, batchUploadInterval: timeInterval)
-        self.minimumEventCount = minBatchSize ?? 0
-        self.timeInterval = timeInterval ?? (isOnlineBatchingAllowed ? Constants.DEFAULT_BATCH_UPLOAD_INTERVAL : 0)
-        if self.timeInterval > 0 {
-            self.startSyncing()
+        initQueue.sync(flags: .barrier) { [weak self] in
+            guard let self = self else { return }
+            self.isOnlineBatchingAllowed = self.checkOnlineBatchingAllowed(batchSize: minBatchSize, batchUploadInterval: timeInterval)
+            self.minimumEventCount = minBatchSize ?? 0
+            self.timeInterval = timeInterval ?? (self.isOnlineBatchingAllowed ? Constants.DEFAULT_BATCH_UPLOAD_INTERVAL : 0)
+            if self.timeInterval > 0 {
+                self.startSyncing()
+            }
         }
     }
     
@@ -89,11 +178,9 @@ class SyncManager {
         self.dispatchTimer?.schedule(deadline: .now() + timeIntervalSeconds, repeating: timeIntervalSeconds)
         self.dispatchTimer?.setEventHandler { [weak self] in
             guard let self = self else { return }
-            let currentTime = Date()
-            let tolerance: TimeInterval = 1.0 // 1 second tolerance
-            let shouldIgnoreThreshold = currentTime >= self.timerNextFireDate.addingTimeInterval(-tolerance)
-            self.timerNextFireDate = currentTime.addingTimeInterval(timeIntervalSeconds)
-            self.syncSavedEvents(ignoreThreshold: shouldIgnoreThreshold)
+            // Always use ignoreThreshold=true for timer-based triggers to ensure time interval works
+            // This ensures that time-based batch processing works regardless of minimum batch size
+            self.syncSavedEvents(ignoreThreshold: true)
         }
         self.dispatchTimer?.resume()
     }
@@ -124,10 +211,33 @@ class SyncManager {
         }
         
         self.isOngoing = true
-        self.coreDataStack.fetchManagedObjects { [weak self] events, error in
+        
+        // Debug: Verify which instance this SyncManager belongs to
+        
+        // Fetch events filtered by this instance's accountId and sdkKey
+        self.coreDataStack.fetchManagedObjects(accountId: Int64(self.accountId), sdkKey: self.sdkKey) { [weak self] events, error in
             guard let self = self else { return }
             guard let events = events, !events.isEmpty else {
                 self.isOngoing = false
+                // If triggered by time interval and no events, still log that batch processing was attempted
+                if ignoreThreshold && self.isOnlineBatchingAllowed {
+                    // Try to get logger from serviceContainer first, then fallback to getting by accountId/sdkKey
+                    var loggerService = self.serviceContainer?.getLoggerService()
+                    if loggerService == nil && self.accountId > 0 && !self.sdkKey.isEmpty {
+                        loggerService = LoggerService.getInstance(accountId: self.accountId, sdkKey: self.sdkKey)
+                    }
+                    if let logger = loggerService {
+                        logger.log(level: .info, key: "BATCH_PROCESSING_FINISHED", details: [
+                            "name": "time interval",
+                            "status": "no events to upload"
+                        ])
+                    } else {
+                        LoggerService.log(level: .info, key: "BATCH_PROCESSING_FINISHED", details: [
+                            "name": "time interval",
+                            "status": "no events to upload"
+                        ])
+                    }
+                }
                 return
             }
             
@@ -141,18 +251,54 @@ class SyncManager {
             }
             
             let triggerForOnlineBatching = ignoreThreshold ? "time interval" : "minimum batch size"
-            if self.isOnlineBatchingAllowed {
-                LoggerService.log(level: .info, key: "BATCH_PROCESSING_STARTED", details: ["name": triggerForOnlineBatching])
+            
+            // Use instance-specific logger from ServiceContainer, with fallback to get by accountId/sdkKey
+            var loggerService = self.serviceContainer?.getLoggerService()
+            if loggerService == nil && self.accountId > 0 && !self.sdkKey.isEmpty {
+                loggerService = LoggerService.getInstance(accountId: self.accountId, sdkKey: self.sdkKey)
             }
-            self.eventManager.uploadEvents(events: events) { success, eventsData  in
+            
+            if self.isOnlineBatchingAllowed {
+                if let logger = loggerService {
+                    logger.log(level: .info, key: "BATCH_PROCESSING_STARTED", details: ["name": triggerForOnlineBatching])
+                } else {
+                    // Fallback to static log if no instance found
+                    LoggerService.log(level: .info, key: "BATCH_PROCESSING_STARTED", details: ["name": triggerForOnlineBatching])
+                }
+            }
+            
+            self.eventManager.uploadEvents(events: events, serviceContainer: self.serviceContainer) { success, eventsData  in
                 self.isOngoing = false
                 if success {
-                    self.eventManager.deleteEvents(data: eventsData) { success in
+                    self.eventManager.deleteEvents(data: eventsData) { deleteSuccess in
                         if self.isOnlineBatchingAllowed {
+                            if let logger = loggerService {
+                                logger.log(level: .info,
+                                          key: "BATCH_PROCESSING_FINISHED",
+                                          details: ["name": triggerForOnlineBatching,
+                                                    "status": deleteSuccess ? "success" : "failed"])
+                            } else {
+                                // Fallback to static log if no instance found
+                                LoggerService.log(level: .info,
+                                                  key: "BATCH_PROCESSING_FINISHED",
+                                                  details: ["name": triggerForOnlineBatching,
+                                                            "status": deleteSuccess ? "success" : "failed"])
+                            }
+                        }
+                    }
+                } else {
+                    // Log failure even if upload failed
+                    if self.isOnlineBatchingAllowed {
+                        if let logger = loggerService {
+                            logger.log(level: .info,
+                                      key: "BATCH_PROCESSING_FINISHED",
+                                      details: ["name": triggerForOnlineBatching,
+                                                "status": "failed"])
+                        } else {
                             LoggerService.log(level: .info,
                                               key: "BATCH_PROCESSING_FINISHED",
                                               details: ["name": triggerForOnlineBatching,
-                                                        "status": success ? "success" : "failed"])
+                                                        "status": "failed"])
                         }
                     }
                 }

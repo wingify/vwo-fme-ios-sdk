@@ -38,7 +38,8 @@ class MegUtil {
                                groupId: Int,
                                evaluatedFeatureMap: inout [String: Any],
                                context: VWOUserContext,
-                               storageService: StorageService) -> Variation? {
+                               storageService: StorageService,
+                               serviceContainer: ServiceContainer) -> Variation? {
         
         // Initialize variables to track features to skip and campaign mappings
         var featureToSkip: [String] = [String]()
@@ -65,7 +66,8 @@ class MegUtil {
                 evaluatedFeatureMap: &evaluatedFeatureMap,
                 featureToSkip: &featureToSkip,
                 context: context,
-                storageService: storageService)
+                storageService: storageService,
+                serviceContainer: serviceContainer)
             
             // If rollout rule is passed, process linked campaigns
             if isRolloutRulePassed {
@@ -100,7 +102,7 @@ class MegUtil {
         }
         
         // Determine eligible campaigns and find the winner
-        let eligibleCampaignsMap = getEligibleCampaigns(settings: settings, campaignMap: campaignMap, context: context, storageService: storageService)
+        let eligibleCampaignsMap = getEligibleCampaigns(settings: settings, campaignMap: campaignMap, context: context, storageService: storageService, serviceContainer: serviceContainer)
         let eligibleCampaigns = eligibleCampaignsMap["eligibleCampaigns"] as? [Campaign]
         let eligibleCampaignsWithStorage = eligibleCampaignsMap["eligibleCampaignsWithStorage"] as? [Campaign]
         
@@ -159,7 +161,8 @@ class MegUtil {
                                                       evaluatedFeatureMap: inout [String: Any],
                                                       featureToSkip: inout [String],
                                                       context: VWOUserContext,
-                                                      storageService: StorageService) -> Bool {
+                                                      storageService: StorageService,
+                                                      serviceContainer: ServiceContainer) -> Bool {
         
         // Check if the feature key is available
         guard let featureKey = feature.key else { return false }
@@ -187,6 +190,7 @@ class MegUtil {
                                                                             evaluatedFeatureMap: &evaluatedFeatureMap,
                                                                             megGroupWinnerCampaigns: &megGroupWinnerCampaignsTemp,
                                                                             storageService: storageService,
+                                                                            serviceContainer: serviceContainer,
                                                                             decision: &decisionTemp)
                 if preSegmentationResult["preSegmentationResult"] as? Bool == true {
                     ruleToTestForTraffic = rule
@@ -196,7 +200,7 @@ class MegUtil {
             
             // If a rule passes pre-segmentation, evaluate traffic
             if let ruleToTestForTraffic = ruleToTestForTraffic {
-                if let variation = DecisionUtil.evaluateTrafficAndGetVariation(settings: settings, campaign: ruleToTestForTraffic, userId: context.id) {
+                if let variation = DecisionUtil.evaluateTrafficAndGetVariation(settings: settings, campaign: ruleToTestForTraffic, userId: context.id, serviceContainer: serviceContainer) {
                     var rollOutInformation: [String: Any] = [:]
                     rollOutInformation["rolloutId"] = ruleToTestForTraffic.id
                     rollOutInformation["rolloutKey"] = ruleToTestForTraffic.key
@@ -227,7 +231,7 @@ class MegUtil {
      *   - storageService: The service used for storage operations.
      * - Returns: A dictionary containing eligible and ineligible campaigns.
      */
-    private static func getEligibleCampaigns(settings: Settings, campaignMap: [String: [Campaign]], context: VWOUserContext, storageService: StorageService) -> [String: Any] {
+    private static func getEligibleCampaigns(settings: Settings, campaignMap: [String: [Campaign]], context: VWOUserContext, storageService: StorageService, serviceContainer: ServiceContainer) -> [String: Any] {
         
         // Initialize lists for eligible and ineligible campaigns
         var eligibleCampaigns: [Campaign] = []
@@ -260,7 +264,7 @@ class MegUtil {
                 }
                 
                 // Evaluate pre-segmentation and user participation
-                if CampaignDecisionService().getPreSegmentationDecision(campaign: campaign, context: context) && CampaignDecisionService().isUserPartOfCampaign(userId: context.id, campaign: campaign) {
+                if CampaignDecisionService().getPreSegmentationDecision(campaign: campaign, context: context, serviceContainer: serviceContainer) && CampaignDecisionService().isUserPartOfCampaign(userId: context.id, campaign: campaign) {
                     LoggerService.log(level: .info,
                                       key: "MEG_CAMPAIGN_ELIGIBLE",
                                       details: ["campaignKey": campaign.type == CampaignTypeEnum.ab.rawValue ? "\(campaign.key ?? "--")" : "\(campaign.name ?? "--")_\(campaign.ruleKey ?? "--")",

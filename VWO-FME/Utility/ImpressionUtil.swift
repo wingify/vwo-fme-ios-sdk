@@ -34,18 +34,21 @@ class ImpressionUtil {
      *   - campaignId: The ID of the campaign.
      *   - variationId: The ID of the variation shown to the user.
      *   - context: The user context model containing user-specific data.
+     *   - serviceContainer: ServiceContainer instance for service access.
      */
     static func createAndSendImpressionForVariationShown(
         settings: Settings,
         campaignId: Int,
         variationId: Int,
-        context: VWOUserContext
+        context: VWOUserContext,
+        serviceContainer: ServiceContainer
     ) {
         // Get base properties for the event
         let properties = NetworkUtil.getEventsBaseProperties(
             eventName: EventEnum.vwoVariationShown.rawValue,
             visitorUserAgent: encodeURIComponent(context.userAgent),
-            ipAddress: context.ipAddress
+            ipAddress: context.ipAddress,
+            serviceContainer: serviceContainer
         )
         
         // Construct payload data for tracking the user
@@ -58,7 +61,8 @@ class ImpressionUtil {
             visitorUserAgent: context.userAgent,
             ipAddress: context.ipAddress,
             sessionId:context.sessionId,
-            context: context
+            context: context,
+            serviceContainer: serviceContainer
         )
         
         let campaignKeyWithFeatureName = CampaignUtil.getCampaignKeyFromCampaignId(settings: settings, campaignId: campaignId)
@@ -80,7 +84,8 @@ class ImpressionUtil {
                            "variationName": variationName,
                            "featureName": featureName,
                            "campaignType": campaignType
-                          ]
+                          ],
+            serviceContainer: serviceContainer
         )
     }
     

@@ -22,9 +22,10 @@ class CampaignDecisionService {
      * This method is used to check if the user is part of the campaign.
      * @param userId  User ID for which the check is to be performed.
      * @param campaign CampaignModel object containing the campaign settings.
+     * @param serviceContainer  Optional ServiceContainer for instance-specific logging.
      * @return  boolean value indicating if the user is part of the campaign.
      */
-    func isUserPartOfCampaign(userId: String?, campaign: Campaign?) -> Bool {
+    func isUserPartOfCampaign(userId: String?, campaign: Campaign?, serviceContainer: ServiceContainer? = nil) -> Bool {
         guard let campaign = campaign, let campaignId = campaign.id , let userId = userId else {
             return false
         }
@@ -47,15 +48,28 @@ class CampaignDecisionService {
         // Check if user is part of campaign
         let isUserPart = valueAssignedToUser != 0 && valueAssignedToUser <= Int(trafficAllocation)
         
-        LoggerService.log(
-            level: .info,
-            key: "USER_PART_OF_CAMPAIGN",
-            details: [
-                "userId": userId,
-                "campaignKey": campaign.type == CampaignTypeEnum.ab.rawValue ? "\(campaign.key ?? "--")" : "\(campaign.name ?? "--")_\(campaign.ruleKey ?? "--")",
-                "notPart": isUserPart ? "" : "not"
-            ]
-        )
+        // Use instance-specific logger if available, otherwise static logger
+        if let logger = serviceContainer?.getLoggerService() {
+            logger.log(
+                level: .info,
+                key: "USER_PART_OF_CAMPAIGN",
+                details: [
+                    "userId": userId,
+                    "campaignKey": campaign.type == CampaignTypeEnum.ab.rawValue ? "\(campaign.key ?? "--")" : "\(campaign.name ?? "--")_\(campaign.ruleKey ?? "--")",
+                    "notPart": isUserPart ? "" : "not"
+                ]
+            )
+        } else {
+            LoggerService.log(
+                level: .info,
+                key: "USER_PART_OF_CAMPAIGN",
+                details: [
+                    "userId": userId,
+                    "campaignKey": campaign.type == CampaignTypeEnum.ab.rawValue ? "\(campaign.key ?? "--")" : "\(campaign.name ?? "--")_\(campaign.ruleKey ?? "--")",
+                    "notPart": isUserPart ? "" : "not"
+                ]
+            )
+        }
         return isUserPart
     }
     
@@ -92,9 +106,10 @@ class CampaignDecisionService {
      * @param userId  User ID for which the bucketing is to be performed.
      * @param accountId  Account ID for which the bucketing is to be performed.
      * @param campaign  CampaignModel object containing the campaign settings.
+     * @param serviceContainer  Optional ServiceContainer for instance-specific logging.
      * @return  VariationModel object containing the variation allotted to the user.
      */
-    func bucketUserToVariation(userId: String?, accountId: String, campaign: Campaign?) -> Variation? {
+    func bucketUserToVariation(userId: String?, accountId: String, campaign: Campaign?, serviceContainer: ServiceContainer? = nil) -> Variation? {
         guard let campaign = campaign, let campaignId = campaign.id, let userId = userId else {
             return nil
         }
@@ -111,17 +126,32 @@ class CampaignDecisionService {
         let hashValue = DecisionMaker.generateHashValue(hashKey: bucketKey)
         let bucketValue = DecisionMaker.generateBucketValue(hashValue: hashValue, maxValue: Constants.MAX_TRAFFIC_VALUE, multiplier: multiplier)
         
-        LoggerService.log(
-            level: .debug,
-            key: "USER_BUCKET_TO_VARIATION",
-            details: [
-                "userId": userId,
-                "campaignKey": campaign.ruleKey ?? "",
-                "percentTraffic": "\(percentTraffic ?? 0)",
-                "bucketValue": "\(bucketValue)",
-                "hashValue": "\(hashValue)"
-            ]
-        )
+        // Use instance-specific logger if available, otherwise static logger
+        if let logger = serviceContainer?.getLoggerService() {
+            logger.log(
+                level: .debug,
+                key: "USER_BUCKET_TO_VARIATION",
+                details: [
+                    "userId": userId,
+                    "campaignKey": campaign.ruleKey ?? "",
+                    "percentTraffic": "\(percentTraffic ?? 0)",
+                    "bucketValue": "\(bucketValue)",
+                    "hashValue": "\(hashValue)"
+                ]
+            )
+        } else {
+            LoggerService.log(
+                level: .debug,
+                key: "USER_BUCKET_TO_VARIATION",
+                details: [
+                    "userId": userId,
+                    "campaignKey": campaign.ruleKey ?? "",
+                    "percentTraffic": "\(percentTraffic ?? 0)",
+                    "bucketValue": "\(bucketValue)",
+                    "hashValue": "\(hashValue)"
+                ]
+            )
+        }
             
         return CampaignDecisionService.getVariation(variations: campaign.variations ?? [], bucketValue: bucketValue)
     }
@@ -130,9 +160,10 @@ class CampaignDecisionService {
      * This method is used to analyze the pre-segmentation decision for the user in the campaign.
      * @param campaign  CampaignModel object containing the campaign settings.
      * @param context  VWOUserContext object containing the user context.
+     * @param serviceContainer ServiceContainer instance for service access.
      * @return  boolean value indicating if the user passes the pre-segmentation.
      */
-    func getPreSegmentationDecision(campaign: Campaign, context: VWOUserContext) -> Bool {
+    func getPreSegmentationDecision(campaign: Campaign, context: VWOUserContext, serviceContainer: ServiceContainer) -> Bool {
         
         let campaignType = campaign.type
         let segments: [String: Any]
@@ -146,14 +177,14 @@ class CampaignDecisionService {
         }
         
         if segments.isEmpty {
-            LoggerService.log(level: .info, key: "SEGMENTATION_SKIP", details: [
+            serviceContainer.getLoggerService()?.log(level: .info, key: "SEGMENTATION_SKIP", details: [
                 "userId": context.id ?? "",
                 "campaignKey": campaign.type == CampaignTypeEnum.ab.rawValue ? "\(campaign.key ?? "--")" : "\(campaign.name ?? "--")_\(campaign.ruleKey ?? "--")",
             ])
             return true
         } else {
-            let preSegmentationResult = SegmentationManager.validateSegmentation(dsl: segments, properties: context.customVariables)
-            LoggerService.log(level: .info, key: "SEGMENTATION_STATUS", details: [
+            let preSegmentationResult = serviceContainer.getSegmentationManager().validateSegmentation(dsl: segments, properties: context.customVariables)
+            serviceContainer.getLoggerService()?.log(level: .info, key: "SEGMENTATION_STATUS", details: [
                 "userId": context.id ?? "",
                 "campaignKey": campaign.type == CampaignTypeEnum.ab.rawValue ? "\(campaign.key ?? "--")" : "\(campaign.name ?? "--")_\(campaign.ruleKey ?? "--")",
                 "status": preSegmentationResult ? "passed" : "failed"
@@ -170,12 +201,12 @@ class CampaignDecisionService {
      * @param campaign  CampaignModel object containing the campaign settings.
      * @return  VariationModel object containing the variation allotted to the user.
      */
-    func getVariationAllotted(userId: String?, accountId: String, campaign: Campaign) -> Variation? {
-        let isUserPart = isUserPartOfCampaign(userId: userId, campaign: campaign)
+    func getVariationAllotted(userId: String?, accountId: String, campaign: Campaign, serviceContainer: ServiceContainer? = nil) -> Variation? {
+        let isUserPart = isUserPartOfCampaign(userId: userId, campaign: campaign, serviceContainer: serviceContainer)
         if campaign.type == CampaignTypeEnum.rollout.rawValue || campaign.type == CampaignTypeEnum.personalize.rawValue {
             return isUserPart ? campaign.variations?[0] : nil
         } else {
-            return isUserPart ? bucketUserToVariation(userId: userId, accountId: accountId, campaign: campaign) : nil
+            return isUserPart ? bucketUserToVariation(userId: userId, accountId: accountId, campaign: campaign, serviceContainer: serviceContainer) : nil
         }
     }
 }

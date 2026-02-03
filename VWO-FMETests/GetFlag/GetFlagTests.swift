@@ -70,8 +70,12 @@ final class GetFlagTests: XCTestCase {
                 let processedMockSetting = mockClient.processedSettings!
                 
                 let contextData = VWOUserContext(id: item.context.id!, customVariables: item.context.customVariables!)
+                // Create ServiceContainer for this call
+                let builder = VWOBuilder(options: mockOptions)
+                _ = builder.setLogger().setSettingsManager()
+                let container = builder.createServiceContainer(processedSettings: processedMockSetting, options: mockOptions)
                 
-                GetFlagAPI.getFlag(featureKey: item.featureKey, settings: processedMockSetting, context: contextData, hookManager: mockHookManager) { getFlag in
+                GetFlagAPI.getFlag(featureKey: item.featureKey, settings: processedMockSetting, context: contextData, hookManager: mockHookManager, serviceContainer: container) { getFlag in
                     
                     XCTAssertNotNil(getFlag)
                     XCTAssertEqual(getFlag.isEnabled(),item.expectation.isEnabled)
@@ -124,8 +128,12 @@ final class GetFlagTests: XCTestCase {
                 let processedMockSetting = mockClient.processedSettings!
                 
                 let contextData = VWOUserContext(id: item.context.id!, customVariables: item.context.customVariables!)
+                // Create ServiceContainer for this call
+                let builder = VWOBuilder(options: mockOptions)
+                _ = builder.setLogger().setSettingsManager()
+                let container = builder.createServiceContainer(processedSettings: processedMockSetting, options: mockOptions)
                 
-                GetFlagAPI.getFlag(featureKey: item.featureKey, settings: processedMockSetting, context: contextData, hookManager: mockHookManager) { getFlag in
+                GetFlagAPI.getFlag(featureKey: item.featureKey, settings: processedMockSetting, context: contextData, hookManager: mockHookManager, serviceContainer: container) { getFlag in
                     
                     XCTAssertNotNil(getFlag)
                     XCTAssertEqual(getFlag.isEnabled(),item.expectation.isEnabled)
@@ -189,7 +197,10 @@ final class GetFlagTests: XCTestCase {
         let mockClient = VWOClient(options: mockOptions, settingObj: mockSettings)
         let processedMockSetting = mockClient.processedSettings!
 
-        GetFlagAPI.getFlag(featureKey: featureKey, settings: processedMockSetting, context: mockContext, hookManager: mockHookManager) { getFlag in
+        let builder = VWOBuilder(options: mockOptions)
+        _ = builder.setLogger().setSettingsManager()
+        let container = builder.createServiceContainer(processedSettings: processedMockSetting, options: mockOptions)
+        GetFlagAPI.getFlag(featureKey: featureKey, settings: processedMockSetting, context: mockContext, hookManager: mockHookManager, serviceContainer: container) { getFlag in
             XCTAssertNotNil(getFlag)
             XCTAssertFalse(getFlag.isEnabled())
             expectation.fulfill()
@@ -213,8 +224,11 @@ final class GetFlagTests: XCTestCase {
                 storageService.emptyLocalStorageSuite()
                 
                 let contextData = VWOUserContext(id: item.context.id!, customVariables: item.context.customVariables!)
+                let builder = VWOBuilder(options: mockOptions)
+                _ = builder.setLogger().setSettingsManager()
+                let container = builder.createServiceContainer(processedSettings: processedMockSetting, options: mockOptions)
                 
-                GetFlagAPI.getFlag(featureKey: item.featureKey, settings: processedMockSetting, context: contextData, hookManager: mockHookManager) { getFlag in
+                GetFlagAPI.getFlag(featureKey: item.featureKey, settings: processedMockSetting, context: contextData, hookManager: mockHookManager, serviceContainer: container) { getFlag in
                     
                     XCTAssertNotNil(getFlag)
                     XCTAssertEqual(getFlag.isEnabled(),item.expectation.isEnabled)
@@ -264,7 +278,10 @@ final class GetFlagTests: XCTestCase {
                 
                 let contextData = VWOUserContext(id: item.context.id!, customVariables: item.context.customVariables!)
 
-                GetFlagAPI.getFlag(featureKey: item.featureKey, settings: processedMockSetting, context: contextData, hookManager: mockHookManager) { getFlag in
+                let builder = VWOBuilder(options: mockOptions)
+                _ = builder.setLogger().setSettingsManager()
+                let container = builder.createServiceContainer(processedSettings: processedMockSetting, options: mockOptions)
+                GetFlagAPI.getFlag(featureKey: item.featureKey, settings: processedMockSetting, context: contextData, hookManager: mockHookManager, serviceContainer: container) { getFlag in
                     XCTAssertNotNil(getFlag)
                     XCTAssertEqual(getFlag.isEnabled(),item.expectation.isEnabled)
                     
@@ -315,11 +332,14 @@ final class GetFlagTests: XCTestCase {
 
             let userContext = VWOUserContext(id: item, customVariables: [:])
 
-            GetFlagAPI.getFlag(featureKey: featureKey1, settings: processedMockSetting, context: userContext, hookManager: mockHookManager) { getFlag1 in
+            let builder = VWOBuilder(options: mockOptions)
+            _ = builder.setLogger().setSettingsManager()
+            let container = builder.createServiceContainer(processedSettings: processedMockSetting, options: mockOptions)
+            GetFlagAPI.getFlag(featureKey: featureKey1, settings: processedMockSetting, context: userContext, hookManager: mockHookManager, serviceContainer: container) { getFlag1 in
 
                 XCTAssertNotNil(getFlag1)
 
-                GetFlagAPI.getFlag(featureKey: featureKey2, settings: processedMockSetting, context: userContext, hookManager: self.mockHookManager) { getFlag2 in
+                GetFlagAPI.getFlag(featureKey: featureKey2, settings: processedMockSetting, context: userContext, hookManager: self.mockHookManager, serviceContainer: container) { getFlag2 in
 
                     XCTAssertNotNil(getFlag2)
                     
@@ -351,12 +371,15 @@ final class GetFlagTests: XCTestCase {
             
             let userContext = VWOUserContext(id: item, customVariables: [:])
             
-            GetFlagAPI.getFlag(featureKey: featureKey1, settings: processedMockSetting, context: userContext, hookManager: mockHookManager) { getFlag1 in
+            let builder = VWOBuilder(options: mockOptions)
+            _ = builder.setLogger().setSettingsManager()
+            let container = builder.createServiceContainer(processedSettings: processedMockSetting, options: mockOptions)
+            GetFlagAPI.getFlag(featureKey: featureKey1, settings: processedMockSetting, context: userContext, hookManager: mockHookManager, serviceContainer: container) { getFlag1 in
 
                 XCTAssertNotNil(getFlag1)
                 
 
-                GetFlagAPI.getFlag(featureKey: featureKey2, settings: processedMockSetting, context: userContext, hookManager: self.mockHookManager) { getFlag2 in
+                GetFlagAPI.getFlag(featureKey: featureKey2, settings: processedMockSetting, context: userContext, hookManager: self.mockHookManager, serviceContainer: container) { getFlag2 in
 
                     XCTAssertNotNil(getFlag2)
                     
@@ -399,7 +422,10 @@ final class GetFlagTests: XCTestCase {
         let jsonData = jsonString.data(using: .utf8)!
         let gatewayService = try! JSONDecoder().decode(GatewayService.self, from: jsonData)
         testContext.vwo = gatewayService
-        GetFlagAPI.getFlag(featureKey: featureKey, settings: processedMockSetting, context: testContext, hookManager: mockHookManager) { getFlag in
+        let builder = VWOBuilder(options: mockOptions)
+        _ = builder.setLogger().setSettingsManager()
+        let container = builder.createServiceContainer(processedSettings: processedMockSetting, options: mockOptions)
+        GetFlagAPI.getFlag(featureKey: featureKey, settings: processedMockSetting, context: testContext, hookManager: mockHookManager, serviceContainer: container) { getFlag in
             XCTAssertNotNil(getFlag)
             XCTAssertTrue(getFlag.isEnabled())
             if getFlag.isEnabled() {
@@ -457,7 +483,10 @@ final class GetFlagTests: XCTestCase {
         let jsonData = jsonString.data(using: .utf8)!
         let gatewayService = try! JSONDecoder().decode(GatewayService.self, from: jsonData)
         testContext.vwo = gatewayService
-        GetFlagAPI.getFlag(featureKey: featureKey, settings: processedMockSetting, context: testContext, hookManager: mockHookManager) { getFlag in
+        let builder = VWOBuilder(options: mockOptions)
+        _ = builder.setLogger().setSettingsManager()
+        let container = builder.createServiceContainer(processedSettings: processedMockSetting, options: mockOptions)
+        GetFlagAPI.getFlag(featureKey: featureKey, settings: processedMockSetting, context: testContext, hookManager: mockHookManager, serviceContainer: container) { getFlag in
             XCTAssertNotNil(getFlag)
             XCTAssertTrue(getFlag.isEnabled())
             if getFlag.isEnabled() {
@@ -513,7 +542,10 @@ final class GetFlagTests: XCTestCase {
         let jsonData = jsonString.data(using: .utf8)!
         let gatewayService = try! JSONDecoder().decode(GatewayService.self, from: jsonData)
         testContext.vwo = gatewayService
-        GetFlagAPI.getFlag(featureKey: featureKey, settings: processedMockSetting, context: testContext, hookManager: mockHookManager) { getFlag in
+        let builder = VWOBuilder(options: mockOptions)
+        _ = builder.setLogger().setSettingsManager()
+        let container = builder.createServiceContainer(processedSettings: processedMockSetting, options: mockOptions)
+        GetFlagAPI.getFlag(featureKey: featureKey, settings: processedMockSetting, context: testContext, hookManager: mockHookManager, serviceContainer: container) { getFlag in
             XCTAssertNotNil(getFlag)
             XCTAssertTrue(getFlag.isEnabled())
             expectation.fulfill()
@@ -532,10 +564,13 @@ final class GetFlagTests: XCTestCase {
         let mockClient = VWOClient(options: mockOptions, settingObj: mockSettings)
         let processedMockSetting = mockClient.processedSettings!
         let userContext = VWOUserContext(id: "user-id-feature-flag-status", customVariables: [:])
-        GetFlagAPI.getFlag(featureKey: featureKey1, settings: processedMockSetting, context: userContext, hookManager: mockHookManager) { getFlag1 in
+        let builder = VWOBuilder(options: mockOptions)
+        _ = builder.setLogger().setSettingsManager()
+        let container = builder.createServiceContainer(processedSettings: processedMockSetting, options: mockOptions)
+        GetFlagAPI.getFlag(featureKey: featureKey1, settings: processedMockSetting, context: userContext, hookManager: mockHookManager, serviceContainer: container) { getFlag1 in
             XCTAssertNotNil(getFlag1)
             XCTAssertTrue(getFlag1.isEnabled())
-            GetFlagAPI.getFlag(featureKey: featureKey2, settings: processedMockSetting, context: userContext, hookManager: self.mockHookManager) { getFlag2 in
+            GetFlagAPI.getFlag(featureKey: featureKey2, settings: processedMockSetting, context: userContext, hookManager: self.mockHookManager, serviceContainer: container) { getFlag2 in
                 XCTAssertNotNil(getFlag2)
                 XCTAssertTrue(getFlag2.isEnabled())
                 expectation.fulfill()
@@ -554,7 +589,10 @@ final class GetFlagTests: XCTestCase {
         let processedMockSetting = mockClient.processedSettings!
         let userContext = VWOUserContext(id: "user-id-inlist", customVariables: ["inlistvar":"user1"])
         storageService.saveAttributeCheck(featureKey: featureKey, listId: listId, attribute: "user1", result: true, userId: "user-id-inlist", customVariable: true)
-        GetFlagAPI.getFlag(featureKey: featureKey, settings: processedMockSetting, context: userContext, hookManager: mockHookManager) { getFlag in
+        let builder = VWOBuilder(options: mockOptions)
+        _ = builder.setLogger().setSettingsManager()
+        let container = builder.createServiceContainer(processedSettings: processedMockSetting, options: mockOptions)
+        GetFlagAPI.getFlag(featureKey: featureKey, settings: processedMockSetting, context: userContext, hookManager: mockHookManager, serviceContainer: container) { getFlag in
             XCTAssertNotNil(getFlag)
             XCTAssertTrue(getFlag.isEnabled())
         }
@@ -571,7 +609,10 @@ final class GetFlagTests: XCTestCase {
         let processedMockSetting = mockClient.processedSettings!
         let userContext = VWOUserContext(id: userIdForContext, customVariables: [:])
         storageService.saveAttributeCheck(featureKey: featureKey, listId: listId, attribute: userIdForContext, result: true, userId: userIdForContext, customVariable: false)
-        GetFlagAPI.getFlag(featureKey: featureKey, settings: processedMockSetting, context: userContext, hookManager: mockHookManager) { getFlag in
+        let builder = VWOBuilder(options: mockOptions)
+        _ = builder.setLogger().setSettingsManager()
+        let container = builder.createServiceContainer(processedSettings: processedMockSetting, options: mockOptions)
+        GetFlagAPI.getFlag(featureKey: featureKey, settings: processedMockSetting, context: userContext, hookManager: mockHookManager, serviceContainer: container) { getFlag in
             XCTAssertNotNil(getFlag)
             XCTAssertTrue(getFlag.isEnabled())
         }

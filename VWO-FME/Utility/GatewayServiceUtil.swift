@@ -28,12 +28,26 @@ class GatewayServiceUtil {
      * Fetches data from the gateway service
      * @param queryParams The query parameters to send with the request
      * @param endpoint The endpoint to send the request to
-     * @return The response data from the gateway service
+     * @param context The VWO user context
+     * @param serviceContainer Optional ServiceContainer for instance-specific gateway service configuration
+     * @param completion The completion handler
      */
-    static func getFromGatewayService(queryParams: [String: String], endpoint: String,context: VWOUserContext?, completion: @escaping (ResponseModel?) -> Void) {
+    static func getFromGatewayService(queryParams: [String: String], endpoint: String, context: VWOUserContext?, serviceContainer: ServiceContainer? = nil, completion: @escaping (ResponseModel?) -> Void) {
         
-        let isUsingGatewayService = SettingsManager.instance?.isGatewayServiceProvided ?? false
-        if isUsingGatewayService && UrlService.baseUrl.contains(Constants.HOST_NAME) {
+        // Get instance-specific base URL and gateway service status
+        let baseUrl = UrlService.getBaseUrl(serviceContainer: serviceContainer)
+        let isUsingGatewayService: Bool
+        let settingsManager: SettingsManager?
+        
+        if let container = serviceContainer {
+            isUsingGatewayService = !container.getVWOInitOptions().gatewayService.isEmpty
+            settingsManager = container.getSettingsManager()
+        } else {
+            isUsingGatewayService = SettingsManager.instance?.isGatewayServiceProvided ?? false
+            settingsManager = SettingsManager.instance
+        }
+        
+        if isUsingGatewayService && baseUrl.contains(Constants.HOST_NAME) {
             let debugEventProps: [String: Any] = [
                 "an": ApiEnum.getFlag.rawValue,
                 "uuid": context?.uuid ?? "",
@@ -45,14 +59,14 @@ class GatewayServiceUtil {
         }
         
         let request = RequestModel(
-            url: UrlService.baseUrl,
+            url: baseUrl,
             method: HTTPMethod.get.rawValue,
             path: endpoint,
             query: queryParams,
             body: nil,
             headers: nil,
-            scheme: SettingsManager.instance?.protocolType ?? Constants.HTTPS_PROTOCOL,
-            port: SettingsManager.instance?.port ?? 0
+            scheme: settingsManager?.protocolType ?? Constants.HTTPS_PROTOCOL,
+            port: settingsManager?.port ?? 0
         )
         
         NetworkManager.get(request) { response in

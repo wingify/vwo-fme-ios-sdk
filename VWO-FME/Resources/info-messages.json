@@ -6,6 +6,7 @@
   "POLLING_NO_CHANGE_IN_SETTINGS": "No change in settings with the last settings fetched. Hence, not instantiating new VWO client",
 
   "SETTINGS_FETCH_SUCCESS": "Settings fetched successfully",
+  "SETTINGS_CACHE_EXPIRED": "Cached settings have expired. Fetching settings from server",
 
   "CLIENT_INITIALIZED": "VWO Client initialized",
 

@@ -54,7 +54,12 @@ final class TrackEventTests: XCTestCase {
         let mockClient = VWOClient(options: mockOptions, settingObj: mockSettings)
         let processedMockSetting = mockClient.processedSettings!
         
-        TrackEventAPI.track(settings: processedMockSetting, eventName: eventName, context: mockContext, eventProperties: eventProperties, hooksManager: mockHookManager)
+        // Create ServiceContainer for this test
+        let builder = VWOBuilder(options: mockOptions)
+        _ = builder.setLogger().setSettingsManager()
+        let container = builder.createServiceContainer(processedSettings: processedMockSetting, options: mockOptions)
+        
+        TrackEventAPI.track(settings: processedMockSetting, eventName: eventName, context: mockContext, eventProperties: eventProperties, hooksManager: mockHookManager, serviceContainer: container)
         
         XCTAssertNotNil(mockHookManager.get())
         XCTAssertTrue(mockHookManager.setCalled, "HooksManager set should be called")
@@ -73,7 +78,12 @@ final class TrackEventTests: XCTestCase {
         let mockClient = VWOClient(options: mockOptions, settingObj: mockSettings)
         let processedMockSetting = mockClient.processedSettings!
         
-        TrackEventAPI.track(settings: processedMockSetting, eventName: eventName, context: mockContext, eventProperties: eventProperties, hooksManager: mockHookManager)
+        // Create ServiceContainer for this test
+        let builder = VWOBuilder(options: mockOptions)
+        _ = builder.setLogger().setSettingsManager()
+        let container = builder.createServiceContainer(processedSettings: processedMockSetting, options: mockOptions)
+        
+        TrackEventAPI.track(settings: processedMockSetting, eventName: eventName, context: mockContext, eventProperties: eventProperties, hooksManager: mockHookManager, serviceContainer: container)
         
         XCTAssertNil(mockHookManager.get())
         XCTAssertFalse(mockHookManager.setCalled, "HooksManager set should NOT be called")
