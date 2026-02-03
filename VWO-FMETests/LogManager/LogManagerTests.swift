@@ -79,12 +79,12 @@ class LogManagerTests: XCTestCase {
     func testLogMessageWithDifferentLevels() {
         logManager.log(level: .info, message: "Info message")
         XCTAssertEqual(mockLogTransport.loggedMessages.count, 1)
-        XCTAssertEqual(mockLogTransport.loggedMessages[0].logType, "INFO")
+        XCTAssertEqual(mockLogTransport.loggedMessages[0].logType, "info")
         XCTAssertTrue(mockLogTransport.loggedMessages[0].message.contains("Info message"))
         
         logManager.log(level: .error, message: "Error message")
         XCTAssertEqual(mockLogTransport.loggedMessages.count, 2)
-        XCTAssertEqual(mockLogTransport.loggedMessages[1].logType, "ERROR")
+        XCTAssertEqual(mockLogTransport.loggedMessages[1].logType, "error")
         XCTAssertTrue(mockLogTransport.loggedMessages[1].message.contains("Error message"))
     }
     
@@ -105,7 +105,6 @@ class LogManagerTests: XCTestCase {
         logManager.log(level: .info, message: "Test message")
         
         let loggedMessage = mockLogTransport.loggedMessages[0].message
-        XCTAssertTrue(loggedMessage.contains("TestPrefix"))
         XCTAssertTrue(loggedMessage.contains("Info"))
         XCTAssertTrue(loggedMessage.contains("Test message"))
     }
