@@ -53,4 +53,9 @@ enum EventEnum: String {
      * FME sdk Debugger event
      */
     case VWO_DEBUGGER_EVENT = "vwo_sdkDebug"
+    
+    case VWO_DEBUGGER_EVENT = "vwo_recommendation_block_shown"
+
+    /** Holdout exclusion event*/
+    case VWO_DEBUGGER_EVENT = "vwo_holdout"
 }

@@ -74,6 +74,19 @@ struct Constants {
     static let MANUFACTURER = "vwo_mfr"
     static let DEVICE_MODEL = "vwo_dm"
     static let LOCALE = "vwo_loc"
+    
+    //Houldout feature
+    static let VWO_META_HOLDOUT_KEY: String = "_vwo_meta_holdout_"
+    static let VARIATION_KEY = "variationKey"
+    static let USER_ID = "userId"
+    static let KEY_EXPERIMENT_TYPE = "experimentType"
+    static let KEY_EXPERIMENT_KEY = "experimentKey"
+    static let IMPRESSION_NO_FEATURE_ID = -1
+    static let REGEX_REQUIRES_GATEWAY_SERVICE = "\\b(country|region|city|os|device_type|browser_string|ua)\\b"
+    static let REGEX_SEGMENTATION_FULL = "$REGEX_REQUIRES_GATEWAY_SERVICE|\"custom_variable\"\\s*:\\s*\\{\\s*\"name\"\\s*:\\s*\"inlist\\([^)]*\\)\""
+    static let getNotInHoldoutKey = "not_in_holdout_$key"
+    //Ends here
+    
 }
 
 public typealias VWOInitCompletionHandler = (Result<String, Error>) -> Void
