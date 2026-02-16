@@ -42,5 +42,7 @@
   "GET_ALIAS_AFTER_SET_SUCCESS": "Successfully retrieved alias",
   "GET_ALIAS_SUCCESS": "Successfully retrieved alias for IDs:{ids}",
 
-  "STORED_HOLDOUT_DECISION_FOUND": "User id: {userId} already part of holdout id: {holdoutId} feature key: {featureKey}."
+  "STORED_HOLDOUT_DECISION_FOUND": "User id: {userId} already part of holdout id: {holdoutId} feature key: {featureKey}.",
+  "HOLDOUT_SHOULD_EXCLUDE_USER": "User {userId} ({bucketValue}%) is in HOLDOUT named: {holdoutGroupName} with targeted traffic percent: {percentTraffic}% for feature with id: {featureId}.",
+  "USER_IN_HOLDOUT_GROUP": "User {userId} is in holdout group {holdoutGroupName} for feature {featureKey} - feature excluded"
 }

@@ -82,7 +82,22 @@ class GetFlagAPI {
                 if let storedDataMap = storedDataMap {
                     let storageMapAsString = try JSONSerialization.data(withJSONObject: storedDataMap, options: [])
                     let storedData = try JSONDecoder().decode(Storage.self, from: storageMapAsString)
-                    
+
+                    // Check for holdout decision first (if user was previously in holdout, return disabled flag)
+                    let isInHoldout = storedData.holdout == true || storedData.isInHoldout == true
+                    let holdoutIds = storedData.holdoutId ?? storedData.holdoutGroupId ?? []
+                    if isInHoldout && !holdoutIds.isEmpty {
+                        serviceContainer.getLoggerService()?.log(level: .info, key: "STORED_HOLDOUT_DECISION_FOUND", details: [
+                            Constants.USER_ID: context.id ?? "",
+                            "featureKey": featureKey,
+                            "holdoutId": "\(holdoutIds)"
+                        ])
+                        getFlag.setIsEnabled(isEnabled: false)
+                        getFlag.setVariables([])
+                        dispatchGroup.leave()
+                        return
+                    }
+
                     if let experimentVariationId = storedData.experimentVariationId {
                         if let experimentKey = storedData.experimentKey, !experimentKey.isEmpty {
                             let variation = CampaignUtil.getVariationFromCampaignKey(settings: settings, campaignKey: experimentKey, variationId: experimentVariationId)
@@ -138,7 +153,52 @@ class GetFlagAPI {
             
             // Use segmentation manager from service container
             serviceContainer.getSegmentationManager().setContextualData(settings: settings, feature: feature, context: context, serviceContainer: serviceContainer)
-            
+
+            /**
+             * Check if user is in a holdout group for this feature.
+             * If user is in holdout, exclude them from the feature and return.
+             */
+            let holdoutGroupService = HoldoutGroupService(serviceContainer: serviceContainer, storageService: storageService)
+            let (holdoutGroups, holdoutImpressions) = holdoutGroupService.getHoldoutsFor(settings: settings, featureId: feature.id, context: context)
+
+            // Send holdout impressions (both "in holdout" and "not in holdout" for reporting)
+            for imp in holdoutImpressions {
+                ImpressionUtil.createAndSendImpressionForVariationShown(settings: settings, campaignId: imp.campaignId, variationId: imp.variationId, context: context, serviceContainer: serviceContainer)
+            }
+
+            decision["holdoutIDs"] = "[]"
+            decision["isUserPartOfCampaign"] = false
+            decision["isPartOfHoldout"] = !holdoutGroups.isEmpty
+            decision["isHoldoutPresent"] = !(settings.holdoutGroups?.isEmpty ?? true)
+
+            if !holdoutGroups.isEmpty {
+                let qualifiedHoldoutNames = holdoutGroups.map { $0.name ?? "" }.joined(separator: ",")
+                let qualifiedHoldoutIds = "[" + holdoutGroups.compactMap { $0.id }.map { "\($0)" }.joined(separator: ",") + "]"
+                decision["holdoutIDs"] = qualifiedHoldoutIds
+
+                serviceContainer.getLoggerService()?.log(level: .info, key: "USER_IN_HOLDOUT_GROUP", details: [
+                    Constants.USER_ID: context.id ?? "",
+                    "featureId": "\(feature.id ?? 0)",
+                    "featureKey": featureKey,
+                    "holdoutGroupName": qualifiedHoldoutNames
+                ])
+
+                var holdoutStorageMap: [String: Any] = [:]
+                holdoutStorageMap["featureKey"] = feature.key
+                holdoutStorageMap["userId"] = context.id
+                holdoutStorageMap["holdoutId"] = holdoutGroups.compactMap { $0.id }
+                holdoutStorageMap["holdout"] = true
+                storageService.setDataInStorage(data: holdoutStorageMap)
+
+                getFlag.setIsEnabled(isEnabled: false)
+                getFlag.setVariables([])
+                decision["isEnabled"] = false
+                hookManager.set(properties: decision)
+                hookManager.execute(properties: hookManager.get())
+                dispatchGroup.leave()
+                return
+            }
+
             /**
              * get all the rollout rules for the feature and evaluate them
              * if any of the rollout rule passes, break the loop and evaluate the traffic
@@ -242,6 +302,22 @@ class GetFlagAPI {
                 storageMap.merge(passedRulesInformation) { (_, new) in new }
                 
                 storageService.setDataInStorage(data: storageMap)
+            }
+
+            // When user is not in any holdout, persist evaluated holdout ids so we skip re-evaluation next time
+            if holdoutGroups.isEmpty, let featureId = feature.id, let userId = context.id {
+                let key = Constants.getNotInHoldoutKey("\(userId)_\(featureId)")
+                let existingKeys = storageService.getString(forKey: key) ?? ""
+                let newIds = (settings.holdoutGroups ?? []).filter { $0.isGlobal == true || ($0.featureIds?.contains(featureId) == true) }.compactMap { $0.id }.map { "\($0)" }
+                let combined = (existingKeys.isEmpty ? [] : existingKeys.split(separator: ",").map { String($0).trimmingCharacters(in: .whitespaces) }) + newIds
+                let finalValue = Array(Set(combined)).filter { !$0.isEmpty }.joined(separator: ",")
+                if !finalValue.isEmpty {
+                    storageService.saveString(finalValue, forKey: key)
+                    serviceContainer.getLoggerService()?.log(level: .debug, key: "SAVE_NOT_IN_HOLDOUT", details: [
+                        Constants.USER_ID: userId,
+                        "holdoutIds": "\(finalValue) storage key: \(key)"
+                    ])
+                }
             }
             
             // Execute the integrations

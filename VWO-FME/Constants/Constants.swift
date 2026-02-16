@@ -20,7 +20,7 @@ struct Constants {
     static let defaultString: String = ""
     static let PLATFORM: String = "ios"
 
-    static let SDK_VERSION: String = "1.14.0"
+    static let SDK_VERSION: String = "1.15.0"
 
     static let MAX_TRAFFIC_PERCENT: Int = 100
     static let MAX_TRAFFIC_VALUE: Int = 10000
@@ -85,7 +85,10 @@ struct Constants {
     static let IMPRESSION_NO_FEATURE_ID = -1
     static let REGEX_REQUIRES_GATEWAY_SERVICE = "\\b(country|region|city|os|device_type|browser_string|ua)\\b"
     static let REGEX_SEGMENTATION_FULL = "$REGEX_REQUIRES_GATEWAY_SERVICE|\"custom_variable\"\\s*:\\s*\\{\\s*\"name\"\\s*:\\s*\"inlist\\([^)]*\\)\""
-    static let getNotInHoldoutKey = "not_in_holdout_$key"
+    /// Returns storage key for tracking holdout groups already evaluated as "not in holdout" for a user+feature.
+    static func getNotInHoldoutKey(_ key: String) -> String {
+        return "not_in_holdout_\(key)"
+    }
     //Ends here
 
     static let SETTINGS_MAX_RETRY_ATTEMPTS = 1

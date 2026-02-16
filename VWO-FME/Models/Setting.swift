@@ -34,7 +34,8 @@ public struct Settings: Codable, Equatable {
     var collectionPrefix: String?
     var sdkMetaInfo:  SdkMetaInfo?
     var usageStatsAccountId : Int?
-    
+    var holdoutGroups: [HoldoutGroup]?
+
     enum CodingKeys: String, CodingKey {
         case features
         case accountId
@@ -48,6 +49,7 @@ public struct Settings: Codable, Equatable {
         case collectionPrefix
         case sdkMetaInfo
         case usageStatsAccountId
+        case holdoutGroups = "holdouts"
     }
     
     public init(from decoder: Decoder) throws {
@@ -72,5 +74,15 @@ public struct Settings: Codable, Equatable {
         collectionPrefix = try container.decodeIfPresent(String.self, forKey: .collectionPrefix)
         sdkMetaInfo = try container.decodeIfPresent(SdkMetaInfo.self, forKey: .sdkMetaInfo)
         usageStatsAccountId = try container.decodeIfPresent(Int.self, forKey: .usageStatsAccountId)
+
+        // Holdouts can come as an array, an object map, or an empty object ({}).
+        // Be lenient here so decoding doesn't fail when there are no holdouts.
+        if let groupsArray = try? container.decodeIfPresent([HoldoutGroup].self, forKey: .holdoutGroups) {
+            holdoutGroups = groupsArray
+        } else if let groupsDict = try? container.decodeIfPresent([String: HoldoutGroup].self, forKey: .holdoutGroups) {
+            holdoutGroups = Array(groupsDict.values)
+        } else {
+            holdoutGroups = nil
+        }
     }
 }

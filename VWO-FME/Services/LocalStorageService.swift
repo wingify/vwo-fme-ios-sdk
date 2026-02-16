@@ -533,19 +533,23 @@ class StorageService {
             return
         }
 
-        let rolloutKey = data["rolloutKey"] as? String
-        let experimentKey = data["experimentKey"] as? String
-        let rolloutVariationId = data["rolloutVariationId"] as? Int
-        let experimentVariationId = data["experimentVariationId"] as? Int
+        // Holdout-only data: allow storing without rollout/experiment validation
+        let isHoldoutData = (data["holdout"] as? Bool) == true
+        if !isHoldoutData {
+            let rolloutKey = data["rolloutKey"] as? String
+            let experimentKey = data["experimentKey"] as? String
+            let rolloutVariationId = data["rolloutVariationId"] as? Int
+            let experimentVariationId = data["experimentVariationId"] as? Int
 
-        if let rolloutKey = rolloutKey, !rolloutKey.isEmpty, experimentKey == nil, rolloutVariationId == nil {
-            LoggerService.errorLog(key: "ERROR_STORING_DATA_IN_STORAGE",data:["key": "Variation:(rolloutKey, experimentKey or rolloutVariationId)"] ,debugData: ["an":ApiEnum.getFlag.rawValue])
-            return
-        }
+            if let rolloutKey = rolloutKey, !rolloutKey.isEmpty, experimentKey == nil, rolloutVariationId == nil {
+                LoggerService.errorLog(key: "ERROR_STORING_DATA_IN_STORAGE",data:["key": "Variation:(rolloutKey, experimentKey or rolloutVariationId)"] ,debugData: ["an":ApiEnum.getFlag.rawValue])
+                return
+            }
 
-        if let experimentKey = experimentKey, !experimentKey.isEmpty, experimentVariationId == nil {
-            LoggerService.errorLog(key: "ERROR_STORING_DATA_IN_STORAGE",data:["key":"Variation:(experimentKey or rolloutVariationId)"] ,debugData: ["an":ApiEnum.getFlag.rawValue])
-            return
+            if let experimentKey = experimentKey, !experimentKey.isEmpty, experimentVariationId == nil {
+                LoggerService.errorLog(key: "ERROR_STORING_DATA_IN_STORAGE",data:["key":"Variation:(experimentKey or rolloutVariationId)"] ,debugData: ["an":ApiEnum.getFlag.rawValue])
+                return
+            }
         }
 
         // Include account prefix to ensure isolation between instances
@@ -556,6 +560,39 @@ class StorageService {
             connector.set(data, forKey: storageKey)
         } else {
             userDefaults.set(data, forKey: storageKey)
+        }
+    }
+
+    /**
+     * Retrieves a string value from storage for the given key.
+     *
+     * - Parameter key: The storage key (will be prefixed with account key when applicable).
+     * - Returns: The string value if available, otherwise nil.
+     */
+    func getString(forKey key: String) -> String? {
+        let storageKey = getAccountKey(key)
+        if let connector = StorageConnectorProvider.shared.getStorageConnector() {
+            if let data = connector.get(forKey: storageKey), let value = data["value"] as? String {
+                return value
+            }
+            return nil
+        }
+        return userDefaults.string(forKey: storageKey)
+    }
+
+    /**
+     * Saves a string value to storage for the given key.
+     *
+     * - Parameters:
+     *   - value: The string value to store.
+     *   - key: The storage key (will be prefixed with account key when applicable).
+     */
+    func saveString(_ value: String, forKey key: String) {
+        let storageKey = getAccountKey(key)
+        if let connector = StorageConnectorProvider.shared.getStorageConnector() {
+            connector.set(["value": value], forKey: storageKey)
+        } else {
+            userDefaults.set(value, forKey: storageKey)
         }
     }
 

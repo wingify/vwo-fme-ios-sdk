@@ -36,7 +36,9 @@ class TrackEventAPI {
         serviceContainer: ServiceContainer
     ) {
         let doesEventBelongToAnyFeature = FunctionUtil.doesEventBelongToAnyFeature(eventName: eventName, settings: settings)
-        if doesEventBelongToAnyFeature {
+        let doesEventBelongToAnyHoldout = FunctionUtil.doesEventBelongToAnyHoldout(eventName: eventName, settings: settings)
+
+        if doesEventBelongToAnyFeature || doesEventBelongToAnyHoldout {
             createAndSendImpressionForTrack(settings: settings, eventName: eventName, context: context, eventProperties: eventProperties, serviceContainer: serviceContainer)
             var objectToReturn: [String: Any] = [:]
             objectToReturn["eventName"] = eventName

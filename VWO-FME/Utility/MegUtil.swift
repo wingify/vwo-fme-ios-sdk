@@ -58,6 +58,40 @@ class MegUtil {
                   !featureToSkip.contains(featureKey) else {
                 continue
             }
+
+            // Check stored holdout decision
+            if let storedDataMap = storageService.getFeatureFromStorage(featureKey: featureKey, context: context) {
+                do {
+                    let data = try JSONSerialization.data(withJSONObject: storedDataMap)
+                    let storedData = try JSONDecoder().decode(Storage.self, from: data)
+                    let isInHoldout = storedData.holdout == true || storedData.isInHoldout == true
+                    let holdoutIds = storedData.holdoutId ?? storedData.holdoutGroupId ?? []
+                    if isInHoldout && !holdoutIds.isEmpty {
+                        featureToSkip.append(featureKey)
+                        LoggerService.log(level: .debug, key: "PART_OF_HOLDOUT_IN_MEG", details: ["featureKey": featureKey, "userId": context.id ?? "", "holdoutId": "\(holdoutIds)"])
+                        continue
+                    }
+                } catch { }
+            }
+
+            // Evaluate holdout for this feature
+            let holdoutGroupService = HoldoutGroupService(serviceContainer: serviceContainer, storageService: storageService)
+            let (holdoutGroups, _) = holdoutGroupService.getHoldoutsFor(settings: settings, featureId: currentFeature.id, context: context)
+            if !holdoutGroups.isEmpty {
+                featureToSkip.append(featureKey)
+                var holdoutStorageMap: [String: Any] = [:]
+                holdoutStorageMap["featureKey"] = featureKey
+                holdoutStorageMap["userId"] = context.id
+                holdoutStorageMap["holdoutId"] = holdoutGroups.compactMap { $0.id }
+                holdoutStorageMap["holdout"] = true
+                storageService.setDataInStorage(data: holdoutStorageMap)
+                LoggerService.log(level: .debug, key: "PART_OF_HOLDOUT_IN_MEG", details: [
+                    "featureKey": featureKey,
+                    "userId": context.id ?? "",
+                    "holdoutId": holdoutGroups.compactMap { $0.id }.map { "\($0)" }.joined(separator: ",")
+                ])
+                continue
+            }
             
             // Determine if the rollout rule for the feature is passed
             let isRolloutRulePassed = isRolloutRuleForFeaturePassed(

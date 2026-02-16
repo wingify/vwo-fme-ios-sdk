@@ -114,7 +114,26 @@ struct FunctionUtil {
             } ?? false
         }
     }
-    
+
+    /**
+     * Checks if an event is tracked as a metric in any holdout group defined in the settings.
+     *
+     * Holdout groups are used to exclude a portion of traffic from experimentation; this helper
+     * scans all configured holdout groups and their metrics to determine whether the provided
+     * event name is referenced.
+     *
+     * - Parameters:
+     *   - eventName: The name of the event to search for within holdout metrics.
+     *   - settings: The settings containing holdout group and metric configuration.
+     * - Returns: `true` if at least one holdout group tracks the event, `false` otherwise.
+     */
+    static func doesEventBelongToAnyHoldout(eventName: String, settings: Settings) -> Bool {
+        return settings.holdoutGroups?.contains { holdout in
+            holdout.metrics?.contains { metric in
+                metric.identifier == eventName
+            } ?? false
+        } ?? false
+    }
 
     /// Returns a human-readable, formatted string representation of an error object.
     /// - Parameter error: The error to format. Can be of various types (Error, String, Dictionary, Codable, etc.).

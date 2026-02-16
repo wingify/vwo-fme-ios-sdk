@@ -30,5 +30,24 @@ struct Storage: Codable {
     var rolloutVariationId: Int?
     var experimentId: Int?
     var experimentKey: String?
-    var experimentVariationId: Int?    
+    var experimentVariationId: Int?
+    var holdoutGroupId: [Int]?
+    var isInHoldout: Bool?
+    var holdoutId: [Int]?
+    var holdout: Bool?
+
+    enum CodingKeys: String, CodingKey {
+        case featureKey
+        case user = "userId"
+        case rolloutId
+        case rolloutKey
+        case rolloutVariationId
+        case experimentId
+        case experimentKey
+        case experimentVariationId
+        case holdoutGroupId
+        case isInHoldout
+        case holdoutId
+        case holdout
+    }
 }

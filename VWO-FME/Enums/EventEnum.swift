@@ -54,8 +54,8 @@ enum EventEnum: String {
      */
     case VWO_DEBUGGER_EVENT = "vwo_sdkDebug"
     
-    case VWO_DEBUGGER_EVENT = "vwo_recommendation_block_shown"
+    case VWO_RECOMMENDATION_BLOCK_SHOWN = "vwo_recommendation_block_shown"
 
     /** Holdout exclusion event*/
-    case VWO_DEBUGGER_EVENT = "vwo_holdout"
+    case VWO_HOLDOUT_EVENT = "vwo_holdout"
 }
