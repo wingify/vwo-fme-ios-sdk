@@ -68,7 +68,11 @@ class DecisionUtil {
                     ]
                 }
             } else {
-                LoggerService.log(level: .info,
+                serviceContainer.getLoggerService()?.log(level: .info,
+                                  key: "WHITELISTING_SKIP",
+                                  details: [
+                                    "userId": context.id ?? "",
+                                    "campaignKey": campaign.ruleKey ?? ""]) ?? LoggerService.log(level: .info,
                                   key: "WHITELISTING_SKIP",
                                   details: [
                                     "userId": context.id ?? "",
@@ -121,7 +125,10 @@ class DecisionUtil {
                         let storageData = try JSONDecoder().decode(Storage.self, from: JSONSerialization.data(withJSONObject: storageDataMap))
                         
                         if let experimentId = storageData.experimentId, let experimentKey = storageData.experimentKey {
-                            LoggerService.log(level: .info, key: "MEG_CAMPAIGN_FOUND_IN_STORAGE", details: [
+                            serviceContainer.getLoggerService()?.log(level: .info, key: "MEG_CAMPAIGN_FOUND_IN_STORAGE", details: [
+                                "campaignKey": experimentKey,
+                                "userId": "\(context.id ?? "--")"
+                            ]) ?? LoggerService.log(level: .info, key: "MEG_CAMPAIGN_FOUND_IN_STORAGE", details: [
                                 "campaignKey": experimentKey,
                                 "userId": "\(context.id ?? "--")"
                             ])
@@ -157,7 +164,9 @@ class DecisionUtil {
                             ]
                         }
                     } catch {
-                        LoggerService.log(level: .error, key: "STORED_DATA_ERROR", details: [
+                        serviceContainer.getLoggerService()?.log(level: .error, key: "STORED_DATA_ERROR", details: [
+                            "err": error.localizedDescription
+                        ]) ?? LoggerService.log(level: .error, key: "STORED_DATA_ERROR", details: [
                             "err": error.localizedDescription
                         ])
                     }

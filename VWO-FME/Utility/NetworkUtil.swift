@@ -145,15 +145,20 @@ class NetworkUtil {
     }
     
     // Creates the base payload for the event arch APIs
-    static func getEventBasePayload(userId: String?, eventName: String, visitorUserAgent: String?, ipAddress: String?, isUsageStatsEvent: Bool? = false, usageStatsAccountId: Int? = 0, shouldGenerateUUID : Bool? = true, sessionId : Int64? = nil) -> EventArchPayload {
+    static func getEventBasePayload(userId: String?, eventName: String, visitorUserAgent: String?, ipAddress: String?, isUsageStatsEvent: Bool? = false, usageStatsAccountId: Int? = 0, shouldGenerateUUID : Bool? = true, sessionId : Int64? = nil, serviceContainer: ServiceContainer? = nil) -> EventArchPayload {
         
         var stringAccountId : String
         
         if (isUsageStatsEvent ?? false) {
             stringAccountId = "\(String(describing: usageStatsAccountId))"
         } else {
-            let settingManager = SettingsManager.instance
-            stringAccountId = "\(settingManager?.accountId ?? 0)"
+            // Use ServiceContainer if provided, otherwise fallback to SettingsManager
+            if let container = serviceContainer {
+                stringAccountId = "\(container.getAccountId())"
+            } else {
+                let settingManager = SettingsManager.instance
+                stringAccountId = "\(settingManager?.accountId ?? 0)"
+            }
         }
         
         var uuid: String
@@ -181,11 +186,11 @@ class NetworkUtil {
             eventArchData.visitorIpAddress = ipAddress
         }
         
-        let event = NetworkUtil.createEvent(eventName: eventName, isUsageStatsEvent: isUsageStatsEvent)
+        let event = NetworkUtil.createEvent(eventName: eventName, isUsageStatsEvent: isUsageStatsEvent, serviceContainer: serviceContainer)
         eventArchData.event = event
         
         if !(isUsageStatsEvent ?? false){
-            let visitor = NetworkUtil.createVisitor(isUsageStatsEvent: isUsageStatsEvent)
+            let visitor = NetworkUtil.createVisitor(isUsageStatsEvent: isUsageStatsEvent, serviceContainer: serviceContainer)
             eventArchData.visitor = visitor
         }
     
@@ -195,9 +200,9 @@ class NetworkUtil {
     }
     
     // Creates the event model for the event arch APIs
-    private static func createEvent(eventName: String, isUsageStatsEvent: Bool? = false) -> Event {
+    private static func createEvent(eventName: String, isUsageStatsEvent: Bool? = false, serviceContainer: ServiceContainer? = nil) -> Event {
         var event = Event()
-        let props = createProps(isUsageStatsEvent: isUsageStatsEvent)
+        let props = createProps(isUsageStatsEvent: isUsageStatsEvent, serviceContainer: serviceContainer)
         event.props = props
         event.name = eventName
         event.time = Date().currentTimeMillis()
@@ -205,21 +210,31 @@ class NetworkUtil {
     }
     
     // Creates the props model for the event arch APIs
-    private static func createProps(isUsageStatsEvent: Bool? = false) -> Props {
+    private static func createProps(isUsageStatsEvent: Bool? = false, serviceContainer: ServiceContainer? = nil) -> Props {
         var props = Props()
         props.vwoSdkName = SDKMetaUtil.name
         props.vwoSdkVersion = SDKMetaUtil.version
         if (!(isUsageStatsEvent ?? false)) {
-            props.vwoEnvKey = SettingsManager.instance?.sdkKey ?? nil
+            // Use ServiceContainer if provided, otherwise fallback to SettingsManager
+            if let container = serviceContainer {
+                props.vwoEnvKey = container.getSdkKey()
+            } else {
+                props.vwoEnvKey = SettingsManager.instance?.sdkKey ?? nil
+            }
         }
         return props
     }
     
     // Creates the visitor model for the event arch APIs
-    private static func createVisitor(isUsageStatsEvent: Bool? = false) -> Visitor {
+    private static func createVisitor(isUsageStatsEvent: Bool? = false, serviceContainer: ServiceContainer? = nil) -> Visitor {
         var visitorProps: [String: Any] = [:]
         if (!(isUsageStatsEvent ?? false)) {
-            visitorProps[Constants.VWO_FS_ENVIRONMENT] = SettingsManager.instance?.sdkKey ?? Constants.defaultString
+            // Use ServiceContainer if provided, otherwise fallback to SettingsManager
+            if let container = serviceContainer {
+                visitorProps[Constants.VWO_FS_ENVIRONMENT] = container.getSdkKey()
+            } else {
+                visitorProps[Constants.VWO_FS_ENVIRONMENT] = SettingsManager.instance?.sdkKey ?? Constants.defaultString
+            }
         }
         let visitor = Visitor(props: visitorProps)
         return visitor
@@ -277,7 +292,9 @@ class NetworkUtil {
     // Returns the payload data for the track user API
 
     class func getTrackUserPayloadData(settings: Settings, userId: String?, eventName: String, campaignId: Int, variationId: Int, visitorUserAgent: String?, ipAddress: String?,sessionId: Int64?, context: VWOUserContext, serviceContainer: ServiceContainer? = nil) -> [String: Any] {
-        var properties = NetworkUtil.getEventBasePayload(userId: userId, eventName: eventName, visitorUserAgent: visitorUserAgent, ipAddress: ipAddress,sessionId: sessionId)
+
+        var properties = NetworkUtil.getEventBasePayload(userId: userId, eventName: eventName, visitorUserAgent: visitorUserAgent, ipAddress: ipAddress, sessionId: sessionId, serviceContainer: serviceContainer)
+
         
         properties.d?.event?.props?.id = campaignId
         properties.d?.event?.props?.variation = "\(variationId)"
@@ -316,7 +333,7 @@ class NetworkUtil {
     // Returns the payload data for the goal API
 
     static func getTrackGoalPayloadData(settings: Settings, userId: String?, eventName: String, context: VWOUserContext, eventProperties: [String: Any], serviceContainer: ServiceContainer? = nil) -> [String: Any] {
-        var properties = NetworkUtil.getEventBasePayload(userId: userId, eventName: eventName, visitorUserAgent: context.userAgent, ipAddress: context.ipAddress,sessionId: context.sessionId)
+        var properties = NetworkUtil.getEventBasePayload(userId: userId, eventName: eventName, visitorUserAgent: context.userAgent, ipAddress: context.ipAddress, sessionId: context.sessionId, serviceContainer: serviceContainer)
 
         properties.d?.event?.props?.setIsCustomEvent(true)
         properties.d?.event?.props?.setAdditionalProperties(eventProperties)
@@ -344,7 +361,8 @@ class NetworkUtil {
     // Returns the payload data for the attribute API
 
     static func getAttributePayloadData(settings: Settings, userId: String?, eventName: String,sessionId: Int64?, attributes: [String: Any], serviceContainer: ServiceContainer? = nil) -> [String: Any] {
-        var properties = NetworkUtil.getEventBasePayload(userId: userId, eventName: eventName, visitorUserAgent: nil, ipAddress: nil,sessionId: sessionId)
+
+        var properties = NetworkUtil.getEventBasePayload(userId: userId, eventName: eventName, visitorUserAgent: nil, ipAddress: nil, sessionId: sessionId, serviceContainer: serviceContainer)
 
         properties.d?.event?.props?.setIsCustomEvent(true)
         let visitorProp: [String: Any] = attributes
@@ -387,7 +405,7 @@ class NetworkUtil {
         }
         
         let userId = stringAccountId + "_" + sdkKey
-        var properties = NetworkUtil.getEventBasePayload(userId: userId, eventName: eventName, visitorUserAgent: nil, ipAddress: nil)
+        var properties = NetworkUtil.getEventBasePayload(userId: userId, eventName: eventName, visitorUserAgent: nil, ipAddress: nil, serviceContainer: serviceContainer)
         properties.d?.event?.props?.setProduct(Constants.PRODUCT_NAME)
         
         var data = [String: Any]()
@@ -405,14 +423,23 @@ class NetworkUtil {
     }
     
 
-    static func getSDKInitEventPayload(eventName: String, settingsFetchTime: Int64? = nil, sdkInitTime: Int64? = nil) -> [String: Any] {
-        let settingsManager = SettingsManager.instance
-        guard let accountId = settingsManager?.accountId, let sdkKey = settingsManager?.sdkKey else {
-            return [:] // Return an empty dictionary if either accountId or sdkKey is nil
+    static func getSDKInitEventPayload(eventName: String, settingsFetchTime: Int64? = nil, sdkInitTime: Int64? = nil, serviceContainer: ServiceContainer? = nil) -> [String: Any] {
+        // Use ServiceContainer if provided, otherwise fallback to SettingsManager
+        let accountId: Int
+        let sdkKey: String
+        
+        if let container = serviceContainer {
+            accountId = container.getAccountId()
+            sdkKey = container.getSdkKey()
+        } else if let settingsManager = SettingsManager.instance {
+            accountId = settingsManager.accountId
+            sdkKey = settingsManager.sdkKey
+        } else {
+            return [:] // Return an empty dictionary if neither ServiceContainer nor SettingsManager is available
         }
         
         let uniqueKey = "\(accountId)_\(sdkKey)"
-        var properties = NetworkUtil.getEventBasePayload(userId: uniqueKey, eventName: eventName, visitorUserAgent: nil, ipAddress: nil)
+        var properties = NetworkUtil.getEventBasePayload(userId: uniqueKey, eventName: eventName, visitorUserAgent: nil, ipAddress: nil, serviceContainer: serviceContainer)
         
         // Set the required fields as specified
         properties.d?.event?.props?.additionalProperties = [Constants.VWO_FS_ENVIRONMENT: sdkKey]
@@ -626,7 +653,7 @@ class NetworkUtil {
         }
 
         // Generate base payload
-        var properties = NetworkUtil.getEventBasePayload(userId: userId, eventName: EventEnum.VWO_DEBUGGER_EVENT.rawValue, visitorUserAgent: nil, ipAddress: nil, shouldGenerateUUID : shouldGenerateUUID)
+        var properties = NetworkUtil.getEventBasePayload(userId: userId, eventName: EventEnum.VWO_DEBUGGER_EVENT.rawValue, visitorUserAgent: nil, ipAddress: nil, shouldGenerateUUID: shouldGenerateUUID, serviceContainer: serviceContainer)
 
       
 

@@ -35,7 +35,7 @@ class EventsUtils {
         )
 
         // Create the payload with required fields
-        let payload = NetworkUtil.getSDKInitEventPayload(eventName: EventEnum.VWO_INIT_CALLED.rawValue, settingsFetchTime: settingsFetchTime, sdkInitTime: sdkInitTime)
+        let payload = NetworkUtil.getSDKInitEventPayload(eventName: EventEnum.VWO_INIT_CALLED.rawValue, settingsFetchTime: settingsFetchTime, sdkInitTime: sdkInitTime, serviceContainer: serviceContainer)
 
         // Send the constructed payload via POST request
         NetworkUtil.sendGatewayEvent(queryParams: queryParams, payload: payload, eventName: EventEnum.VWO_INIT_CALLED.rawValue, serviceContainer: serviceContainer)

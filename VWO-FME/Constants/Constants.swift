@@ -20,7 +20,7 @@ struct Constants {
     static let defaultString: String = ""
     static let PLATFORM: String = "ios"
 
-    static let SDK_VERSION: String = "1.13.0"
+    static let SDK_VERSION: String = "1.14.0"
 
     static let MAX_TRAFFIC_PERCENT: Int = 100
     static let MAX_TRAFFIC_VALUE: Int = 10000
@@ -75,6 +75,7 @@ struct Constants {
     static let DEVICE_MODEL = "vwo_dm"
     static let LOCALE = "vwo_loc"
     
+
     //Houldout feature
     static let VWO_META_HOLDOUT_KEY: String = "_vwo_meta_holdout_"
     static let VARIATION_KEY = "variationKey"
@@ -86,6 +87,11 @@ struct Constants {
     static let REGEX_SEGMENTATION_FULL = "$REGEX_REQUIRES_GATEWAY_SERVICE|\"custom_variable\"\\s*:\\s*\\{\\s*\"name\"\\s*:\\s*\"inlist\\([^)]*\\)\""
     static let getNotInHoldoutKey = "not_in_holdout_$key"
     //Ends here
+
+    static let SETTINGS_MAX_RETRY_ATTEMPTS = 1
+    static let MAX_RETRY_ATTEMPTS = 4
+    static let HTTP_STATUS_CODE_200 = 200
+
     
 }
 

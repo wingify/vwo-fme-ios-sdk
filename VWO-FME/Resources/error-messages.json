@@ -59,5 +59,7 @@
   "ALIASES_CANNOT_BE_EMPTY": "Alias ID cannot be empty or blank",
   "USERID_CANNOT_BE_BLANK": "User ID cannot be blank",
 
-  "ERROR_FETCHING_SETTINGS_WITH_POLLING": "Settings could not be fetched with polling. Error:{err}"
+  "ERROR_FETCHING_SETTINGS_WITH_POLLING": "Settings could not be fetched with polling. Error:{err}",
+  "INVALID_CREDENTIALS": "Invalid Account ID, SDK Key, or both provided during initialization."
+
 }

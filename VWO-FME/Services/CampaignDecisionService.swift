@@ -106,9 +106,10 @@ class CampaignDecisionService {
      * @param userId  User ID for which the bucketing is to be performed.
      * @param accountId  Account ID for which the bucketing is to be performed.
      * @param campaign  CampaignModel object containing the campaign settings.
+     * @param serviceContainer  Optional ServiceContainer for instance-specific logging.
      * @return  VariationModel object containing the variation allotted to the user.
      */
-    func bucketUserToVariation(userId: String?, accountId: String, campaign: Campaign?) -> Variation? {
+    func bucketUserToVariation(userId: String?, accountId: String, campaign: Campaign?, serviceContainer: ServiceContainer? = nil) -> Variation? {
         guard let campaign = campaign, let campaignId = campaign.id, let userId = userId else {
             return nil
         }
@@ -125,17 +126,32 @@ class CampaignDecisionService {
         let hashValue = DecisionMaker.generateHashValue(hashKey: bucketKey)
         let bucketValue = DecisionMaker.generateBucketValue(hashValue: hashValue, maxValue: Constants.MAX_TRAFFIC_VALUE, multiplier: multiplier)
         
-        LoggerService.log(
-            level: .debug,
-            key: "USER_BUCKET_TO_VARIATION",
-            details: [
-                "userId": userId,
-                "campaignKey": campaign.ruleKey ?? "",
-                "percentTraffic": "\(percentTraffic ?? 0)",
-                "bucketValue": "\(bucketValue)",
-                "hashValue": "\(hashValue)"
-            ]
-        )
+        // Use instance-specific logger if available, otherwise static logger
+        if let logger = serviceContainer?.getLoggerService() {
+            logger.log(
+                level: .debug,
+                key: "USER_BUCKET_TO_VARIATION",
+                details: [
+                    "userId": userId,
+                    "campaignKey": campaign.ruleKey ?? "",
+                    "percentTraffic": "\(percentTraffic ?? 0)",
+                    "bucketValue": "\(bucketValue)",
+                    "hashValue": "\(hashValue)"
+                ]
+            )
+        } else {
+            LoggerService.log(
+                level: .debug,
+                key: "USER_BUCKET_TO_VARIATION",
+                details: [
+                    "userId": userId,
+                    "campaignKey": campaign.ruleKey ?? "",
+                    "percentTraffic": "\(percentTraffic ?? 0)",
+                    "bucketValue": "\(bucketValue)",
+                    "hashValue": "\(hashValue)"
+                ]
+            )
+        }
             
         return CampaignDecisionService.getVariation(variations: campaign.variations ?? [], bucketValue: bucketValue)
     }
@@ -190,7 +206,7 @@ class CampaignDecisionService {
         if campaign.type == CampaignTypeEnum.rollout.rawValue || campaign.type == CampaignTypeEnum.personalize.rawValue {
             return isUserPart ? campaign.variations?[0] : nil
         } else {
-            return isUserPart ? bucketUserToVariation(userId: userId, accountId: accountId, campaign: campaign) : nil
+            return isUserPart ? bucketUserToVariation(userId: userId, accountId: accountId, campaign: campaign, serviceContainer: serviceContainer) : nil
         }
     }
 }

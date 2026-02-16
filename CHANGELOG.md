@@ -5,6 +5,75 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.14.0] - 2026-02-03
+
+### Added
+
+- Refactored the SDK to provide support for multiple instances. Previously, the SDK was singleton-based, which caused state to be shared across multiple SDK instances. Now, you can create any number of SDK instances, each with its own isolated utils, services, and associated state.
+
+```swift
+import VWO_FME
+
+// Initialize first instance
+let options1 = VWOInitOptions(
+    sdkKey: "first_sdk_key",
+    accountId: 123456,
+    logLevel: .info,
+    logPrefix: "Instance1",
+    batchUploadTimeInterval: 60000  // 1 minute
+)
+
+VWOFme.initialize(options: options1) { result in
+    switch result {
+    case .success:
+        print("First instance initialized")
+
+        let userContext1 = VWOUserContext(id: "user_123")
+        VWOFme.getFlag(featureKey: "feature_1", context: userContext1) { flag in
+            // Use flag from first instance
+        }
+    case .failure(let error):
+        print("First instance initialization failed: \(error)")
+    }
+}
+
+// Initialize second instance with different configuration
+let options2 = VWOInitOptions(
+    sdkKey: "second_sdk_key",
+    accountId: 789012,
+    logLevel: .debug,
+    logPrefix: "Instance2",
+    batchUploadTimeInterval: 120000  // 2 minutes
+)
+
+VWOFme.initialize(options: options2) { result in
+    switch result {
+    case .success:
+        print("Second instance initialized")
+
+        let userContext2 = VWOUserContext(id: "user_456")
+        VWOFme.getFlag(featureKey: "feature_2", context: userContext2) { flag in
+            // Use flag from second instance
+        }
+    case .failure(let error):
+        print("Second instance initialization failed: \(error)")
+    }
+}
+```
+
+Each SDK instance maintains its own:
+
+- Settings and configuration
+- Services (storage, logger, network layer, etc.)
+- Utils and helper functions
+- State and cached data
+
+This ensures complete isolation between instances, allowing you to safely use multiple VWO accounts or environments in the same application without any interference.
+
+
+### Fixed
+
+- Prevent API call retries when invalid credentials are provided.
 
 ## [1.13.0] - 2025-11-27
 

@@ -120,6 +120,138 @@ To customize the SDK further, additional parameters can be passed to the `VWOIni
 
 Refer to the [official VWO documentation](https://developers.vwo.com/v2/docs/fme-ios-install) for additional parameter details.
 
+### Multi-Instance Support
+
+The VWO FME iOS SDK supports initializing and managing multiple SDK instances simultaneously. This is particularly useful when you need to work with different VWO accounts, environments, or configurations within the same application.
+
+#### Use Cases
+
+- **Multiple Accounts**: Managing feature flags from different VWO accounts in the same app
+- **Environment Separation**: Using different SDK keys for development, staging, and production environments
+- **Independent Configuration**: Each instance can have its own batch upload settings, polling intervals, and logging configurations
+- **Isolated Data**: Each instance maintains its own event storage, settings cache, and user data
+
+#### Initializing Multiple Instances
+
+Each instance is identified by a unique combination of `accountId` and `sdkKey`. You can initialize multiple instances as follows:
+
+```swift
+import VWO_FME
+
+// Initialize first instance
+let options1 = VWOInitOptions(
+    sdkKey: "first_sdk_key",
+    accountId: 123456,
+    logLevel: .info,
+    logPrefix: "Instance1",
+    batchUploadTimeInterval: 60000  // 1 minute
+)
+
+VWOFme.initialize(options: options1) { result in
+    switch result {
+    case .success:
+        print("First instance initialized")
+        
+        let userContext1 = VWOUserContext(id: "user_123")
+        VWOFme.getFlag(featureKey: "feature_1", context: userContext1) { flag in
+            // Use flag from first instance
+        }
+    case .failure(let error):
+        print("First instance initialization failed: \(error)")
+    }
+}
+
+// Initialize second instance with different configuration
+let options2 = VWOInitOptions(
+    sdkKey: "second_sdk_key",
+    accountId: 789012,
+    logLevel: .debug,
+    logPrefix: "Instance2",
+    batchUploadTimeInterval: 120000  // 2 minutes
+)
+
+VWOFme.initialize(options: options2) { result in
+    switch result {
+    case .success:
+        print("Second instance initialized")
+        
+        let userContext2 = VWOUserContext(id: "user_456")
+        VWOFme.getFlag(featureKey: "feature_2", context: userContext2) { flag in
+            // Use flag from second instance
+        }
+    case .failure(let error):
+        print("Second instance initialization failed: \(error)")
+    }
+}
+```
+
+#### Getting an Instance
+
+After initialization, you can retrieve a specific VWOFme instance using the `getInstance()` method:
+
+```swift
+// Get a specific instance by accountId and sdkKey
+if let vwoInstance = VWOFme.getInstance(accountId: 123456, sdkKey: "first_sdk_key") {
+    // Use the instance for operations
+    let userContext = VWOUserContext(id: "user_123")
+    
+    // Instance-specific operations
+    vwoInstance.getFlag(featureKey: "feature_1", context: userContext) { flag in
+        // Handle flag
+    }
+    
+    vwoInstance.trackEvent(eventName: "event_name", context: userContext)
+    vwoInstance.setAttribute(attributes: ["key": "value"], context: userContext)
+} else {
+    print("Instance not found. Make sure it has been initialized first.")
+}
+```
+
+**Note**: The `getInstance()` method returns `nil` if the instance hasn't been initialized yet. Always check for `nil` before using the instance.
+
+#### Using Instance vs Static Methods
+
+The SDK provides two ways to perform operations:
+
+**1. Static Methods (Backward Compatible)**
+```swift
+// Uses the default (most recently initialized) instance
+VWOFme.getFlag(featureKey: "feature_1", context: userContext) { flag in
+    // Handle flag
+}
+```
+
+**2. Instance Methods (Recommended for Multi-Instance)**
+```swift
+// Get the specific instance first
+if let vwoInstance = VWOFme.getInstance(accountId: 123456, sdkKey: "first_sdk_key") {
+    // Use instance methods for guaranteed instance-specific behavior
+    vwoInstance.getFlag(featureKey: "feature_1", context: userContext) { flag in
+        // Handle flag
+    }
+}
+```
+
+**Recommendation**: When working with multiple instances, always use `getInstance()` to retrieve the specific instance and then use instance methods. This ensures operations are performed on the correct instance.
+
+#### Instance Isolation
+
+Each instance maintains complete isolation:
+
+- **Storage**: Settings, events, and user data are stored separately per instance
+- **Network Requests**: All API calls include the correct account information
+- **Batch Processing**: Each instance has its own batch upload timer and event queue
+- **Logging**: Instance-specific log prefixes help identify which instance generated each log
+
+
+#### Important Notes
+
+- Each instance must have a unique combination of `accountId` and `sdkKey`
+- All operations automatically route to the correct instance based on account information
+- Logs include instance prefixes (e.g., "Instance1:", "Instance2:") for easy identification
+- Gateway service configuration is instance-specific when provided
+
+
 ### User Context
 
 The `context` object uniquely identifies users and is crucial for consistent feature rollouts. A typical `context` includes an `id` for identifying the user. It can also include other attributes that can be used for targeting and segmentation, such as `customVariables`.
