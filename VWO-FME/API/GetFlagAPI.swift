@@ -83,14 +83,25 @@ class GetFlagAPI {
                     let storageMapAsString = try JSONSerialization.data(withJSONObject: storedDataMap, options: [])
                     let storedData = try JSONDecoder().decode(Storage.self, from: storageMapAsString)
 
-                    // Check for holdout decision first (if user was previously in holdout, return disabled flag)
-                    let isInHoldout = storedData.holdout == true || storedData.isInHoldout == true
-                    let holdoutIds = storedData.holdoutId ?? storedData.holdoutGroupId ?? []
-                    if isInHoldout && !holdoutIds.isEmpty {
+                    // Check for holdout decision (aligned with Android: use holdoutIds, partition with server, cleanup obsolete)
+                    let savedHoldoutIds = storedData.holdoutIds ?? storedData.holdoutId ?? storedData.holdoutGroupId ?? []
+                    let isInHoldout = !savedHoldoutIds.isEmpty
+
+                    let holdoutIdsFromSettings = settings.holdoutGroups?.compactMap { $0.id } ?? []
+                    let localHidAlsoValidOnServer = savedHoldoutIds.filter { holdoutIdsFromSettings.contains($0) }
+                    let localButHidNotOnServer = savedHoldoutIds.filter { !holdoutIdsFromSettings.contains($0) }
+
+                    if !localButHidNotOnServer.isEmpty {
+                        storageService.updateDataInStorage(featureKey: featureKey, context: context, data: [
+                            Constants.Holdouts.KEY_STORAGE_HOLDOUT_IDS: localHidAlsoValidOnServer
+                        ])
+                    }
+
+                    if isInHoldout && !localHidAlsoValidOnServer.isEmpty {
                         serviceContainer.getLoggerService()?.log(level: .info, key: "STORED_HOLDOUT_DECISION_FOUND", details: [
                             Constants.USER_ID: context.id ?? "",
                             "featureKey": featureKey,
-                            "holdoutId": "\(holdoutIds)"
+                            "holdoutId": "\(localHidAlsoValidOnServer)"
                         ])
                         getFlag.setIsEnabled(isEnabled: false)
                         getFlag.setVariables([])
@@ -159,7 +170,7 @@ class GetFlagAPI {
              * If user is in holdout, exclude them from the feature and return.
              */
             let holdoutGroupService = HoldoutGroupService(serviceContainer: serviceContainer, storageService: storageService)
-            let (holdoutGroups, holdoutImpressions) = holdoutGroupService.getHoldoutsFor(settings: settings, featureId: feature.id, context: context)
+            let (holdoutGroups, holdoutImpressions) = holdoutGroupService.getHoldoutsFor(settings: settings, feature: feature, context: context, storageService: storageService)
 
             // Send holdout impressions (both "in holdout" and "not in holdout" for reporting)
             for imp in holdoutImpressions {
@@ -186,7 +197,12 @@ class GetFlagAPI {
                 var holdoutStorageMap: [String: Any] = [:]
                 holdoutStorageMap["featureKey"] = feature.key
                 holdoutStorageMap["userId"] = context.id
-                holdoutStorageMap["holdoutId"] = holdoutGroups.compactMap { $0.id }
+                holdoutStorageMap[Constants.Holdouts.KEY_STORAGE_HOLDOUT_IDS] = holdoutGroups.compactMap { $0.id }
+                let notInHoldoutIds = (settings.holdoutGroups?
+                    .filter { h in !holdoutGroups.contains(where: { $0.id == h.id }) }
+                    .filter { h in h.isGlobal == true || (feature.id != nil && (h.featureIds?.contains(feature.id!) == true)) }
+                    .compactMap { $0.id }) ?? []
+                holdoutStorageMap[Constants.Holdouts.KEY_STORAGE_NOT_IN_HOLDOUT_IDS] = notInHoldoutIds
                 holdoutStorageMap["holdout"] = true
                 storageService.setDataInStorage(data: holdoutStorageMap)
 
@@ -304,22 +320,6 @@ class GetFlagAPI {
                 storageService.setDataInStorage(data: storageMap)
             }
 
-            // When user is not in any holdout, persist evaluated holdout ids so we skip re-evaluation next time
-            if holdoutGroups.isEmpty, let featureId = feature.id, let userId = context.id {
-                let key = Constants.getNotInHoldoutKey("\(userId)_\(featureId)")
-                let existingKeys = storageService.getString(forKey: key) ?? ""
-                let newIds = (settings.holdoutGroups ?? []).filter { $0.isGlobal == true || ($0.featureIds?.contains(featureId) == true) }.compactMap { $0.id }.map { "\($0)" }
-                let combined = (existingKeys.isEmpty ? [] : existingKeys.split(separator: ",").map { String($0).trimmingCharacters(in: .whitespaces) }) + newIds
-                let finalValue = Array(Set(combined)).filter { !$0.isEmpty }.joined(separator: ",")
-                if !finalValue.isEmpty {
-                    storageService.saveString(finalValue, forKey: key)
-                    serviceContainer.getLoggerService()?.log(level: .debug, key: "SAVE_NOT_IN_HOLDOUT", details: [
-                        Constants.USER_ID: userId,
-                        "holdoutIds": "\(finalValue) storage key: \(key)"
-                    ])
-                }
-            }
-            
             // Execute the integrations
             hookManager.set(properties: decision)
             hookManager.execute(properties: hookManager.get())

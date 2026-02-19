@@ -31,10 +31,16 @@ struct Storage: Codable {
     var experimentId: Int?
     var experimentKey: String?
     var experimentVariationId: Int?
-    var holdoutGroupId: [Int]?
     var isInHoldout: Bool?
-    var holdoutId: [Int]?
     var holdout: Bool?
+    /// In-holdout IDs
+    var holdoutIds: [Int]?
+    /// Not-in-holdout IDs
+    var notInHoldoutIds: [Int]?
+    /// Legacy: single holdout id list
+    var holdoutId: [Int]?
+    /// Legacy: holdout group id list 
+    var holdoutGroupId: [Int]?
 
     enum CodingKeys: String, CodingKey {
         case featureKey
@@ -45,9 +51,11 @@ struct Storage: Codable {
         case experimentId
         case experimentKey
         case experimentVariationId
-        case holdoutGroupId
         case isInHoldout
-        case holdoutId
         case holdout
+        case holdoutIds
+        case notInHoldoutIds
+        case holdoutId
+        case holdoutGroupId
     }
 }

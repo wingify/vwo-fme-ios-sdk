@@ -75,8 +75,6 @@ struct Constants {
     static let DEVICE_MODEL = "vwo_dm"
     static let LOCALE = "vwo_loc"
     
-
-    //Houldout feature
     static let VWO_META_HOLDOUT_KEY: String = "_vwo_meta_holdout_"
     static let VARIATION_KEY = "variationKey"
     static let USER_ID = "userId"
@@ -85,6 +83,18 @@ struct Constants {
     static let IMPRESSION_NO_FEATURE_ID = -1
     static let REGEX_REQUIRES_GATEWAY_SERVICE = "\\b(country|region|city|os|device_type|browser_string|ua)\\b"
     static let REGEX_SEGMENTATION_FULL = "$REGEX_REQUIRES_GATEWAY_SERVICE|\"custom_variable\"\\s*:\\s*\\{\\s*\"name\"\\s*:\\s*\"inlist\\([^)]*\\)\""
+    
+    // Holdout feature
+    enum Holdouts {
+        static let KEY_STORAGE_HOLDOUT_IDS = "holdoutIds"
+        static let KEY_STORAGE_NOT_IN_HOLDOUT_IDS = "notInHoldoutIds"
+    }
+    /// Variation id when user is in holdout (VARIATION_IS_PART_OF_HOLDOUT = 1).
+    static let VARIATION_IS_PART_OF_HOLDOUT = 1
+    /// Variation id when user is not in holdout (VARIATION_NOT_PART_OF_HOLDOUT = 2).
+    static let VARIATION_NOT_PART_OF_HOLDOUT = 2
+
+    
     /// Returns storage key for tracking holdout groups already evaluated as "not in holdout" for a user+feature.
     static func getNotInHoldoutKey(_ key: String) -> String {
         return "not_in_holdout_\(key)"

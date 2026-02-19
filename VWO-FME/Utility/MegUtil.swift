@@ -76,7 +76,7 @@ class MegUtil {
 
             // Evaluate holdout for this feature
             let holdoutGroupService = HoldoutGroupService(serviceContainer: serviceContainer, storageService: storageService)
-            let (holdoutGroups, _) = holdoutGroupService.getHoldoutsFor(settings: settings, featureId: currentFeature.id, context: context)
+            let (holdoutGroups, _) = holdoutGroupService.getHoldoutsFor(settings: settings, feature: currentFeature, context: context, storageService: storageService)
             if !holdoutGroups.isEmpty {
                 featureToSkip.append(featureKey)
                 var holdoutStorageMap: [String: Any] = [:]

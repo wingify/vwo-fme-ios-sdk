@@ -564,6 +564,29 @@ class StorageService {
     }
 
     /**
+     * Updates existing feature storage with the given data (merge). Aligned with Android updateDataInStorage.
+     * Used e.g. to remove obsolete holdout ids from storage when server no longer has those holdout groups.
+     *
+     * - Parameters:
+     *   - featureKey: The feature key.
+     *   - context: The user context.
+     *   - data: Keys and values to merge into existing storage (overwrite existing keys).
+     * - Returns: true if update was performed, false if no existing data.
+     */
+    func updateDataInStorage(featureKey: String, context: VWOUserContext, data: [String: Any]) -> Bool {
+        guard var existingData = getDataInStorage(featureKey: featureKey, context: context) else {
+            return false
+        }
+        existingData["featureKey"] = featureKey
+        existingData["userId"] = context.id
+        for (key, value) in data {
+            existingData[key] = value
+        }
+        setDataInStorage(data: existingData)
+        return true
+    }
+
+    /**
      * Retrieves a string value from storage for the given key.
      *
      * - Parameter key: The storage key (will be prefixed with account key when applicable).
