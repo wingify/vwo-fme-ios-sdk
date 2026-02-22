@@ -29,9 +29,9 @@ struct HoldoutImpression {
 /// excluded from features due to holdout group membership. Evaluates segmentation
 /// rules and traffic percentage bucketing to determine holdout status.
 class HoldoutGroupService {
-    /// Aligned with Node Constants.VARIATION_IS_PART_OF_HOLDOUT / VARIATION_NOT_PART_OF_HOLDOUT
-    private static let variationIsPartOfHoldout = Constants.VARIATION_IS_PART_OF_HOLDOUT
-    private static let variationNotPartOfHoldout = Constants.VARIATION_NOT_PART_OF_HOLDOUT
+    /// Aligned with Android Constants.Holdouts.VARIATION_IS_PART_OF_HOLDOUT / VARIATION_NOT_PART_OF_HOLDOUT
+    private static let variationIsPartOfHoldout = Constants.Holdouts.VARIATION_IS_PART_OF_HOLDOUT
+    private static let variationNotPartOfHoldout = Constants.Holdouts.VARIATION_NOT_PART_OF_HOLDOUT
 
     private let serviceContainer: ServiceContainer?
     private let storageService: StorageService

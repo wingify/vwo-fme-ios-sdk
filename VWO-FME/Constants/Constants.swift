@@ -84,15 +84,13 @@ struct Constants {
     static let REGEX_REQUIRES_GATEWAY_SERVICE = "\\b(country|region|city|os|device_type|browser_string|ua)\\b"
     static let REGEX_SEGMENTATION_FULL = "$REGEX_REQUIRES_GATEWAY_SERVICE|\"custom_variable\"\\s*:\\s*\\{\\s*\"name\"\\s*:\\s*\"inlist\\([^)]*\\)\""
     
-    // Holdout feature
+    // Holdout feature (aligned with Android Constants.Holdouts)
     enum Holdouts {
+        static let VARIATION_IS_PART_OF_HOLDOUT = 1
+        static let VARIATION_NOT_PART_OF_HOLDOUT = 2
         static let KEY_STORAGE_HOLDOUT_IDS = "holdoutIds"
         static let KEY_STORAGE_NOT_IN_HOLDOUT_IDS = "notInHoldoutIds"
     }
-    /// Variation id when user is in holdout (VARIATION_IS_PART_OF_HOLDOUT = 1).
-    static let VARIATION_IS_PART_OF_HOLDOUT = 1
-    /// Variation id when user is not in holdout (VARIATION_NOT_PART_OF_HOLDOUT = 2).
-    static let VARIATION_NOT_PART_OF_HOLDOUT = 2
 
     
     /// Returns storage key for tracking holdout groups already evaluated as "not in holdout" for a user+feature.
