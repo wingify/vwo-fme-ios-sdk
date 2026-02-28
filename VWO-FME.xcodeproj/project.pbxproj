@@ -119,6 +119,7 @@
 		EB373E7C2D9E99C9005713D1 /* TestDataLoader.swift in Sources */ = {isa = PBXBuildFile; fileRef = EB373E7B2D9E99C9005713D1 /* TestDataLoader.swift */; };
 		EB373E842DA54B4D005713D1 /* GetFlagTest.json in Resources */ = {isa = PBXBuildFile; fileRef = EB373E832DA54B4D005713D1 /* GetFlagTest.json */; };
 		EB373E862DA54B77005713D1 /* GetFlagTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = EB373E852DA54B77005713D1 /* GetFlagTests.swift */; };
+		EB373EC12DA54B77005713D1 /* ConcurrentSegmentationRaceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = EB373EC02DA54B77005713D1 /* ConcurrentSegmentationRaceTests.swift */; };
 		EB373E8A2DA637C2005713D1 /* MockHookManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = EB373E892DA637C2005713D1 /* MockHookManager.swift */; };
 		EB373E8E2DA649DA005713D1 /* FlagTestDataLoader.swift in Sources */ = {isa = PBXBuildFile; fileRef = EB373E8D2DA649DA005713D1 /* FlagTestDataLoader.swift */; };
 		EB373E912DA65583005713D1 /* OnlyRolloutSettings.json in Resources */ = {isa = PBXBuildFile; fileRef = EB373E902DA65583005713D1 /* OnlyRolloutSettings.json */; };
@@ -285,6 +286,7 @@
 		EB373E7B2D9E99C9005713D1 /* TestDataLoader.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TestDataLoader.swift; sourceTree = "<group>"; };
 		EB373E832DA54B4D005713D1 /* GetFlagTest.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = GetFlagTest.json; sourceTree = "<group>"; };
 		EB373E852DA54B77005713D1 /* GetFlagTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GetFlagTests.swift; sourceTree = "<group>"; };
+		EB373EC02DA54B77005713D1 /* ConcurrentSegmentationRaceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConcurrentSegmentationRaceTests.swift; sourceTree = "<group>"; };
 		EB373E892DA637C2005713D1 /* MockHookManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MockHookManager.swift; sourceTree = "<group>"; };
 		EB373E8D2DA649DA005713D1 /* FlagTestDataLoader.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FlagTestDataLoader.swift; sourceTree = "<group>"; };
 		EB373E902DA65583005713D1 /* OnlyRolloutSettings.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = OnlyRolloutSettings.json; sourceTree = "<group>"; };
@@ -739,6 +741,7 @@
 			isa = PBXGroup;
 			children = (
 				EB373E852DA54B77005713D1 /* GetFlagTests.swift */,
+				EB373EC02DA54B77005713D1 /* ConcurrentSegmentationRaceTests.swift */,
 				EB373E832DA54B4D005713D1 /* GetFlagTest.json */,
 				EB373E892DA637C2005713D1 /* MockHookManager.swift */,
 				EB373E8D2DA649DA005713D1 /* FlagTestDataLoader.swift */,
@@ -1209,6 +1212,7 @@
 				EB373EB82DAE8013005713D1 /* SettingUtilTests.swift in Sources */,
 				EB373EAC2DAE1FC2005713D1 /* UUIDUtilsTests.swift in Sources */,
 				EB373E862DA54B77005713D1 /* GetFlagTests.swift in Sources */,
+				EB373EC12DA54B77005713D1 /* ConcurrentSegmentationRaceTests.swift in Sources */,
 				EB544F222DD784A3006AA817 /* SyncManagerTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
