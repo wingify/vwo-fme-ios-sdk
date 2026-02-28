@@ -116,4 +116,18 @@ class NetworkMonitor {
     deinit {
         self.stopMonitoring()
     }
+
+    // MARK: - Test support
+
+    /// Mirrors the body of the `pathUpdateHandler` closure for the `.satisfied` branch.
+    /// Exists solely so tests can drive concurrent invocations without requiring a real
+    /// network-state change from NWPathMonitor.  Must not be called in production code.
+    func simulateNetworkAvailable() {
+        self.debounceWorkItem?.cancel()
+        self.debounceWorkItem = DispatchWorkItem {}
+        let delay = 3.0
+        if let workItem = self.debounceWorkItem {
+            self.debounceQueue.asyncAfter(deadline: .now() + delay, execute: workItem)
+        }
+    }
 }
