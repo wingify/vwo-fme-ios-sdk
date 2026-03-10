@@ -28,10 +28,10 @@ class NetworkMonitor {
     private let queue = DispatchQueue.global(qos: .background)
     private var isMonitoring = false
     
-    // Work item for debouncing network status updates
+    // Work item for debouncing network status updates (only accessed on debounceQueue)
     private var debounceWorkItem: DispatchWorkItem?
     
-    // Queue for handling debounced tasks
+    // Serial queue for all debounce cancel/schedule to avoid dispatch_block_cancel crash
     private let debounceQueue = DispatchQueue(label: "com.vwo.fme.debounceQueue", qos: .background)
     
     private init() {}
@@ -43,25 +43,20 @@ class NetworkMonitor {
     func startMonitoring() {
         guard !isMonitoring else { return }
         isMonitoring = true
-        monitor.pathUpdateHandler = { path in
-            if path.status == .satisfied {
-                // Network is available
+        monitor.pathUpdateHandler = { [weak self] path in
+            guard path.status == .satisfied, let self = self else { return }
+            // Run all cancel/schedule on debounceQueue to avoid canceling from monitor queue while work item may run on debounceQueue
+            self.debounceQueue.async {
                 self.debounceWorkItem?.cancel()
-                self.debounceWorkItem = DispatchWorkItem {
-                    self.checkInternetConnectivity { success in
+                let workItem = DispatchWorkItem { [weak self] in
+                    self?.checkInternetConnectivity { success in
                         if success {
-                            // Trigger sync of saved events if internet connectivity is confirmed
                             SyncManager.shared.syncSavedEvents(ignoreThreshold: true)
                         }
                     }
                 }
-                
-                // Add a delay to prevent rapid successive updates
-                let delay = 3.0
-                if let workItem = self.debounceWorkItem {
-                    self.debounceQueue.asyncAfter(deadline: .now() + delay, execute: workItem)
-                }
-                
+                self.debounceWorkItem = workItem
+                self.debounceQueue.asyncAfter(deadline: .now() + 3.0, execute: workItem)
             }
         }
         monitor.start(queue: queue)
@@ -73,6 +68,10 @@ class NetworkMonitor {
     func stopMonitoring() {
         guard isMonitoring else { return }
         monitor.cancel()
+        debounceQueue.async { [weak self] in
+            self?.debounceWorkItem?.cancel()
+            self?.debounceWorkItem = nil
+        }
         isMonitoring = false
     }
     
