@@ -5,6 +5,17 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.15.0] - 2026-03-12
+
+### Added
+
+- Added support for cachedDecisionExpiryTime, allowing cached flag decisions to automatically expire and be cleared after the configured time interval.
+
+```swift
+// Decisions expire after 60 seconds (60_000 ms); re-evaluation happens on the next getFlag call
+ let options = VWOInitOptions(sdkKey: SDK_KEY, accountId: ACCOUNT_ID, cachedDecisionExpiryTime: 60000)
+```
+
 ## [1.14.1] - 2026-03-10
 
 ### Fixed

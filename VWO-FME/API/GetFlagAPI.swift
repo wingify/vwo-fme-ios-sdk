@@ -37,6 +37,7 @@ class GetFlagAPI {
             var shouldCheckForExperimentsRules = false
             var passedRulesInformation: [String: Any] = [:]
             var evaluatedFeatureMap: [String: Any] = [:]
+            var storedDataIsAlreadyValid = false
             
             // get feature object from feature key
             let feature: Feature? = FunctionUtil.getFeatureFromKey(settings: settings, featureKey: featureKey)
@@ -80,9 +81,33 @@ class GetFlagAPI {
              */
             do {
                 if let storedDataMap = storedDataMap {
-                    let storageMapAsString = try JSONSerialization.data(withJSONObject: storedDataMap, options: [])
+                    let normalizedStorageMap = FunctionUtil.normalizeStorageMapForDecoding(storedDataMap)
+                    let storageMapAsString = try JSONSerialization.data(withJSONObject: normalizedStorageMap, options: [])
                     let storedData = try JSONDecoder().decode(Storage.self, from: storageMapAsString)
-                    
+
+                    let ttl = serviceContainer.getVWOInitOptions().cachedDecisionExpiryTime
+                    let now = Date().currentTimeMillis()
+                    let storedExpiry = storedData.decisionExpiryTime ?? 0
+                    let isExpired: Bool
+                    if ttl > 0 {
+                        if storedExpiry > 0 {
+                            isExpired = now > storedExpiry
+                        } else {
+                            // No expiry stored but TTL is enabled -> force re-evaluation
+                            isExpired = true
+                        }
+                    } else {
+                        isExpired = storedData.isDecisionExpired()
+                    }
+
+                    if isExpired {
+                        serviceContainer.getLoggerService()?.log(level: .warn, key: "DECISION_EXPIRED", details: [
+                            "featureKey": featureKey,
+                            "id": context.id ?? ""
+                        ])
+                    }
+                    if !isExpired {
+                        storedDataIsAlreadyValid = true
                     if let experimentVariationId = storedData.experimentVariationId {
                         if let experimentKey = storedData.experimentKey, !experimentKey.isEmpty {
                             let variation = CampaignUtil.getVariationFromCampaignKey(settings: settings, campaignKey: experimentKey, variationId: experimentVariationId)
@@ -130,6 +155,7 @@ class GetFlagAPI {
                             
                             passedRulesInformation.merge(featureInfo) { (_, new) in new }
                         }
+                    }
                     }
                 }
             } catch {
@@ -234,13 +260,18 @@ class GetFlagAPI {
                 }
             }
             
-            if getFlag.isEnabled() {
+            if getFlag.isEnabled() && !storedDataIsAlreadyValid {
                 var storageMap: [String: Any] = [:]
                 
                 storageMap["featureKey"] = feature.key
                 storageMap["userId"] = context.id
                 storageMap.merge(passedRulesInformation) { (_, new) in new }
                 
+                let cachedDecisionExpiryTime = serviceContainer.getVWOInitOptions().cachedDecisionExpiryTime
+                if cachedDecisionExpiryTime > 0 {
+                    let newExpiry = Date().currentTimeMillis() + cachedDecisionExpiryTime
+                    storageMap["decisionExpiryTime"] = newExpiry
+                }
                 storageService.setDataInStorage(data: storageMap)
             }
             

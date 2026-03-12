@@ -245,16 +245,29 @@ class MegUtil {
                 // Check if the campaign is stored in storage
                 if let storedDataMap = storageService.getFeatureFromStorage(featureKey: featureKey, context: context) {
                     do {
-                        let storageMapAsString = try JSONSerialization.data(withJSONObject: storedDataMap, options: [])
+                        let normalizedStorageMap = FunctionUtil.normalizeStorageMapForDecoding(storedDataMap)
+                        let storageMapAsString = try JSONSerialization.data(withJSONObject: normalizedStorageMap, options: [])
                         let storedData = try JSONDecoder().decode(Storage.self, from: storageMapAsString)
-                        if let experimentVariationId = storedData.experimentVariationId {
-                            if let experimentKey = storedData.experimentKey, experimentKey == campaign.key {
-                                if CampaignUtil.getVariationFromCampaignKey(settings: settings, campaignKey: experimentKey, variationId: experimentVariationId) != nil {
-                                    LoggerService.log(level: .info, key: "MEG_CAMPAIGN_FOUND_IN_STORAGE", details: ["campaignKey": experimentKey, "userId": context.id ?? ""])
-                                    if !eligibleCampaignsWithStorage.contains(where: { $0.key == campaign.key }) {
-                                        eligibleCampaignsWithStorage.append(campaign)
+                        
+                        if storedData.isDecisionExpired() {
+                            serviceContainer.getLoggerService()?.log(level: .warn, key: "MEG_FEATURE_DECISION_EXPIRED", details: [
+                                "featureKey": featureKey,
+                                "id": "\(context.id ?? "")"
+                            ]) ?? LoggerService.log(level: .warn, key: "MEG_FEATURE_DECISION_EXPIRED", details: [
+                                "featureKey": featureKey,
+                                "id": "\(context.id ?? "")"
+                            ])
+                        }
+                        if !storedData.isDecisionExpired() {
+                            if let experimentVariationId = storedData.experimentVariationId {
+                                if let experimentKey = storedData.experimentKey, experimentKey == campaign.key {
+                                    if CampaignUtil.getVariationFromCampaignKey(settings: settings, campaignKey: experimentKey, variationId: experimentVariationId) != nil {
+                                        LoggerService.log(level: .info, key: "MEG_CAMPAIGN_FOUND_IN_STORAGE", details: ["campaignKey": experimentKey, "userId": context.id ?? ""])
+                                        if !eligibleCampaignsWithStorage.contains(where: { $0.key == campaign.key }) {
+                                            eligibleCampaignsWithStorage.append(campaign)
+                                        }
+                                        continue
                                     }
-                                    continue
                                 }
                             }
                         }

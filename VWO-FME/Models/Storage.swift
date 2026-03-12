@@ -30,5 +30,13 @@ struct Storage: Codable {
     var rolloutVariationId: Int?
     var experimentId: Int?
     var experimentKey: String?
-    var experimentVariationId: Int?    
+    var experimentVariationId: Int?
+    /// Decision expiry time in milliseconds (timestamp when decision becomes invalid). Nil or non-positive = valid indefinitely.
+    var decisionExpiryTime: Int64?
+
+    /// Returns true when the stored decision has expired (decisionExpiryTime is a positive timestamp in the past).
+    func isDecisionExpired() -> Bool {
+        guard let expiry = decisionExpiryTime, expiry > 0 else { return false }
+        return Date().currentTimeMillis() > expiry
+    }
 }

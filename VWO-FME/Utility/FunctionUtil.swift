@@ -79,6 +79,24 @@ struct FunctionUtil {
             return rules
         }
     }
+
+    /**
+     * Normalizes storage dictionary so decisionExpiryTime is Int64 (UserDefaults may store numbers as NSNumber).
+     * @param storageMap: A dictionary retrieved from persistent storage.
+     * @return: A normalized dictionary where `decisionExpiryTime`, if present,
+        is guaranteed to be of type `Int64`.
+     */
+    static func normalizeStorageMapForDecoding(_ storageMap: [String: Any]) -> [String: Any] {
+        var normalizedMap = storageMap
+        if let expiryTimeValue = storageMap["decisionExpiryTime"] {
+            if let nsNumber = expiryTimeValue as? NSNumber {
+                normalizedMap["decisionExpiryTime"] = nsNumber.int64Value
+            } else if let intValue = expiryTimeValue as? Int {
+                normalizedMap["decisionExpiryTime"] = Int64(intValue)
+            }
+        }
+        return normalizedMap
+    }
     
     /**
      * Retrieves all AB and Personalize rules from a feature.
