@@ -17,21 +17,38 @@
 import Foundation
 
 class NetworkManager {
-    static var config: GlobalRequestModel? = nil
-    private static var client: NetworkClientInterface? = nil
+    // Serial queue to synchronise access to config and client
+    private static let configQueue = DispatchQueue(label: "com.vwo.fme.network.config")
+
+    private static var _config: GlobalRequestModel?
+    static var config: GlobalRequestModel? {
+        get { configQueue.sync { _config } }
+        set { configQueue.sync { _config = newValue } }
+    }
+
+    private static var _client: NetworkClientInterface?
+    private static var client: NetworkClientInterface? {
+        get { configQueue.sync { _client } }
+        set { configQueue.sync { _client = newValue } }
+    }
+
     private static let executorService = DispatchQueue.global(qos: .background)
         
     static func attachClient(client: NetworkClientInterface? = NetworkClient()) {
-        if self.client != nil {
-            return
+        configQueue.sync {
+            if _client != nil {
+                return
+            }
+            _client = client
+            _config = GlobalRequestModel() // Initialize with default config
         }
-        self.client = client
-        self.config = GlobalRequestModel() // Initialize with default config
     }
     
     private static func createRequest(_ request: RequestModel) -> RequestModel? {
         let handler = RequestHandler()
-        return self.config.flatMap { handler.createRequest(request: request, config: $0) } // Merge and create request
+        // Snapshot config under the serial queue to avoid races
+        let currentConfig = configQueue.sync { _config }
+        return currentConfig.flatMap { handler.createRequest(request: request, config: $0) } // Merge and create request
     }
     
     private static func parseJSONString(_ jsonString: String) {

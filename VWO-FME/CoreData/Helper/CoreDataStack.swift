@@ -71,12 +71,43 @@ class CoreDataStack {
         do {
             try persistentStoreCoordinator.addPersistentStore(ofType: NSSQLiteStoreType, configurationName: nil, at: storeURL, options: options)
         } catch {
-            fatalError("Unresolved error \(error), \(error.localizedDescription)")
+            // If store is corrupted, don't crash host app. Try delete + retry once; otherwise use in-memory store.
+            LoggerService.log(level: .error, message: "CoreData addPersistentStore failed: \(error.localizedDescription).")
+            let fm = FileManager.default
+            try? fm.removeItem(at: storeURL)
+            try? fm.removeItem(at: URL(fileURLWithPath: storeURL.path + "-wal"))
+            try? fm.removeItem(at: URL(fileURLWithPath: storeURL.path + "-shm"))
+            
+            do {
+                try persistentStoreCoordinator.addPersistentStore(ofType: NSSQLiteStoreType, configurationName: nil, at: storeURL, options: options)
+            } catch {
+                LoggerService.log(level: .error, message: "CoreData addPersistentStore retry failed: \(error.localizedDescription). Falling back to in-memory store.")
+                do {
+                    try persistentStoreCoordinator.addPersistentStore(ofType: NSInMemoryStoreType, configurationName: nil, at: nil, options: nil)
+                } catch {
+                    let freeSpace = CoreDataStack.getFreeDiskSpaceDescription()
+                    LoggerService.log(
+                        level: .error,
+                        message: "CoreData in-memory fallback failed: \(error.localizedDescription). Free disk space: \(freeSpace)"
+                    )
+                }
+            }
         }
         
         self.context = NSManagedObjectContext(concurrencyType: .privateQueueConcurrencyType)
         self.context.persistentStoreCoordinator = persistentStoreCoordinator
         self.context.automaticallyMergesChangesFromParent = true
+    }
+
+    /// Returns a human-readable description of free disk space on the current device (e.g. \"123.45 MB\" or \"unknown\").
+    private static func getFreeDiskSpaceDescription() -> String {
+        let path = NSSearchPathForDirectoriesInDomains(.documentDirectory, .userDomainMask, true).first ?? NSTemporaryDirectory()
+        if let attrs = try? FileManager.default.attributesOfFileSystem(forPath: path),
+           let freeBytes = attrs[.systemFreeSize] as? NSNumber {
+            let mb = Double(truncating: freeBytes) / (1024.0 * 1024.0)
+            return String(format: "%.2f MB", mb)
+        }
+        return "unknown"
     }
     
     /**
