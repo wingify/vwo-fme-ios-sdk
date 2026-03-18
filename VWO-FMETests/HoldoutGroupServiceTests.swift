@@ -114,7 +114,7 @@ final class HoldoutGroupServiceTests: XCTestCase {
 
         // No need for a full ServiceContainer for these unit tests; we pass nil.
         let service = HoldoutGroupService(serviceContainer: nil, storageService: storageService)
-        let (groups, impressions) = service.getHoldoutsFor(settings: settings, featureId: feature.id, context: context)
+        let (groups, impressions) = service.getHoldoutsFor(settings: settings, feature: feature, context: context, storageService: storageService)
 
         XCTAssertTrue(groups.isEmpty, "HoldoutGroupService should return empty list when no holdout groups exist")
         XCTAssertTrue(impressions.isEmpty, "No holdout impressions should be generated when no holdouts exist")
@@ -143,7 +143,7 @@ final class HoldoutGroupServiceTests: XCTestCase {
         storageService.emptyLocalStorageSuite()
 
         let service = HoldoutGroupService(serviceContainer: nil, storageService: storageService)
-        let (groups, impressions) = service.getHoldoutsFor(settings: settings, featureId: feature.id, context: context)
+        let (groups, impressions) = service.getHoldoutsFor(settings: settings, feature: feature, context: context, storageService: storageService)
 
         XCTAssertFalse(groups.isEmpty, "User should be in holdout when trafficPercent is 100")
         XCTAssertEqual(groups.first?.id, 100)
@@ -175,7 +175,7 @@ final class HoldoutGroupServiceTests: XCTestCase {
         storageService.emptyLocalStorageSuite()
 
         let service = HoldoutGroupService(serviceContainer: nil, storageService: storageService)
-        let (groups, impressions) = service.getHoldoutsFor(settings: settings, featureId: feature.id, context: context)
+        let (groups, impressions) = service.getHoldoutsFor(settings: settings, feature: feature, context: context, storageService: storageService)
 
         XCTAssertTrue(groups.isEmpty, "User should not be in holdout when trafficPercent is 0")
         // Impressions still contain \"not in holdout\" signals, so just ensure they are created

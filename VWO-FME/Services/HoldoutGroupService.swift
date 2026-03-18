@@ -89,7 +89,7 @@ class HoldoutGroupService {
                     key: "HOLDOUT_SKIP_EVALUATION",
                     details: [
                         "holdoutName": holdoutGroup.name ?? "",
-                        "reason": "user \(context.id ?? "") was already evaluated for feature with id: \(feature.id ?? 0); SKIP decision making altogether."
+                        "reason": "user \(context.id ?? "") was already evaluated for feature with id: \(feature.id ?? 0); skip decision making altogether."
                     ]
                 )
                 continue
@@ -122,12 +122,21 @@ class HoldoutGroupService {
             if shouldExcludeUser {
                 serviceContainer?.getLoggerService()?.log(
                     level: .info,
+                    key: "USER_EXCLUDED_DUE_TO_HOLDOUT",
+                    details: [
+                        "userId": context.id ?? "",
+                        "holdoutGroupName": holdoutGroup.name ?? "",
+                        "featureKey": feature.key ?? ""
+                    ]
+                )
+                serviceContainer?.getLoggerService()?.log(
+                    level: .info,
                     key: "USER_IN_HOLDOUT_GROUP",
                     details: [
                         "userId": context.id ?? "",
                         "featureId": "\(feature.id ?? 0)",
                         "holdoutGroupName": holdoutGroup.name ?? "",
-                        "featureKey": "\(feature.id ?? 0)"
+                        "featureKey": feature.key ?? ""
                     ]
                 )
                 qualifiedHoldoutGroups.append(holdoutGroup)
@@ -170,6 +179,11 @@ class HoldoutGroupService {
 
     private func evaluateHoldoutSegmentation(holdoutGroup: HoldoutGroup, context: VWOUserContext) -> Bool {
         guard let segments = holdoutGroup.segments, !segments.isEmpty else {
+            serviceContainer?.getLoggerService()?.log(
+                level: .info,
+                key: "HOLDOUT_SEGMENTATION_SKIP",
+                details: ["holdoutGroupName": holdoutGroup.name ?? ""]
+            )
             return true
         }
         return (serviceContainer?.getSegmentationManager())?.validateSegmentation(dsl: segments, properties: context.customVariables ?? [:]) ?? false

@@ -110,26 +110,53 @@ class GetFlagAPI {
                         storedDataIsAlreadyValid = true
                     // Check for holdout decision (aligned with Android: use holdoutIds, partition with server, cleanup obsolete)
                     let savedHoldoutIds = storedData.holdoutIds ?? storedData.holdoutId ?? storedData.holdoutGroupId ?? []
-                    let isInHoldout = !savedHoldoutIds.isEmpty
+                    let savedNotInHoldoutIds = storedData.notInHoldoutIds ?? []
 
-                    let holdoutIdsFromSettings = settings.holdoutGroups?.compactMap { $0.id } ?? []
-                    // New holdout IDs on server that were not in local storage (for "not in holdout" impressions)
-                    let onServerButHidNotInLocal = holdoutIdsFromSettings.filter { !(savedHoldoutIds ?? []).contains($0) }
-                    let localHidAlsoValidOnServer = savedHoldoutIds.filter { holdoutIdsFromSettings.contains($0) }
-                    let localButHidNotOnServer = savedHoldoutIds.filter { !holdoutIdsFromSettings.contains($0) }
+                    // Only consider holdouts applicable to this feature (feature-scoped evaluation)
+                    let applicableHoldouts = HoldoutGroupService.getApplicableHoldouts(settings: settings, featureId: feature.id)
+                    let applicableHoldoutIdsFromSettings = applicableHoldouts.compactMap { $0.id }
 
-                    if !localButHidNotOnServer.isEmpty {
+                    // Remove stale stored holdouts that no longer exist on server OR are no longer applicable to this feature.
+                    let localHidAlsoValidOnServer = savedHoldoutIds.filter { applicableHoldoutIdsFromSettings.contains($0) }
+                    let localButHidNotOnServerOrNotApplicable = savedHoldoutIds.filter { !applicableHoldoutIdsFromSettings.contains($0) }
+                    if !localButHidNotOnServerOrNotApplicable.isEmpty {
                         storageService.updateDataInStorage(featureKey: featureKey, context: context, data: [
                             Constants.Holdouts.KEY_STORAGE_HOLDOUT_IDS: localHidAlsoValidOnServer
                         ])
                     }
 
+                    // New holdout IDs on server that were not evaluated yet (absent from both holdoutIds and notInHoldoutIds).
+                    let alreadyEvaluated = Set(localHidAlsoValidOnServer + savedNotInHoldoutIds)
+                    let onServerButNotEvaluatedLocally = applicableHoldoutIdsFromSettings.filter { !alreadyEvaluated.contains($0) }
+
+                    let isInHoldout = !localHidAlsoValidOnServer.isEmpty
                     if isInHoldout && !localHidAlsoValidOnServer.isEmpty {
                         serviceContainer.getLoggerService()?.log(level: .info, key: "STORED_HOLDOUT_DECISION_FOUND", details: [
                             Constants.USER_ID: context.id ?? "",
                             "featureKey": featureKey,
                             "holdoutId": "\(localHidAlsoValidOnServer)"
                         ])
+
+                        // Even on storage hit + early exit, evaluate any newly added applicable holdouts and send impressions.
+                        if !onServerButNotEvaluatedLocally.isEmpty {
+                            let holdoutGroupService = HoldoutGroupService(serviceContainer: serviceContainer, storageService: storageService)
+                            let (_, newImpressions) = holdoutGroupService.getHoldoutsFor(settings: settings, feature: feature, context: context, storageService: storageService)
+                            if !newImpressions.isEmpty {
+                                for imp in newImpressions {
+                                    ImpressionUtil.createAndSendImpressionForVariationShown(settings: settings, campaignId: imp.campaignId, variationId: imp.variationId, context: context, serviceContainer: serviceContainer)
+                                }
+                                let evaluatedIds = Set(newImpressions.map { $0.campaignId })
+                                let inIds = Set(newImpressions.filter { $0.variationId == Constants.Holdouts.VARIATION_IS_PART_OF_HOLDOUT }.map { $0.campaignId })
+                                let notInIds = evaluatedIds.subtracting(inIds)
+                                let mergedHoldoutIds = Array(Set(localHidAlsoValidOnServer).union(inIds)).sorted()
+                                let mergedNotInHoldoutIds = Array(Set(savedNotInHoldoutIds).union(notInIds)).sorted()
+                                storageService.updateDataInStorage(featureKey: featureKey, context: context, data: [
+                                    Constants.Holdouts.KEY_STORAGE_HOLDOUT_IDS: mergedHoldoutIds,
+                                    Constants.Holdouts.KEY_STORAGE_NOT_IN_HOLDOUT_IDS: mergedNotInHoldoutIds
+                                ])
+                            }
+                        }
+
                         getFlag.setIsEnabled(isEnabled: false)
                         getFlag.setVariables([])
                         dispatchGroup.leave()
@@ -148,16 +175,18 @@ class GetFlagAPI {
                                     "experimentType": "experiment",
                                     "experimentKey": experimentKey
                                 ])
-                                Self.sendNotInHoldoutForNewlyAddedHoldouts(
-                                    featureKey: featureKey,
-                                    newIds: onServerButHidNotInLocal,
-                                    feature: feature,
-                                    settings: settings,
-                                    context: context,
-                                    storageService: storageService,
-                                    storedData: storedData,
-                                    serviceContainer: serviceContainer
+                                let (notInImpressions, updatedNotInHoldoutIds) = Self.buildNotInHoldoutForNewlyAddedHoldouts(
+                                    newIds: onServerButNotEvaluatedLocally,
+                                    storedNotInHoldoutIds: storedData.notInHoldoutIds
                                 )
+                                for imp in notInImpressions {
+                                    ImpressionUtil.createAndSendImpressionForVariationShown(settings: settings, campaignId: imp.campaignId, variationId: imp.variationId, context: context, serviceContainer: serviceContainer)
+                                }
+                                if !updatedNotInHoldoutIds.isEmpty {
+                                    storageService.updateDataInStorage(featureKey: featureKey, context: context, data: [
+                                        Constants.Holdouts.KEY_STORAGE_NOT_IN_HOLDOUT_IDS: updatedNotInHoldoutIds
+                                    ])
+                                }
                                 getFlag.setIsEnabled(isEnabled: true)
                                 getFlag.setVariables(variation.variables)
                                 dispatchGroup.leave()
@@ -252,6 +281,11 @@ class GetFlagAPI {
                 dispatchGroup.leave()
                 return
             }
+            
+            serviceContainer.getLoggerService()?.log(level: .info, key: "USER_NOT_EXCLUDED_DUE_TO_HOLDOUT", details: [
+                "userId": context.id ?? "",
+                "featureKey": featureKey
+            ])
 
             /**
              * get all the rollout rules for the feature and evaluate them
@@ -348,17 +382,23 @@ class GetFlagAPI {
                 }
             }
             
-            if getFlag.isEnabled() && !storedDataIsAlreadyValid {
+            if !storedDataIsAlreadyValid {
                 var storageMap: [String: Any] = [:]
                 
                 storageMap["featureKey"] = feature.key
                 storageMap["userId"] = context.id
                 storageMap.merge(passedRulesInformation) { (_, new) in new }
-                // Store "not in holdout" IDs for reporting (applicable holdouts user is not in)
-                storageMap[Constants.Holdouts.KEY_STORAGE_NOT_IN_HOLDOUT_IDS] = (settings.holdoutGroups?
-                    .filter { h in !holdoutGroups.contains(where: { $0.id == h.id }) }
-                    .filter { h in h.isGlobal == true || (feature.id != nil && (h.featureIds?.contains(feature.id!) == true)) }
-                    .compactMap { $0.id }) ?? []
+                // Store "not in holdout" IDs for reporting (even when flag is disabled).
+                // Persist only the holdouts that were evaluated as "NOT in holdout" for this feature.
+                // This is derived from evaluation impressions and stays correct even if applicable holdouts change.
+                let notInHoldoutIds = Array(
+                    Set(
+                        holdoutImpressions
+                            .filter { $0.variationId == Constants.Holdouts.VARIATION_NOT_PART_OF_HOLDOUT }
+                            .map { $0.campaignId }
+                    )
+                ).sorted()
+                storageMap[Constants.Holdouts.KEY_STORAGE_NOT_IN_HOLDOUT_IDS] = notInHoldoutIds
                 
                 let cachedDecisionExpiryTime = serviceContainer.getVWOInitOptions().cachedDecisionExpiryTime
                 if cachedDecisionExpiryTime > 0 {
@@ -455,30 +495,16 @@ class GetFlagAPI {
     }
 
     /// When new holdouts were added on server, send "not in holdout" impression for those IDs and update local storage (aligned with Android).
-    private static func sendNotInHoldoutForNewlyAddedHoldouts(
-        featureKey: String,
+    private static func buildNotInHoldoutForNewlyAddedHoldouts(
         newIds: [Int],
-        feature: Feature?,
-        settings: Settings,
-        context: VWOUserContext,
-        storageService: StorageService,
-        storedData: Storage,
-        serviceContainer: ServiceContainer
-    ) {
-        if newIds.isEmpty { return }
-        for hid in newIds {
-            ImpressionUtil.createAndSendImpressionForVariationShown(
-                settings: settings,
-                campaignId: hid,
-                variationId: Constants.Holdouts.VARIATION_NOT_PART_OF_HOLDOUT,
-                context: context,
-                serviceContainer: serviceContainer
-            )
+        storedNotInHoldoutIds: [Int]?
+    ) -> (impressions: [HoldoutImpression], updatedNotInHoldoutIds: [Int]) {
+        if newIds.isEmpty { return ([], storedNotInHoldoutIds ?? []) }
+        let impressions = newIds.map { hid in
+            HoldoutImpression(campaignId: hid, variationId: Constants.Holdouts.VARIATION_NOT_PART_OF_HOLDOUT, featureId: Constants.IMPRESSION_NO_FEATURE_ID)
         }
-        let existingIds = storedData.notInHoldoutIds ?? []
+        let existingIds = storedNotInHoldoutIds ?? []
         let updatedIds = Array(Set(existingIds + newIds)).sorted()
-        storageService.updateDataInStorage(featureKey: featureKey, context: context, data: [
-            Constants.Holdouts.KEY_STORAGE_HOLDOUT_IDS: updatedIds
-        ])
+        return (impressions, updatedIds)
     }
 }
