@@ -122,46 +122,58 @@ class DecisionUtil {
                 if let storageDataMap = storageDataMap {
                     
                     do {
-                        let storageData = try JSONDecoder().decode(Storage.self, from: JSONSerialization.data(withJSONObject: storageDataMap))
+                        let normalizedStorageMap = FunctionUtil.normalizeStorageMapForDecoding(storageDataMap)
+                        let storageData = try JSONDecoder().decode(Storage.self, from: JSONSerialization.data(withJSONObject: normalizedStorageMap))
                         
-                        if let experimentId = storageData.experimentId, let experimentKey = storageData.experimentKey {
-                            serviceContainer.getLoggerService()?.log(level: .info, key: "MEG_CAMPAIGN_FOUND_IN_STORAGE", details: [
-                                "campaignKey": experimentKey,
-                                "userId": "\(context.id ?? "--")"
-                            ]) ?? LoggerService.log(level: .info, key: "MEG_CAMPAIGN_FOUND_IN_STORAGE", details: [
-                                "campaignKey": experimentKey,
-                                "userId": "\(context.id ?? "--")"
+                        if storageData.isDecisionExpired() {
+                            serviceContainer.getLoggerService()?.log(level: .warn, key: "MEG_DECISION_EXPIRED", details: [
+                                "groupId": groupId,
+                                "id": "\(context.id ?? "--")"
+                            ]) ?? LoggerService.log(level: .warn, key: "MEG_DECISION_EXPIRED", details: [
+                                "groupId": groupId,
+                                "id": "\(context.id ?? "--")"
                             ])
-                            if experimentId == campaignId {
-                                if campaign.type == CampaignTypeEnum.personalize.rawValue {
-                                    if storageData.experimentVariationId == campaign.variations?[0].id {
+                        }
+                        if !storageData.isDecisionExpired() {
+                            if let experimentId = storageData.experimentId, let experimentKey = storageData.experimentKey {
+                                serviceContainer.getLoggerService()?.log(level: .info, key: "MEG_CAMPAIGN_FOUND_IN_STORAGE", details: [
+                                    "campaignKey": experimentKey,
+                                    "userId": "\(context.id ?? "--")"
+                                ]) ?? LoggerService.log(level: .info, key: "MEG_CAMPAIGN_FOUND_IN_STORAGE", details: [
+                                    "campaignKey": experimentKey,
+                                    "userId": "\(context.id ?? "--")"
+                                ])
+                                if experimentId == campaignId {
+                                    if campaign.type == CampaignTypeEnum.personalize.rawValue {
+                                        if storageData.experimentVariationId == campaign.variations?[0].id {
+                                            return [
+                                                "preSegmentationResult": true,
+                                                "whitelistedObject": NSNull()
+                                            ]
+                                        } else {
+                                            megGroupWinnerCampaigns?[Int(groupId) ?? 0] = "\(experimentId)_\(storageData.experimentVariationId ?? 0)"
+                                            return [
+                                                "preSegmentationResult": false,
+                                                "whitelistedObject": NSNull()
+                                            ]
+                                        }
+                                    } else {
                                         return [
                                             "preSegmentationResult": true,
                                             "whitelistedObject": NSNull()
                                         ]
-                                    } else {
-                                        megGroupWinnerCampaigns?[Int(groupId) ?? 0] = "\(experimentId)_\(storageData.experimentVariationId ?? 0)"
-                                        return [
-                                            "preSegmentationResult": false,
-                                            "whitelistedObject": NSNull()
-                                        ]
                                     }
-                                } else {
-                                    return [
-                                        "preSegmentationResult": true,
-                                        "whitelistedObject": NSNull()
-                                    ]
                                 }
+                                if storageData.experimentVariationId != -1 {
+                                    megGroupWinnerCampaigns?[Int(groupId) ?? 0] = "\(experimentId)_\(storageData.experimentVariationId ?? 0)"
+                                } else {
+                                    megGroupWinnerCampaigns?[Int(groupId) ?? 0] = String(experimentId)
+                                }
+                                return [
+                                    "preSegmentationResult": false,
+                                    "whitelistedObject": NSNull()
+                                ]
                             }
-                            if storageData.experimentVariationId != -1 {
-                                megGroupWinnerCampaigns?[Int(groupId) ?? 0] = "\(experimentId)_\(storageData.experimentVariationId ?? 0)"
-                            } else {
-                                megGroupWinnerCampaigns?[Int(groupId) ?? 0] = String(experimentId)
-                            }
-                            return [
-                                "preSegmentationResult": false,
-                                "whitelistedObject": NSNull()
-                            ]
                         }
                     } catch {
                         serviceContainer.getLoggerService()?.log(level: .error, key: "STORED_DATA_ERROR", details: [

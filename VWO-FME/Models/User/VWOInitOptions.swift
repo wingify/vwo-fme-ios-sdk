@@ -35,6 +35,8 @@ import Foundation
     var vwoBuilder: VWOBuilder?
     var gatewayService: [String: Any] = [:]
     var cachedSettingsExpiryTime: Int64 = Constants.SETTINGS_EXPIRY
+    /// Expiry time for cached Get Flag decisions in milliseconds; 0 = no expiry (infinite validity).
+    var cachedDecisionExpiryTime: Int64 = 0
     var batchMinSize: Int?
     var batchUploadTimeInterval: Int64?
     var sdkName: String = Constants.SDK_NAME
@@ -55,6 +57,7 @@ import Foundation
      *   - integrations: Callback for integrations.
      *   - gatewayService: Configuration for the gateway service.
      *   - cachedSettingsExpiryTime: Expiry time for cached settings in milliseconds.
+     *   - cachedDecisionExpiryTime: Expiry time for cached decisions in milliseconds. Stored Get Flag decisions are only valid for this duration; if not set (0), decisions are valid indefinitely.
      *   - pollInterval: Interval for polling updates in milliseconds.
      *   - batchMinSize: Minimum size of batch to upload.
      *   - batchUploadTimeInterval: Batch upload time interval in milliseconds. Please specify at least few minutes.
@@ -68,6 +71,7 @@ import Foundation
                 integrations: IntegrationCallback? = nil,
                 gatewayService: [String: Any] = [:],
                 cachedSettingsExpiryTime: Int64? = nil,
+                cachedDecisionExpiryTime: Int64? = nil,
                 pollInterval: Int64? = nil,
                 batchMinSize: Int? = nil,
                 batchUploadTimeInterval: Int64? = nil,
@@ -100,6 +104,11 @@ import Foundation
         // Setting the cached settings expiry time if provided
         if let userExpiryTime = cachedSettingsExpiryTime {
             self.cachedSettingsExpiryTime = userExpiryTime
+        }
+        
+        // Setting the cached decision expiry time if provided
+        if let userDecisionExpiryTime = cachedDecisionExpiryTime {
+            self.cachedDecisionExpiryTime = userDecisionExpiryTime
         }
         
         // Setting the poll interval if provided

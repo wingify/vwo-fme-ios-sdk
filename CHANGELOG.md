@@ -5,10 +5,33 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [1.15.0] - 2026-02-16
+## [1.17.0] - 2026-03-18
 ### Added
 
 - Introduced holdout group support for feature flags and events, including holdout settings in the configuration, SDK-side holdout evaluation, and exclusion of users in holdout groups from feature rollouts and experiments.
+
+## [1.16.0] - 2026-03-16
+
+### Fixed
+
+- Stability and performance improvements: Enhanced Core Data handling for more reliable store initialization and improved thread-safety in concurrent network.
+
+## [1.15.0] - 2026-03-12
+
+### Added
+
+- Added support for cachedDecisionExpiryTime, allowing cached flag decisions to automatically expire and be cleared after the configured time interval.
+
+```swift
+// Decisions expire after 60 seconds (60_000 ms); re-evaluation happens on the next getFlag call
+ let options = VWOInitOptions(sdkKey: SDK_KEY, accountId: ACCOUNT_ID, cachedDecisionExpiryTime: 60000)
+```
+
+## [1.14.1] - 2026-03-10
+
+### Fixed
+
+- Optimize network monitoring and event synchronization
 
 ## [1.14.0] - 2026-02-03
 

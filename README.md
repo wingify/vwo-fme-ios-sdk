@@ -114,6 +114,7 @@ To customize the SDK further, additional parameters can be passed to the `VWOIni
 | `pollInterval`               | Time interval for fetching updates from VWO servers (in milliseconds).                                                                                      | No           | Int64    | `60000`                         |
 | `integrations`               | Callback for integrations.                                                                                                                                  | No           | IntegrationCallback | See [Integrations](#integrations) section |
 | `cachedSettingsExpiryTime`   | Expiry time for cached settings in milliseconds.                                                                                                            | No           | Int64    | `3600000`                       |
+| `cachedDecisionExpiryTime`   | Expiry time for cached Get Flag decisions in milliseconds. When set to a value > 0, stored decisions are re-evaluated after this duration. Use `0` (default) for decisions to remain valid indefinitely. | No           | Int64    | `60000`                         |
 | `batchMinSize`               | Minimum size of batch to upload.                                                                                                                            | No           | Int      | `10`                            |
 | `batchUploadTimeInterval`    | Batch upload time interval in milliseconds.                                                                                                                 | No           | Int64    | `300000`                        |
 | `logTransport`               | Custom log transport for handling log messages.                                                                                                             | No           | LogTransport  | See [LogTransport](#logtransport) section |
@@ -485,6 +486,23 @@ Example usage:
 ```swift
 // Initialize VWOInitOptions with a custom cached settings expiry time
 let options = VWOInitOptions(sdkKey: SDK_KEY, accountId: ACCOUNT_ID, cachedSettingsExpiryTime:600000)
+```
+
+### Cached Decision Expiry Time
+
+The `cachedDecisionExpiryTime` parameter controls how long a stored Get Flag decision (rollout/experiment assignment) is considered valid. When set to a value **greater than 0** (in milliseconds), the SDK stores an expiry timestamp with each decision. After that duration has passed, the next `getFlag` call for that feature and user will **re-evaluate** instead of reusing the stored result, so users can get fresh assignments (e.g. after campaign or traffic changes).
+
+- **`0` (default)**: Stored decisions never expire; the SDK reuses them until the app is updated or storage is cleared. Use this when you want maximum consistency and minimal re-evaluation.
+- **`> 0`**: Stored decisions expire after the given number of milliseconds. After expiry, the SDK re-evaluates and may log a warning (e.g. `DECISION_EXPIRED`) before computing a new decision.
+
+Example usage:
+
+```swift
+// Decisions expire after 60 seconds (60_000 ms); re-evaluation happens on the next getFlag call
+let options = VWOInitOptions(sdkKey: SDK_KEY, accountId: ACCOUNT_ID, cachedDecisionExpiryTime: 60000)
+
+// Default: decisions never expire (infinite validity)
+let optionsDefault = VWOInitOptions(sdkKey: SDK_KEY, accountId: ACCOUNT_ID)  // cachedDecisionExpiryTime is 0
 ```
 
 ### Event Batching Configuration

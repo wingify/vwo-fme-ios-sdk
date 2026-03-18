@@ -267,10 +267,20 @@ class SegmentEvaluator {
         let storageService = self.serviceContainer?.storage ?? StorageService(accountId: 0, sdkKey: "")
         let storedDataMap = storageService.getFeatureFromStorage(featureKey: featureKey, context: context)
         
-        guard let storedDataMap = storedDataMap else {
+        guard let storedDataMap = storedDataMap, !storedDataMap.isEmpty else {
             LoggerService.log(level: .error, key: "STORED_DATA_ERROR", details: ["err": "Stored data map is nil"])
             return false
         }
-        return !storedDataMap.isEmpty
+        do {
+            let normalizedStorageMap = FunctionUtil.normalizeStorageMapForDecoding(storedDataMap)
+            let storedData = try JSONDecoder().decode(Storage.self, from: JSONSerialization.data(withJSONObject: normalizedStorageMap))
+            if storedData.isDecisionExpired() {
+                return false
+            }
+            return storedDataMap.count > 1
+        } catch {
+            serviceContainer?.getLoggerService()?.log(level: .error, key: "Error in checking feature in user storage.", details: ["err": "\(error)"])
+            return false
+        }
     }
 }

@@ -26,7 +26,8 @@ let package = Package(
             path: "VWO-FME",
             exclude: [],
             resources: [
-                .process("Resources")
+                .process("Resources"),
+                .process("CoreData/Model/OffineEventData.xcdatamodeld")
             ],
             publicHeadersPath: ".",
             cSettings: [

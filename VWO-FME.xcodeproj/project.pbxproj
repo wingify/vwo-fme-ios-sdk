@@ -38,6 +38,9 @@
 		BAD427492E12766100C5C011 /* StorageConnectorProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = BAD427472E12766100C5C011 /* StorageConnectorProvider.swift */; };
 		BAE6CFE72E4384880041118A /* SegmentOperandEvaluatorTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = BAE6CFE62E4384880041118A /* SegmentOperandEvaluatorTests.swift */; };
 		BAE6CFE92E4396360041118A /* DeviceUtilTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = BAE6CFE82E4396360041118A /* DeviceUtilTests.swift */; };
+		BAE7B5E02F6187F6003FC298 /* CoreDataStackCorruptionTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = BAE7B5DE2F6187F6003FC298 /* CoreDataStackCorruptionTests.swift */; };
+		BAE7B6072F61948C003FC298 /* ConcurrentSegmentationRaceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = BAE7B6062F619486003FC298 /* ConcurrentSegmentationRaceTests.swift */; };
+		BAE7B60B2F61951C003FC298 /* NetworkManagerConfigRaceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = BAE7B60A2F61951A003FC298 /* NetworkManagerConfigRaceTests.swift */; };
 		EB06C7842C90229B00A25E07 /* VWO_FME.h in Headers */ = {isa = PBXBuildFile; fileRef = EB06C7832C90229B00A25E07 /* VWO_FME.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		EB06C7902C90234F00A25E07 /* info-messages.json in Resources */ = {isa = PBXBuildFile; fileRef = EB06C78F2C90233600A25E07 /* info-messages.json */; };
 		EB06C7912C90234F00A25E07 /* warn-messages.json in Resources */ = {isa = PBXBuildFile; fileRef = EB06C78C2C90233600A25E07 /* warn-messages.json */; };
@@ -206,6 +209,9 @@
 		BAD427472E12766100C5C011 /* StorageConnectorProvider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StorageConnectorProvider.swift; sourceTree = "<group>"; };
 		BAE6CFE62E4384880041118A /* SegmentOperandEvaluatorTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SegmentOperandEvaluatorTests.swift; sourceTree = "<group>"; };
 		BAE6CFE82E4396360041118A /* DeviceUtilTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeviceUtilTests.swift; sourceTree = "<group>"; };
+		BAE7B5DE2F6187F6003FC298 /* CoreDataStackCorruptionTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CoreDataStackCorruptionTests.swift; sourceTree = "<group>"; };
+		BAE7B6062F619486003FC298 /* ConcurrentSegmentationRaceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConcurrentSegmentationRaceTests.swift; sourceTree = "<group>"; };
+		BAE7B60A2F61951A003FC298 /* NetworkManagerConfigRaceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NetworkManagerConfigRaceTests.swift; sourceTree = "<group>"; };
 		EB06C7802C90229B00A25E07 /* VWO_FME.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = VWO_FME.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		EB06C7832C90229B00A25E07 /* VWO_FME.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = VWO_FME.h; sourceTree = "<group>"; };
 		EB06C78B2C90233600A25E07 /* trace-messages.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = "trace-messages.json"; sourceTree = "<group>"; };
@@ -373,6 +379,23 @@
 				BAD427452E12763800C5C011 /* VWOStorageConnector.swift */,
 			);
 			path = Storage;
+			sourceTree = "<group>";
+		};
+		BAE7B5DF2F6187F6003FC298 /* CoreData */ = {
+			isa = PBXGroup;
+			children = (
+				BAE7B5DE2F6187F6003FC298 /* CoreDataStackCorruptionTests.swift */,
+			);
+			path = CoreData;
+			sourceTree = "<group>";
+		};
+		BAE7B6052F619473003FC298 /* RaceConditionsTests */ = {
+			isa = PBXGroup;
+			children = (
+				BAE7B60A2F61951A003FC298 /* NetworkManagerConfigRaceTests.swift */,
+				BAE7B6062F619486003FC298 /* ConcurrentSegmentationRaceTests.swift */,
+			);
+			path = RaceConditionsTests;
 			sourceTree = "<group>";
 		};
 		EB06C7762C90229B00A25E07 = {
@@ -702,6 +725,8 @@
 		EB373E682D9D2B51005713D1 /* VWO-FMETests */ = {
 			isa = PBXGroup;
 			children = (
+				BAE7B6052F619473003FC298 /* RaceConditionsTests */,
+				BAE7B5DF2F6187F6003FC298 /* CoreData */,
 				EB544F202DD78493006AA817 /* SyncManager */,
 				EB544F0F2DD613AE006AA817 /* UsageStats */,
 				EB544F0A2DD60E64006AA817 /* SettingSchema */,
@@ -1200,6 +1225,7 @@
 				EB544F112DD613D8006AA817 /* UsageStatsTests.swift in Sources */,
 				EB373E6A2D9D2B51005713D1 /* VWO_FMETests.swift in Sources */,
 				BAE6CFE92E4396360041118A /* DeviceUtilTests.swift in Sources */,
+				BAE7B5E02F6187F6003FC298 /* CoreDataStackCorruptionTests.swift in Sources */,
 				EB373E752D9D484C005713D1 /* DecisionMakerTests.swift in Sources */,
 				BA72A53E2F436C91001FF615 /* HoldoutGroupServiceTests.swift in Sources */,
 				EB544F072DD5FBA6006AA817 /* EnumTests.swift in Sources */,
@@ -1209,6 +1235,7 @@
 				EB544F042DD5FA08006AA817 /* FeatureTests.swift in Sources */,
 				EB373EAF2DAE4344005713D1 /* TrackEventTests.swift in Sources */,
 				BAE6CFE72E4384880041118A /* SegmentOperandEvaluatorTests.swift in Sources */,
+				BAE7B6072F61948C003FC298 /* ConcurrentSegmentationRaceTests.swift in Sources */,
 				EB7A73372DDC67190034279F /* CampaignUtilTests.swift in Sources */,
 				EB373E8E2DA649DA005713D1 /* FlagTestDataLoader.swift in Sources */,
 				EB544F012DD5F788006AA817 /* SegmentOperatorValueEnumTests.swift in Sources */,
@@ -1219,6 +1246,7 @@
 				EB373EC02DAF82A2005713D1 /* EventDataManagerTests.swift in Sources */,
 				EB373EB82DAE8013005713D1 /* SettingUtilTests.swift in Sources */,
 				EB373EAC2DAE1FC2005713D1 /* UUIDUtilsTests.swift in Sources */,
+				BAE7B60B2F61951C003FC298 /* NetworkManagerConfigRaceTests.swift in Sources */,
 				EB373E862DA54B77005713D1 /* GetFlagTests.swift in Sources */,
 				EB544F222DD784A3006AA817 /* SyncManagerTests.swift in Sources */,
 			);
