@@ -494,7 +494,14 @@ class GetFlagAPI {
         decision.merge(passedRulesInformation) { (_, new) in new }
     }
 
-    /// When new holdouts were added on server, send "not in holdout" impression for those IDs and update local storage (aligned with Android).
+    /// Builds impressions and updated "not in holdout" IDs when the server adds new holdouts.
+    ///
+    /// - Parameters:
+    ///   - newIds: Newly added holdout IDs from server for which we must generate "not in holdout" impressions.
+    ///   - storedNotInHoldoutIds: Previously stored "not in holdout" IDs (may be nil if nothing was stored yet).
+    /// - Returns: Tuple containing:
+    ///   - impressions: The generated `HoldoutImpression` list for the provided `newIds`.
+    ///   - updatedNotInHoldoutIds: The merged and de-duplicated sorted list of "not in holdout" IDs to persist.
     private static func buildNotInHoldoutForNewlyAddedHoldouts(
         newIds: [Int],
         storedNotInHoldoutIds: [Int]?

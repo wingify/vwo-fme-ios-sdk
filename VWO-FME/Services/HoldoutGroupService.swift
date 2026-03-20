@@ -35,19 +35,35 @@ class HoldoutGroupService {
 
     private let serviceContainer: ServiceContainer?
     private let storageService: StorageService
-
+    
+    /// Creates a `HoldoutGroupService`.
+    ///
+    /// - Parameters:
+    ///   - serviceContainer: Optional service container used to access logger and segmentation manager.
+    ///   - storageService: Storage service used to read holdout-related decision data.
+    /// - Returns: A configured `HoldoutGroupService` instance.
     init(serviceContainer: ServiceContainer?, storageService: StorageService) {
         self.serviceContainer = serviceContainer
         self.storageService = storageService
     }
 
-    /// Gets the applicable holdouts for a given feature ID (same as Android doesHoldoutApplyToFeature filter).
+    /// Gets the applicable holdout groups for a given feature ID (same as Android `doesHoldoutApplyToFeature` filter).
+    ///
+    /// - Parameters:
+    ///   - settings: Settings containing configured holdout groups.
+    ///   - featureId: Feature id to match against holdout group targeting rules.
+    /// - Returns: Array of `HoldoutGroup` that apply to the provided feature.
     static func getApplicableHoldouts(settings: Settings, featureId: Int?) -> [HoldoutGroup] {
         let holdouts = settings.holdoutGroups ?? []
         return holdouts.filter { doesHoldoutApplyToFeature($0, featureId: featureId) }
     }
 
-    /// Determines if a holdout group applies to the given feature (aligned with Android doesHoldoutApplyToFeature).
+    /// Determines if a holdout group applies to the given feature (aligned with Android `doesHoldoutApplyToFeature`).
+    ///
+    /// - Parameters:
+    ///   - holdoutGroup: Holdout group definition.
+    ///   - featureId: Optional feature id used to check `holdoutGroup.featureIds`.
+    /// - Returns: `true` if the holdout group applies to the feature, otherwise `false`.
     private static func doesHoldoutApplyToFeature(_ holdoutGroup: HoldoutGroup, featureId: Int?) -> Bool {
         if holdoutGroup.isGlobal == true { return true }
         guard let featureId = featureId else { return false }
@@ -62,7 +78,9 @@ class HoldoutGroupService {
     ///   - feature: The feature being evaluated.
     ///   - context: The user context containing user information.
     ///   - storageService: Storage service to read feature storage (holdoutIds, notInHoldoutIds).
-    /// - Returns: Tuple of (qualified holdout groups, impressions to send).
+    /// - Returns: Tuple containing:
+    ///   - holdoutGroups: Qualified holdout groups for which the user should be excluded.
+    ///   - impressions: Holdout impressions to emit (including featureId and variationId).
     func getHoldoutsFor(settings: Settings, feature: Feature, context: VWOUserContext, storageService: StorageService) -> (holdoutGroups: [HoldoutGroup], impressions: [HoldoutImpression]) {
         let storedData = storageService.getFeatureFromStorage(featureKey: feature.key ?? "", context: context)
         let alreadyEvaluatedHoldoutIds: [String] = Self.getAlreadyEvaluatedHoldoutIds(from: storedData)
@@ -162,6 +180,10 @@ class HoldoutGroupService {
     }
 
     /// Builds already-evaluated holdout IDs from feature storage (holdoutIds + notInHoldoutIds).
+    ///
+    /// - Parameters:
+    ///   - storedData: Feature storage data that can contain previously evaluated holdout IDs.
+    /// - Returns: Array of holdout IDs represented as `String`.
     private static func getAlreadyEvaluatedHoldoutIds(from storedData: [String: Any]?) -> [String] {
         guard let stored = storedData else { return [] }
         let inIds = Self.intsFromStorage(stored[Constants.Holdouts.KEY_STORAGE_HOLDOUT_IDS])
@@ -169,6 +191,11 @@ class HoldoutGroupService {
         return (inIds + notInIds).map { "\($0)" }
     }
 
+    /// Converts a stored value into an array of integers.
+    ///
+    /// - Parameters:
+    ///   - value: Storage value that may be `[Int]`, `[NSNumber]`, or `[Double]`.
+    /// - Returns: Array of integers extracted from the provided value.
     private static func intsFromStorage(_ value: Any?) -> [Int] {
         guard let value = value else { return [] }
         if let arr = value as? [Int] { return arr }
@@ -177,6 +204,12 @@ class HoldoutGroupService {
         return []
     }
 
+    /// Evaluates segmentation rules for a given holdout group.
+    ///
+    /// - Parameters:
+    ///   - holdoutGroup: Holdout group containing segmentation DSL.
+    ///   - context: User context with custom variables used as segmentation properties.
+    /// - Returns: `true` if the user passes segmentation rules (or there are no segments), otherwise `false`.
     private func evaluateHoldoutSegmentation(holdoutGroup: HoldoutGroup, context: VWOUserContext) -> Bool {
         guard let segments = holdoutGroup.segments, !segments.isEmpty else {
             serviceContainer?.getLoggerService()?.log(
@@ -189,6 +222,14 @@ class HoldoutGroupService {
         return (serviceContainer?.getSegmentationManager())?.validateSegmentation(dsl: segments, properties: context.customVariables ?? [:]) ?? false
     }
 
+    /// Determines whether the user should be excluded from a feature based on holdout bucketing.
+    ///
+    /// - Parameters:
+    ///   - holdoutGroup: Holdout group definition (contains `id` and `trafficPercent`).
+    ///   - userId: User id used to compute the bucket value.
+    ///   - accountId: Account id used to namespace the bucket.
+    ///   - featureId: Feature id used only for logging.
+    /// - Returns: `true` if the user falls within the holdout traffic allocation; otherwise `false`.
     private func shouldExcludeUserFromFeature(holdoutGroup: HoldoutGroup, userId: String?, accountId: Int?, featureId: Int?) -> Bool {
         guard let userId = userId, let holdoutId = holdoutGroup.id, let trafficPercent = holdoutGroup.trafficPercent, let accountId = accountId else {
             return false
