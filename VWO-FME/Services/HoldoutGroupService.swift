@@ -116,6 +116,11 @@ class HoldoutGroupService {
             let passesSegmentation = evaluateHoldoutSegmentation(holdoutGroup: holdoutGroup, context: context)
             if !passesSegmentation {
                 serviceContainer?.getLoggerService()?.log(
+                    level: .info,
+                    key: "SEGMENTATION_FAILED_HOLDOUT",
+                    details: ["userId": context.id ?? "", "holdoutId": "\(holdoutGroup.id ?? 0)"]
+                )
+                serviceContainer?.getLoggerService()?.log(
                     level: .debug,
                     key: "HOLDOUT_SEGMENTATION_FAIL",
                     details: ["userId": context.id ?? "", "holdoutGroupName": holdoutGroup.name ?? ""]
@@ -129,6 +134,11 @@ class HoldoutGroupService {
                 }
                 continue
             }
+            serviceContainer?.getLoggerService()?.log(
+                level: .info,
+                key: "SEGMENTATION_PASSED_HOLDOUT",
+                details: ["userId": context.id ?? "", "holdoutId": "\(holdoutGroup.id ?? 0)"]
+            )
 
             let shouldExcludeUser = shouldExcludeUserFromFeature(
                 holdoutGroup: holdoutGroup,
@@ -219,7 +229,7 @@ class HoldoutGroupService {
             )
             return true
         }
-        return (serviceContainer?.getSegmentationManager())?.validateSegmentation(dsl: segments, properties: context.customVariables ?? [:]) ?? false
+        return (serviceContainer?.getSegmentationManager())?.validateSegmentation(dsl: segments, properties: context.customVariables) ?? false
     }
 
     /// Determines whether the user should be excluded from a feature based on holdout bucketing.

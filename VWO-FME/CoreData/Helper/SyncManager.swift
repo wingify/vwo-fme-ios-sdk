@@ -212,7 +212,9 @@ class SyncManager {
         
         self.isOngoing = true
         
-        // Debug: Verify which instance this SyncManager belongs to
+        // Resolve container for this account. `serviceContainer` can be nil because it's weak;
+        // fallback to registry to preserve instance-specific routing (gateway vs DACDN).
+        let resolvedServiceContainer = self.serviceContainer ?? EventDataManager.getServiceContainer(accountId: self.accountId, sdkKey: self.sdkKey)
         
         // Fetch events filtered by this instance's accountId and sdkKey
         self.coreDataStack.fetchManagedObjects(accountId: Int64(self.accountId), sdkKey: self.sdkKey) { [weak self] events, error in
@@ -253,7 +255,7 @@ class SyncManager {
             let triggerForOnlineBatching = ignoreThreshold ? "time interval" : "minimum batch size"
             
             // Use instance-specific logger from ServiceContainer, with fallback to get by accountId/sdkKey
-            var loggerService = self.serviceContainer?.getLoggerService()
+            var loggerService = resolvedServiceContainer?.getLoggerService()
             if loggerService == nil && self.accountId > 0 && !self.sdkKey.isEmpty {
                 loggerService = LoggerService.getInstance(accountId: self.accountId, sdkKey: self.sdkKey)
             }
@@ -267,7 +269,7 @@ class SyncManager {
                 }
             }
             
-            self.eventManager.uploadEvents(events: events, serviceContainer: self.serviceContainer) { success, eventsData  in
+            self.eventManager.uploadEvents(events: events, serviceContainer: resolvedServiceContainer) { success, eventsData  in
                 self.isOngoing = false
                 if success {
                     self.eventManager.deleteEvents(data: eventsData) { deleteSuccess in

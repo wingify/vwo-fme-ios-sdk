@@ -18,9 +18,74 @@ import XCTest
 @testable import VWO_FME
 
 class SettingsSchemaTests: XCTestCase {
+
+    /// Minimal holdout that satisfies `SettingsSchema.isValidHoldoutGroup` (all required fields present).
+    private func makeSchemaValidHoldout(
+        id: Int? = 9001,
+        trafficPercent: Int? = 10,
+        isGlobal: Bool? = false,
+        segments: [String: CodableValue]? = [:]
+    ) -> HoldoutGroup {
+        HoldoutGroup(
+            name: "schema_test_holdout",
+            id: id,
+            segments: segments,
+            trafficPercent: trafficPercent,
+            isGlobal: isGlobal,
+            isGatewayServiceRequired: false,
+            featureIds: [1],
+            metrics: nil
+        )
+    }
+
+    /// Rollout + testing fixture; `holdoutGroups` is nil until tests assign it.
+    private func loadBaseSettings() throws -> Settings {
+        try XCTUnwrap(
+            FlagTestDataLoader.loadTestData(jsonFileName: SettingsTestJson.RolloutAndTestingSettings.jsonFileName),
+            "RolloutAndTestingSettings.json must load for schema tests"
+        )
+    }
     
     override func setUp() {
         super.setUp()
+    }
+
+    func testValidSettingsWithHoldoutGroup() throws {
+        var settings = try loadBaseSettings()
+        settings.holdoutGroups = [makeSchemaValidHoldout()]
+        XCTAssertTrue(SettingsSchema().isSettingsValid(settings), "Settings with a well-formed holdout group should be valid")
+    }
+
+    func testInvalidSettingsHoldoutMissingId() throws {
+        var settings = try loadBaseSettings()
+        settings.holdoutGroups = [makeSchemaValidHoldout(id: nil)]
+        XCTAssertFalse(SettingsSchema().isSettingsValid(settings), "Holdout without id should invalidate settings")
+    }
+
+    func testInvalidSettingsHoldoutMissingTrafficPercent() throws {
+        var settings = try loadBaseSettings()
+        settings.holdoutGroups = [makeSchemaValidHoldout(trafficPercent: nil)]
+        XCTAssertFalse(SettingsSchema().isSettingsValid(settings), "Holdout without percentTraffic should invalidate settings")
+    }
+
+    func testInvalidSettingsHoldoutMissingIsGlobal() throws {
+        var settings = try loadBaseSettings()
+        settings.holdoutGroups = [makeSchemaValidHoldout(isGlobal: nil)]
+        XCTAssertFalse(SettingsSchema().isSettingsValid(settings), "Holdout without isGlobal should invalidate settings")
+    }
+
+    func testInvalidSettingsHoldoutMissingSegments() throws {
+        var settings = try loadBaseSettings()
+        settings.holdoutGroups = [makeSchemaValidHoldout(segments: nil)]
+        XCTAssertFalse(SettingsSchema().isSettingsValid(settings), "Holdout without segments should invalidate settings")
+    }
+
+    func testInvalidSettingsWhenAnyHoldoutInListIsInvalid() throws {
+        var settings = try loadBaseSettings()
+        let valid = makeSchemaValidHoldout(id: 1)
+        let invalid = makeSchemaValidHoldout(id: nil)
+        settings.holdoutGroups = [valid, invalid]
+        XCTAssertFalse(SettingsSchema().isSettingsValid(settings), "One invalid holdout in the list should fail validation")
     }
     
     func testValidSettings() {

@@ -64,8 +64,8 @@ class MegUtil {
                 do {
                     let data = try JSONSerialization.data(withJSONObject: storedDataMap)
                     let storedData = try JSONDecoder().decode(Storage.self, from: data)
-                    let isInHoldout = storedData.holdout == true || storedData.isInHoldout == true
-                    let holdoutIds = storedData.holdoutId ?? storedData.holdoutGroupId ?? []
+                    let holdoutIds = storedData.holdoutIds ?? storedData.holdoutId ?? storedData.holdoutGroupId ?? []
+                    let isInHoldout = (storedData.holdout == true || storedData.isInHoldout == true || !holdoutIds.isEmpty)
                     if isInHoldout && !holdoutIds.isEmpty {
                         featureToSkip.append(featureKey)
                         LoggerService.log(level: .debug, key: "PART_OF_HOLDOUT_IN_MEG", details: ["featureKey": featureKey, "userId": context.id ?? "", "holdoutId": "\(holdoutIds)"])

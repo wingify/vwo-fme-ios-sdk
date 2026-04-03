@@ -247,7 +247,10 @@ class GetFlagAPI {
             decision["holdoutIDs"] = "[]"
             decision["isUserPartOfCampaign"] = false
             decision["isPartOfHoldout"] = !holdoutGroups.isEmpty
-            decision["isHoldoutPresent"] = !(settings.holdoutGroups?.isEmpty ?? true)
+            let isAnyHoldoutApplicableForThisFeature = !HoldoutGroupService
+                .getApplicableHoldouts(settings: settings, featureId: feature.id)
+                .isEmpty
+            decision["isHoldoutPresent"] = isAnyHoldoutApplicableForThisFeature
 
             if !holdoutGroups.isEmpty {
                 let qualifiedHoldoutNames = holdoutGroups.map { $0.name ?? "" }.joined(separator: ",")

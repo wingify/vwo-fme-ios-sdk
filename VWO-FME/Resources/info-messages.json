@@ -46,6 +46,8 @@
   "HOLDOUT_SHOULD_EXCLUDE_USER": "User {userId} ({bucketValue}%) is in HOLDOUT named: {holdoutGroupName} with targeted traffic percent: {percentTraffic}% for feature with id: {featureId}.",
   "USER_IN_HOLDOUT_GROUP": "User {userId} is in holdout group {holdoutGroupName} for feature {featureKey} - feature excluded",
   "HOLDOUT_SEGMENTATION_SKIP": "Holdout segmentation skipped for holdout: {holdoutGroupName} because segments is null/empty.",
+  "SEGMENTATION_FAILED_HOLDOUT": "Segmentation failed for holdout ID:{holdoutId} for user ID:{userId}",
+  "SEGMENTATION_PASSED_HOLDOUT": "Segmentation passed for holdout ID:{holdoutId} for user ID:{userId}",
   "USER_EXCLUDED_DUE_TO_HOLDOUT": "User {userId} excluded due to holdout group {holdoutGroupName} for feature key: {featureKey}.",
   "USER_NOT_EXCLUDED_DUE_TO_HOLDOUT": "User {userId} not excluded due to holdout because no applicable holdout groups matched for feature key: {featureKey}."
 }

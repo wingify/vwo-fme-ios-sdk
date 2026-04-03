@@ -65,7 +65,13 @@ class SegmentationManager {
             return
         }
 
-        if feature.isGatewayServiceRequired && context.vwo == nil {
+        let isGatewayServiceRequiredForHoldouts = !(settings.holdoutGroups?
+            .filter { $0.isGatewayServiceRequired == true }
+            .isEmpty ?? true)
+
+        // If gateway service is required either by feature or holdout groups,
+        // and context does not already have vwo data, fetch from gateway service.
+        if (feature.isGatewayServiceRequired || isGatewayServiceRequiredForHoldouts) && context.vwo == nil {
             
             var queryParams: [String: String] = [:]
             if context.userAgent.isEmpty && context.ipAddress.isEmpty {

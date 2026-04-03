@@ -56,6 +56,14 @@ class SettingsSchema {
             }
         }
         
+        if let holdoutGroups = settings.holdoutGroups, !holdoutGroups.isEmpty {
+            for holdoutGroup in holdoutGroups {
+                if !isValidHoldoutGroup(holdoutGroup) {
+                    return false
+                }
+            }
+        }
+        
         return true
     }
     
@@ -179,5 +187,23 @@ class SettingsSchema {
      */
     private func isValidRule(_ rule: Rule) -> Bool {
         return rule.type != nil && rule.ruleKey != nil && rule.campaignId != nil
+    }
+    
+    /**
+     * Checks if a holdout group object is valid.
+     *
+     * Validates that required fields (id, trafficPercent, isGlobal, segments) are present.
+     *
+     * - Parameter holdoutGroup: The holdout group object to validate.
+     * - Returns: `true` if the holdout group is valid, `false` otherwise.
+     */
+    private func isValidHoldoutGroup(_ holdoutGroup: HoldoutGroup) -> Bool {
+        guard holdoutGroup.id != nil,
+              holdoutGroup.trafficPercent != nil,
+              holdoutGroup.isGlobal != nil,
+              holdoutGroup.segments != nil else {
+            return false
+        }
+        return true
     }
 }

@@ -30,7 +30,7 @@ struct HoldoutGroup: Codable, Equatable {
     var segments: [String: CodableValue]?
     var trafficPercent: Int?
     var isGlobal: Bool?
-    var isGatewayServiceRequired: Bool?
+    var isGatewayServiceRequired: Bool? = false
     var featureIds: [Int]?
     var metrics: [Metrics]?
 
