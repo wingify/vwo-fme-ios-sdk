@@ -19,12 +19,21 @@ import XCTest
 
 class SettingsSchemaTests: XCTestCase {
 
-    /// Minimal holdout that satisfies `SettingsSchema.isValidHoldoutGroup` (all required fields present).
+    private static let validHoldoutSegments: [String: CodableValue] = [
+        "or": .array([.dictionary(["country": .string("US")])])
+    ]
+    private static let validHoldoutMetrics: [HoldoutGroup.Metrics] = [
+        HoldoutGroup.Metrics(type: "CUSTOM_GOAL", id: 1, identifier: "holdout_metric")
+    ]
+
+    /// Holdout that satisfies `SettingsSchema.isValidHoldoutGroup` (required holdout JSON fields present).
     private func makeSchemaValidHoldout(
         id: Int? = 9001,
         trafficPercent: Int? = 10,
         isGlobal: Bool? = false,
-        segments: [String: CodableValue]? = [:]
+        segments: [String: CodableValue]? = SettingsSchemaTests.validHoldoutSegments,
+        featureIds: [Int]? = [1],
+        metrics: [HoldoutGroup.Metrics]? = SettingsSchemaTests.validHoldoutMetrics
     ) -> HoldoutGroup {
         HoldoutGroup(
             name: "schema_test_holdout",
@@ -33,8 +42,8 @@ class SettingsSchemaTests: XCTestCase {
             trafficPercent: trafficPercent,
             isGlobal: isGlobal,
             isGatewayServiceRequired: false,
-            featureIds: [1],
-            metrics: nil
+            featureIds: featureIds,
+            metrics: metrics
         )
     }
 
@@ -49,6 +58,11 @@ class SettingsSchemaTests: XCTestCase {
     override func setUp() {
         super.setUp()
     }
+
+    // MARK: - Holdout (`SettingsSchema.isValidHoldoutGroup`)
+    // Covered: missing id / percentTraffic / isGlobal; segments nil or empty; metrics nil, empty, or any metric
+    // missing id, type, identifier, or empty identifier; non-global with nil or empty featureIds; global with nil/empty
+    // featureIds allowed; mixed list invalid; no holdouts (nil or empty array).
 
     func testValidSettingsWithHoldoutGroup() throws {
         var settings = try loadBaseSettings()
@@ -78,6 +92,98 @@ class SettingsSchemaTests: XCTestCase {
         var settings = try loadBaseSettings()
         settings.holdoutGroups = [makeSchemaValidHoldout(segments: nil)]
         XCTAssertFalse(SettingsSchema().isSettingsValid(settings), "Holdout without segments should invalidate settings")
+    }
+
+    func testInvalidSettingsHoldoutEmptySegments() throws {
+        var settings = try loadBaseSettings()
+        settings.holdoutGroups = [makeSchemaValidHoldout(segments: [:])]
+        XCTAssertFalse(SettingsSchema().isSettingsValid(settings), "Holdout with empty segments object should invalidate settings")
+    }
+
+    func testInvalidSettingsHoldoutMissingMetrics() throws {
+        var settings = try loadBaseSettings()
+        settings.holdoutGroups = [makeSchemaValidHoldout(metrics: nil)]
+        XCTAssertFalse(SettingsSchema().isSettingsValid(settings), "Holdout without metrics should invalidate settings")
+    }
+
+    func testInvalidSettingsHoldoutMissingFeatureIdsWhenNotGlobal() throws {
+        var settings = try loadBaseSettings()
+        settings.holdoutGroups = [makeSchemaValidHoldout(isGlobal: false, featureIds: [])]
+        XCTAssertFalse(SettingsSchema().isSettingsValid(settings), "Non-global holdout without featureIds should invalidate settings")
+    }
+
+    func testInvalidSettingsHoldoutNonGlobalNilFeatureIds() throws {
+        var settings = try loadBaseSettings()
+        settings.holdoutGroups = [makeSchemaValidHoldout(isGlobal: false, featureIds: nil)]
+        XCTAssertFalse(SettingsSchema().isSettingsValid(settings), "Non-global holdout with nil featureIds should invalidate settings")
+    }
+
+    func testValidSettingsGlobalHoldoutNilFeatureIds() throws {
+        var settings = try loadBaseSettings()
+        settings.holdoutGroups = [makeSchemaValidHoldout(isGlobal: true, featureIds: nil)]
+        XCTAssertTrue(SettingsSchema().isSettingsValid(settings), "Global holdout may omit featureIds")
+    }
+
+    func testValidSettingsGlobalHoldoutEmptyFeatureIds() throws {
+        var settings = try loadBaseSettings()
+        settings.holdoutGroups = [makeSchemaValidHoldout(isGlobal: true, featureIds: [])]
+        XCTAssertTrue(SettingsSchema().isSettingsValid(settings), "Global holdout may use empty featureIds")
+    }
+
+    func testInvalidSettingsHoldoutEmptyMetricsArray() throws {
+        var settings = try loadBaseSettings()
+        settings.holdoutGroups = [makeSchemaValidHoldout(metrics: [])]
+        XCTAssertFalse(SettingsSchema().isSettingsValid(settings), "Holdout with empty metrics array should invalidate settings")
+    }
+
+    func testInvalidSettingsHoldoutMetricMissingId() throws {
+        var settings = try loadBaseSettings()
+        let bad = [HoldoutGroup.Metrics(type: "CUSTOM_GOAL", id: nil, identifier: "m")]
+        settings.holdoutGroups = [makeSchemaValidHoldout(metrics: bad)]
+        XCTAssertFalse(SettingsSchema().isSettingsValid(settings))
+    }
+
+    func testInvalidSettingsHoldoutMetricMissingType() throws {
+        var settings = try loadBaseSettings()
+        let bad = [HoldoutGroup.Metrics(type: nil, id: 1, identifier: "m")]
+        settings.holdoutGroups = [makeSchemaValidHoldout(metrics: bad)]
+        XCTAssertFalse(SettingsSchema().isSettingsValid(settings))
+    }
+
+    func testInvalidSettingsHoldoutMetricMissingIdentifier() throws {
+        var settings = try loadBaseSettings()
+        let bad = [HoldoutGroup.Metrics(type: "CUSTOM_GOAL", id: 1, identifier: nil)]
+        settings.holdoutGroups = [makeSchemaValidHoldout(metrics: bad)]
+        XCTAssertFalse(SettingsSchema().isSettingsValid(settings))
+    }
+
+    func testInvalidSettingsHoldoutMetricEmptyIdentifier() throws {
+        var settings = try loadBaseSettings()
+        let bad = [HoldoutGroup.Metrics(type: "CUSTOM_GOAL", id: 1, identifier: "")]
+        settings.holdoutGroups = [makeSchemaValidHoldout(metrics: bad)]
+        XCTAssertFalse(SettingsSchema().isSettingsValid(settings))
+    }
+
+    func testInvalidSettingsHoldoutSecondMetricInvalid() throws {
+        var settings = try loadBaseSettings()
+        let metrics: [HoldoutGroup.Metrics] = [
+            HoldoutGroup.Metrics(type: "CUSTOM_GOAL", id: 1, identifier: "ok"),
+            HoldoutGroup.Metrics(type: nil, id: 2, identifier: "bad")
+        ]
+        settings.holdoutGroups = [makeSchemaValidHoldout(metrics: metrics)]
+        XCTAssertFalse(SettingsSchema().isSettingsValid(settings), "Any invalid metric in the list should fail validation")
+    }
+
+    func testValidSettingsHoldoutGroupsNilSkipsHoldoutChecks() throws {
+        var settings = try loadBaseSettings()
+        settings.holdoutGroups = nil
+        XCTAssertTrue(SettingsSchema().isSettingsValid(settings))
+    }
+
+    func testValidSettingsEmptyHoldoutGroupsArray() throws {
+        var settings = try loadBaseSettings()
+        settings.holdoutGroups = []
+        XCTAssertTrue(SettingsSchema().isSettingsValid(settings))
     }
 
     func testInvalidSettingsWhenAnyHoldoutInListIsInvalid() throws {

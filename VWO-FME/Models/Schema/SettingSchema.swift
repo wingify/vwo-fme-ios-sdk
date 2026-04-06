@@ -192,7 +192,9 @@ class SettingsSchema {
     /**
      * Checks if a holdout group object is valid.
      *
-     * Validates that required fields (id, trafficPercent, isGlobal, segments) are present.
+     * Fails if any core holdout payload from settings JSON is missing or unusable:
+     * `id`, `percentTraffic`, `isGlobal`, non-empty `segments`, non-empty `metrics` with complete entries,
+     * and for non-global holdouts a non-empty `featureIds` list.
      *
      * - Parameter holdoutGroup: The holdout group object to validate.
      * - Returns: `true` if the holdout group is valid, `false` otherwise.
@@ -200,9 +202,24 @@ class SettingsSchema {
     private func isValidHoldoutGroup(_ holdoutGroup: HoldoutGroup) -> Bool {
         guard holdoutGroup.id != nil,
               holdoutGroup.trafficPercent != nil,
-              holdoutGroup.isGlobal != nil,
-              holdoutGroup.segments != nil else {
+              holdoutGroup.isGlobal != nil else {
             return false
+        }
+        guard let segments = holdoutGroup.segments, !segments.isEmpty else {
+            return false
+        }
+        guard let metrics = holdoutGroup.metrics, !metrics.isEmpty else {
+            return false
+        }
+        for metric in metrics {
+            if metric.id == nil || metric.type == nil || (metric.identifier == nil || metric.identifier?.isEmpty == true) {
+                return false
+            }
+        }
+        if holdoutGroup.isGlobal == false {
+            guard let featureIds = holdoutGroup.featureIds, !featureIds.isEmpty else {
+                return false
+            }
         }
         return true
     }

@@ -1,4 +1,5 @@
 {
+  "BATCHING_DISABLED_DUE_TO_GATEWAY": "Online event batching is disabled because gatewayService is configured in VWOInitOptions.{note}",
   "API_CALLED": "API called: {apiName}",
   "SERVICE_INITIALIZED": "VWO {service} initialized while creating an instance of SDK",
 

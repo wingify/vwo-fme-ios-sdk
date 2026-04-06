@@ -71,7 +71,7 @@ class GetFlagAPI {
             decision["featureKey"] = feature.key
             decision["userId"] = context.id
             decision["api"] = ApiEnum.getFlag.rawValue
-            
+            Self.applyIntegrationDecisionDefaults(feature: feature, settings: settings, decision: &decision)
             
             let storageService = serviceContainer.storage ?? StorageService()
             let storedDataMap = storageService.getFeatureFromStorage(featureKey: featureKey, context: context)
@@ -137,6 +137,7 @@ class GetFlagAPI {
                             "holdoutId": "\(localHidAlsoValidOnServer)"
                         ])
 
+                        var holdoutIdsForIntegration = localHidAlsoValidOnServer.sorted()
                         // Even on storage hit + early exit, evaluate any newly added applicable holdouts and send impressions.
                         if !onServerButNotEvaluatedLocally.isEmpty {
                             let holdoutGroupService = HoldoutGroupService(serviceContainer: serviceContainer, storageService: storageService)
@@ -154,11 +155,25 @@ class GetFlagAPI {
                                     Constants.Holdouts.KEY_STORAGE_HOLDOUT_IDS: mergedHoldoutIds,
                                     Constants.Holdouts.KEY_STORAGE_NOT_IN_HOLDOUT_IDS: mergedNotInHoldoutIds
                                 ])
+                                holdoutIdsForIntegration = mergedHoldoutIds
                             }
                         }
 
+                        decision["holdoutIDs"] = holdoutIdsForIntegration
+                        decision["isPartOfHoldout"] = true
+                        decision["isUserPartOfCampaign"] = false
+                        decision["isEnabled"] = false
                         getFlag.setIsEnabled(isEnabled: false)
                         getFlag.setVariables([])
+                        hookManager.set(properties: decision)
+                        hookManager.execute(properties: hookManager.get())
+                        if feature.isDebuggerEnabled {
+                            debugEventProps["cg"] = DebuggerCategoryEnum.DECISION.rawValue
+                            debugEventProps["lt"] = LogLevelEnum.info.rawValue
+                            debugEventProps["msg_t"] = Constants.FLAG_DECISION_GIVEN
+                            Self.updateDebugEventProps(&debugEventProps, decision: decision)
+                            DebuggerServiceUtil.sendDebugEventToVWO(eventProps: debugEventProps, serviceContainer: serviceContainer)
+                        }
                         dispatchGroup.leave()
                         return
                     }
@@ -189,6 +204,17 @@ class GetFlagAPI {
                                 }
                                 getFlag.setIsEnabled(isEnabled: true)
                                 getFlag.setVariables(variation.variables)
+                                decision["isEnabled"] = true
+                                decision["isUserPartOfCampaign"] = true
+                                hookManager.set(properties: decision)
+                                hookManager.execute(properties: hookManager.get())
+                                if feature.isDebuggerEnabled {
+                                    debugEventProps["cg"] = DebuggerCategoryEnum.DECISION.rawValue
+                                    debugEventProps["lt"] = LogLevelEnum.info.rawValue
+                                    debugEventProps["msg_t"] = Constants.FLAG_DECISION_GIVEN
+                                    Self.updateDebugEventProps(&debugEventProps, decision: decision)
+                                    DebuggerServiceUtil.sendDebugEventToVWO(eventProps: debugEventProps, serviceContainer: serviceContainer)
+                                }
                                 dispatchGroup.leave()
                                 return
                             }
@@ -214,6 +240,7 @@ class GetFlagAPI {
                             getFlag.setIsEnabled(isEnabled: true)
                             getFlag.setVariables(variation.variables)
                             shouldCheckForExperimentsRules = true
+                            decision["isUserPartOfCampaign"] = true
                             var featureInfo: [String: Any] = [:]
                             featureInfo["rolloutId"] = rolloutId
                             featureInfo["rolloutKey"] = rolloutKey
@@ -221,6 +248,7 @@ class GetFlagAPI {
                             evaluatedFeatureMap[featureKey] = featureInfo
                             
                             passedRulesInformation.merge(featureInfo) { (_, new) in new }
+                            decision.merge(featureInfo) { (_, new) in new }
                         }
                     }
                     }
@@ -244,18 +272,14 @@ class GetFlagAPI {
                 ImpressionUtil.createAndSendImpressionForVariationShown(settings: settings, campaignId: imp.campaignId, variationId: imp.variationId, context: context, serviceContainer: serviceContainer)
             }
 
-            decision["holdoutIDs"] = "[]"
-            decision["isUserPartOfCampaign"] = false
-            decision["isPartOfHoldout"] = !holdoutGroups.isEmpty
-            let isAnyHoldoutApplicableForThisFeature = !HoldoutGroupService
-                .getApplicableHoldouts(settings: settings, featureId: feature.id)
-                .isEmpty
-            decision["isHoldoutPresent"] = isAnyHoldoutApplicableForThisFeature
+            decision["holdoutIDs"] = [Int]()
+            decision["isPartOfHoldout"] = false
 
             if !holdoutGroups.isEmpty {
                 let qualifiedHoldoutNames = holdoutGroups.map { $0.name ?? "" }.joined(separator: ",")
-                let qualifiedHoldoutIds = "[" + holdoutGroups.compactMap { $0.id }.map { "\($0)" }.joined(separator: ",") + "]"
+                let qualifiedHoldoutIds = holdoutGroups.compactMap { $0.id }
                 decision["holdoutIDs"] = qualifiedHoldoutIds
+                decision["isPartOfHoldout"] = true
 
                 serviceContainer.getLoggerService()?.log(level: .info, key: "USER_IN_HOLDOUT_GROUP", details: [
                     Constants.USER_ID: context.id ?? "",
@@ -327,6 +351,7 @@ class GetFlagAPI {
                         getFlag.setIsEnabled(isEnabled: true)
                         getFlag.setVariables(variation.variables)
                         shouldCheckForExperimentsRules = true
+                        decision["isUserPartOfCampaign"] = true
                         GetFlagAPI.updateIntegrationsDecisionObject(campaign: passedRolloutCampaign, variation: variation, passedRulesInformation: &passedRulesInformation, decision: &decision)
                         
                         ImpressionUtil.createAndSendImpressionForVariationShown(settings: settings, campaignId: passedRolloutCampaign.id ?? 0, variationId: variation.id ?? 0, context: context, serviceContainer: serviceContainer)
@@ -366,6 +391,7 @@ class GetFlagAPI {
                             passedRulesInformation["experimentId"] = rule.id
                             passedRulesInformation["experimentKey"] = rule.key
                             passedRulesInformation["experimentVariationId"] = whitelistedObject!.id
+                            decision["isUserPartOfCampaign"] = true
                         }
                         break
                     }
@@ -378,6 +404,7 @@ class GetFlagAPI {
                     if let variation = variation {
                         getFlag.setIsEnabled(isEnabled: true)
                         getFlag.setVariables(variation.variables)
+                        decision["isUserPartOfCampaign"] = true
                         GetFlagAPI.updateIntegrationsDecisionObject(campaign: campaign, variation: variation, passedRulesInformation: &passedRulesInformation, decision: &decision)
                         
                         ImpressionUtil.createAndSendImpressionForVariationShown(settings: settings, campaignId: campaign.id ?? 0, variationId: variation.id ?? 0, context: context, serviceContainer: serviceContainer)
@@ -412,6 +439,9 @@ class GetFlagAPI {
             }
 
             // Execute the integrations
+            decision.merge(passedRulesInformation) { _, new in new }
+            decision["isEnabled"] = getFlag.isEnabled()
+            decision["isUserPartOfCampaign"] = getFlag.isEnabled()
             hookManager.set(properties: decision)
             hookManager.execute(properties: hookManager.get())
             
@@ -441,6 +471,16 @@ class GetFlagAPI {
         }
         dispatchGroup.wait()
         completion(getFlag)
+    }
+
+    /// Integration defaults: whether the feature uses any holdout, and cleared participation until evaluated.
+    private static func applyIntegrationDecisionDefaults(feature: Feature, settings: Settings, decision: inout [String: Any]) {
+        decision["isUserPartOfCampaign"] = false
+        decision["isPartOfHoldout"] = false
+        decision["holdoutIDs"] = [Int]()
+        decision["isHoldoutPresent"] = !HoldoutGroupService
+            .getApplicableHoldouts(settings: settings, featureId: feature.id)
+            .isEmpty
     }
 
     /// Update debug event props with decision keys

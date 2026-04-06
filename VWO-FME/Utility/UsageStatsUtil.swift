@@ -93,7 +93,8 @@ class UsageStatsUtil {
             usageStatsDict[UsageStatsKeys.storage] = 1
             usageStatsDict[UsageStatsKeys.cachedSettingsExpiryTime] = (options.cachedSettingsExpiryTime != 0).toIntForDictValue()
             usageStatsDict[UsageStatsKeys.pollInterval] = (options.pollInterval != nil).toIntForDictValue()
-            usageStatsDict[UsageStatsKeys.eventBatching] = (options.batchMinSize != nil || options.batchUploadTimeInterval != nil).toIntForDictValue()
+            let batchingRequested = options.batchMinSize != nil || options.batchUploadTimeInterval != nil
+            usageStatsDict[UsageStatsKeys.eventBatching] = (batchingRequested && !options.isGatewayServiceConfigured).toIntForDictValue()
             if let batchSize = options.batchMinSize {
                 usageStatsDict[UsageStatsKeys.eventBatchingSize] = "\(batchSize)"
             }

@@ -46,6 +46,17 @@ import Foundation
     var vwoMeta: [String: Any] = [:]
     var storageConnector: VWOStorageConnector? = nil
     var isAliasingEnabled: Bool = false
+
+    /// `true` when a non-empty gateway base URL is supplied (`gatewayService["url"]`). Online event batching is not used in this case.
+    internal var isGatewayServiceConfigured: Bool {
+        guard !gatewayService.isEmpty,
+              let url = gatewayService["url"] as? String,
+              !url.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
+            return false
+        }
+        return true
+    }
+
     /**
      * Initializes a new instance of VWOInitOptions.
      *
@@ -59,8 +70,8 @@ import Foundation
      *   - cachedSettingsExpiryTime: Expiry time for cached settings in milliseconds.
      *   - cachedDecisionExpiryTime: Expiry time for cached decisions in milliseconds. Stored Get Flag decisions are only valid for this duration; if not set (0), decisions are valid indefinitely.
      *   - pollInterval: Interval for polling updates in milliseconds.
-     *   - batchMinSize: Minimum size of batch to upload.
-     *   - batchUploadTimeInterval: Batch upload time interval in milliseconds. Please specify at least few minutes.
+     *   - batchMinSize: Minimum size of batch to upload (ignored when `gatewayService` includes a valid `url`).
+     *   - batchUploadTimeInterval: Batch upload time interval in milliseconds (ignored when `gatewayService` includes a valid `url`).
      *   - storageConnector: Connect user storage with SDK
      *   - isAliasingEnabled:Enable for setup userId alias
      */
