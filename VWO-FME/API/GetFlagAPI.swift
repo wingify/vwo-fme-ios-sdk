@@ -37,7 +37,6 @@ class GetFlagAPI {
             var shouldCheckForExperimentsRules = false
             var passedRulesInformation: [String: Any] = [:]
             var evaluatedFeatureMap: [String: Any] = [:]
-            var storedDataIsAlreadyValid = false
             
             // get feature object from feature key
             let feature: Feature? = FunctionUtil.getFeatureFromKey(settings: settings, featureKey: featureKey)
@@ -107,7 +106,6 @@ class GetFlagAPI {
                         ])
                     }
                     if !isExpired {
-                        storedDataIsAlreadyValid = true
                     // Check for holdout decision (aligned with Android: use holdoutIds, partition with server, cleanup obsolete)
                     let savedHoldoutIds = storedData.holdoutIds ?? storedData.holdoutId ?? storedData.holdoutGroupId ?? []
                     let savedNotInHoldoutIds = storedData.notInHoldoutIds ?? []
@@ -223,7 +221,7 @@ class GetFlagAPI {
                               let rolloutId = storedData.rolloutId {
                         let variation = CampaignUtil.getVariationFromCampaignKey(settings: settings, campaignKey: rolloutKey, variationId: storedData.rolloutVariationId)
                         
-                        // If variation is found in settings, evaluate experiment rules
+                        // If variation is found in settings, prefer stored decision and avoid holdout re-evaluation.
                         if let variation = variation {
                             
                             serviceContainer.getLoggerService()?.log(level: .info, key: "STORED_VARIATION_FOUND", details: [
@@ -236,10 +234,33 @@ class GetFlagAPI {
                             serviceContainer.getLoggerService()?.log(level: .debug, key: "EXPERIMENTS_EVALUATION_WHEN_ROLLOUT_PASSED", details: [
                                 "userId": context.id ?? ""
                             ])
-                            
+
+                            if !onServerButNotEvaluatedLocally.isEmpty {
+                                serviceContainer.getLoggerService()?.log(level: .debug, key: "HOLDOUT_SKIP_EVALUATION", details: [
+                                    "holdoutName": "\(onServerButNotEvaluatedLocally)",
+                                    "reason": "stored variation already exists"
+                                ])
+                                serviceContainer.getLoggerService()?.log(level: .debug, key: "SAVE_NOT_IN_HOLDOUT", details: [
+                                    "userId": context.id ?? "",
+                                    "holdoutIds": "\(onServerButNotEvaluatedLocally)"
+                                ])
+                            }
+                            let (notInImpressions, updatedNotInHoldoutIds) = Self.buildNotInHoldoutForNewlyAddedHoldouts(
+                                newIds: onServerButNotEvaluatedLocally,
+                                storedNotInHoldoutIds: storedData.notInHoldoutIds
+                            )
+                            for imp in notInImpressions {
+                                ImpressionUtil.createAndSendImpressionForVariationShown(settings: settings, campaignId: imp.campaignId, variationId: imp.variationId, context: context, serviceContainer: serviceContainer)
+                            }
+                            if !updatedNotInHoldoutIds.isEmpty {
+                                storageService.updateDataInStorage(featureKey: featureKey, context: context, data: [
+                                    Constants.Holdouts.KEY_STORAGE_NOT_IN_HOLDOUT_IDS: updatedNotInHoldoutIds
+                                ])
+                            }
+
                             getFlag.setIsEnabled(isEnabled: true)
                             getFlag.setVariables(variation.variables)
-                            shouldCheckForExperimentsRules = true
+                            decision["isEnabled"] = true
                             decision["isUserPartOfCampaign"] = true
                             var featureInfo: [String: Any] = [:]
                             featureInfo["rolloutId"] = rolloutId
@@ -249,6 +270,17 @@ class GetFlagAPI {
                             
                             passedRulesInformation.merge(featureInfo) { (_, new) in new }
                             decision.merge(featureInfo) { (_, new) in new }
+                            hookManager.set(properties: decision)
+                            hookManager.execute(properties: hookManager.get())
+                            if feature.isDebuggerEnabled {
+                                debugEventProps["cg"] = DebuggerCategoryEnum.DECISION.rawValue
+                                debugEventProps["lt"] = LogLevelEnum.info.rawValue
+                                debugEventProps["msg_t"] = Constants.FLAG_DECISION_GIVEN
+                                Self.updateDebugEventProps(&debugEventProps, decision: decision)
+                                DebuggerServiceUtil.sendDebugEventToVWO(eventProps: debugEventProps, serviceContainer: serviceContainer)
+                            }
+                            dispatchGroup.leave()
+                            return
                         }
                     }
                     }
@@ -412,31 +444,29 @@ class GetFlagAPI {
                 }
             }
             
-            if !storedDataIsAlreadyValid {
-                var storageMap: [String: Any] = [:]
-                
-                storageMap["featureKey"] = feature.key
-                storageMap["userId"] = context.id
-                storageMap.merge(passedRulesInformation) { (_, new) in new }
-                // Store "not in holdout" IDs for reporting (even when flag is disabled).
-                // Persist only the holdouts that were evaluated as "NOT in holdout" for this feature.
-                // This is derived from evaluation impressions and stays correct even if applicable holdouts change.
-                let notInHoldoutIds = Array(
-                    Set(
-                        holdoutImpressions
-                            .filter { $0.variationId == Constants.Holdouts.VARIATION_NOT_PART_OF_HOLDOUT }
-                            .map { $0.campaignId }
-                    )
-                ).sorted()
-                storageMap[Constants.Holdouts.KEY_STORAGE_NOT_IN_HOLDOUT_IDS] = notInHoldoutIds
-                
-                let cachedDecisionExpiryTime = serviceContainer.getVWOInitOptions().cachedDecisionExpiryTime
-                if cachedDecisionExpiryTime > 0 {
-                    let newExpiry = Date().currentTimeMillis() + cachedDecisionExpiryTime
-                    storageMap["decisionExpiryTime"] = newExpiry
-                }
-                storageService.setDataInStorage(data: storageMap)
+            var storageMap: [String: Any] = [:]
+            
+            storageMap["featureKey"] = feature.key
+            storageMap["userId"] = context.id
+            storageMap.merge(passedRulesInformation) { (_, new) in new }
+            // Store "not in holdout" IDs for reporting (even when flag is disabled).
+            // Persist only the holdouts that were evaluated as "NOT in holdout" for this feature.
+            // This is derived from evaluation impressions and stays correct even if applicable holdouts change.
+            let notInHoldoutIds = Array(
+                Set(
+                    holdoutImpressions
+                        .filter { $0.variationId == Constants.Holdouts.VARIATION_NOT_PART_OF_HOLDOUT }
+                        .map { $0.campaignId }
+                )
+            ).sorted()
+            storageMap[Constants.Holdouts.KEY_STORAGE_NOT_IN_HOLDOUT_IDS] = notInHoldoutIds
+            
+            let cachedDecisionExpiryTime = serviceContainer.getVWOInitOptions().cachedDecisionExpiryTime
+            if cachedDecisionExpiryTime > 0 {
+                let newExpiry = Date().currentTimeMillis() + cachedDecisionExpiryTime
+                storageMap["decisionExpiryTime"] = newExpiry
             }
+            storageService.setDataInStorage(data: storageMap)
 
             // Execute the integrations
             decision.merge(passedRulesInformation) { _, new in new }

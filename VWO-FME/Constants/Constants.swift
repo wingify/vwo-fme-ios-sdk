@@ -36,7 +36,7 @@ struct Constants {
     static let SETTINGS_TIMEOUT: Int = 30
 
     static let HOST_NAME: String = "dev.visualwebsiteoptimizer.com"
-    static let SETTINGS_ENDPOINT: String = "/server-side/v2-settings"
+    static let SETTINGS_ENDPOINT: String = "/server-side/v2-pull"
     static let EVENT_BATCH_ENDPOINT: String = "/server-side/batch-events-v2"
 
     static let VWO_FS_ENVIRONMENT: String = "vwo_fs_environment"
