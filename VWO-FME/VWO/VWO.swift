@@ -419,4 +419,17 @@ enum SDKState {
         VWOFme.logPerf(for: "setAlias", start: start, end: end)
     }
     
+    /**
+         * Public helper for hybrid SDKs (e.g. Flutter) to send the SDK init event.
+         *
+         * Looks up the default instance, builds a service container and delegates to the
+         * internal sendSdkInitEvent(sdkInitTime:client:serviceContainer:) helper.
+         *
+         * - Parameter sdkInitTime: The duration (in ms) it took to initialize the SDK.
+         */
+        public func sendSdkInitEvent(sdkInitTime: Int64) {
+            guard let client = vwoClient else { return }
+            let serviceContainer = client.createServiceContainer()
+            VWOFme.sendSdkInitEvent(sdkInitTime: sdkInitTime, client: client, serviceContainer: serviceContainer)
+        }
 }
