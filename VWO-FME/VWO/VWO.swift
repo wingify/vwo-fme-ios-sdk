@@ -55,11 +55,6 @@ enum SDKState {
     private static var vwoInstances: [String: VWOFme] = [:]
     private static let instancesQueue = DispatchQueue(label: "com.vwo.fme.instances", attributes: .concurrent)
     
-    // Temporary perf logger for manual timing checks.
-     static func logPerf(for method: String, start: Int64, end: Int64) {
-        LoggerService.log(level: .info, message: "[PERF] \(method) start=\(start) end=\(end) durationMs=\(end - start)")
-    }
-    
     // Private instance variable for VWOClient
     private var vwoClient: VWOClient?
     
@@ -293,14 +288,10 @@ enum SDKState {
      */
     
     private static func sendSdkInitEvent(sdkInitTime: Int64, client: VWOClient, serviceContainer: ServiceContainer?) {
-        let start = Date().currentTimeMillis()
         let wasInitializedEarlier = client.processedSettings?.sdkMetaInfo?.wasInitializedEarlier
-        
         if client.isSettingsValid && (wasInitializedEarlier == false || wasInitializedEarlier == nil) {
             EventsUtils().sendSdkInitEvent(settingsFetchTime: client.settingsFetchTime, sdkInitTime: sdkInitTime, serviceContainer: serviceContainer)
         }
-        let end = Date().currentTimeMillis()
-        logPerf(for: "sendSdkInitEvent", start: start, end: end)
     }
     
     /**
@@ -315,15 +306,10 @@ enum SDKState {
      * @param client The VWOClient instance to use
      */
     private static func sendUsageStats(client: VWOClient, serviceContainer: ServiceContainer?) {
-        let start = Date().currentTimeMillis()
         guard let usageStatsAccountId = client.processedSettings?.usageStatsAccountId else {
-            let end = Date().currentTimeMillis()
-            logPerf(for: "sendUsageStats", start: start, end: end)
             return
         }
         EventsUtils().sendSDKUsageStatsEvent(usageStatsAccountId: usageStatsAccountId, serviceContainer: serviceContainer)
-        let end = Date().currentTimeMillis()
-        logPerf(for: "sendUsageStats", start: start, end: end)
     }
     
     /**
@@ -389,23 +375,16 @@ enum SDKState {
     
     // Tracks an event with properties
     public func trackEvent(eventName: String, context: VWOUserContext, eventProperties: [String: Any]? = nil) {
-        let start = Date().currentTimeMillis()
         vwoClient?.trackEvent(eventName: eventName, context: context, eventProperties: eventProperties ?? [:])
-        let end = Date().currentTimeMillis()
-        VWOFme.logPerf(for: "trackEvent", start: start, end: end)
     }
     
     // Sets attributes for a user in the context provided
     public func setAttribute(attributes: [String: Any], context: VWOUserContext) {
-        let start = Date().currentTimeMillis()
         vwoClient?.setAttribute(attributes: attributes, context: context)
-        let end = Date().currentTimeMillis()
-        VWOFme.logPerf(for: "setAttribute", start: start, end: end)
     }
     
     // Sets alias for a user
     public func setAlias(from userContext: VWOUserContext, to alias: String) {
-        let start = Date().currentTimeMillis()
         // Get ServiceContainer for this instance to ensure correct account context
         let serviceContainer = vwoClient?.createServiceContainer()
         // Use instance-specific alias manager from ServiceContainer
@@ -415,8 +394,6 @@ enum SDKState {
             // Fallback to shared for backward compatibility
             AliasIdentifierManager.shared.setAlias(from: userContext, to: alias, serviceContainer: nil)
         }
-        let end = Date().currentTimeMillis()
-        VWOFme.logPerf(for: "setAlias", start: start, end: end)
     }
     
     /**
