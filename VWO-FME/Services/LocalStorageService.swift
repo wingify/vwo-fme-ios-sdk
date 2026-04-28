@@ -533,19 +533,23 @@ class StorageService {
             return
         }
 
-        let rolloutKey = data["rolloutKey"] as? String
-        let experimentKey = data["experimentKey"] as? String
-        let rolloutVariationId = data["rolloutVariationId"] as? Int
-        let experimentVariationId = data["experimentVariationId"] as? Int
+        // Holdout-only data: allow storing without rollout/experiment validation
+        let isHoldoutData = (data["holdout"] as? Bool) == true
+        if !isHoldoutData {
+            let rolloutKey = data["rolloutKey"] as? String
+            let experimentKey = data["experimentKey"] as? String
+            let rolloutVariationId = data["rolloutVariationId"] as? Int
+            let experimentVariationId = data["experimentVariationId"] as? Int
 
-        if let rolloutKey = rolloutKey, !rolloutKey.isEmpty, experimentKey == nil, rolloutVariationId == nil {
-            LoggerService.errorLog(key: "ERROR_STORING_DATA_IN_STORAGE",data:["key": "Variation:(rolloutKey, experimentKey or rolloutVariationId)"] ,debugData: ["an":ApiEnum.getFlag.rawValue])
-            return
-        }
+            if let rolloutKey = rolloutKey, !rolloutKey.isEmpty, experimentKey == nil, rolloutVariationId == nil {
+                LoggerService.errorLog(key: "ERROR_STORING_DATA_IN_STORAGE",data:["key": "Variation:(rolloutKey, experimentKey or rolloutVariationId)"] ,debugData: ["an":ApiEnum.getFlag.rawValue])
+                return
+            }
 
-        if let experimentKey = experimentKey, !experimentKey.isEmpty, experimentVariationId == nil {
-            LoggerService.errorLog(key: "ERROR_STORING_DATA_IN_STORAGE",data:["key":"Variation:(experimentKey or rolloutVariationId)"] ,debugData: ["an":ApiEnum.getFlag.rawValue])
-            return
+            if let experimentKey = experimentKey, !experimentKey.isEmpty, experimentVariationId == nil {
+                LoggerService.errorLog(key: "ERROR_STORING_DATA_IN_STORAGE",data:["key":"Variation:(experimentKey or rolloutVariationId)"] ,debugData: ["an":ApiEnum.getFlag.rawValue])
+                return
+            }
         }
 
         // Include account prefix to ensure isolation between instances
@@ -556,6 +560,62 @@ class StorageService {
             connector.set(data, forKey: storageKey)
         } else {
             userDefaults.set(data, forKey: storageKey)
+        }
+    }
+
+    /**
+     * Updates existing feature storage with the given data (merge). Aligned with Android updateDataInStorage.
+     * Used e.g. to remove obsolete holdout ids from storage when server no longer has those holdout groups.
+     *
+     * - Parameters:
+     *   - featureKey: The feature key.
+     *   - context: The user context.
+     *   - data: Keys and values to merge into existing storage (overwrite existing keys).
+     * - Returns: true if update was performed, false if no existing data.
+     */
+    func updateDataInStorage(featureKey: String, context: VWOUserContext, data: [String: Any]) -> Bool {
+        guard var existingData = getDataInStorage(featureKey: featureKey, context: context) else {
+            return false
+        }
+        existingData["featureKey"] = featureKey
+        existingData["userId"] = context.id
+        for (key, value) in data {
+            existingData[key] = value
+        }
+        setDataInStorage(data: existingData)
+        return true
+    }
+
+    /**
+     * Retrieves a string value from storage for the given key.
+     *
+     * - Parameter key: The storage key (will be prefixed with account key when applicable).
+     * - Returns: The string value if available, otherwise nil.
+     */
+    func getString(forKey key: String) -> String? {
+        let storageKey = getAccountKey(key)
+        if let connector = StorageConnectorProvider.shared.getStorageConnector() {
+            if let data = connector.get(forKey: storageKey), let value = data["value"] as? String {
+                return value
+            }
+            return nil
+        }
+        return userDefaults.string(forKey: storageKey)
+    }
+
+    /**
+     * Saves a string value to storage for the given key.
+     *
+     * - Parameters:
+     *   - value: The string value to store.
+     *   - key: The storage key (will be prefixed with account key when applicable).
+     */
+    func saveString(_ value: String, forKey key: String) {
+        let storageKey = getAccountKey(key)
+        if let connector = StorageConnectorProvider.shared.getStorageConnector() {
+            connector.set(["value": value], forKey: storageKey)
+        } else {
+            userDefaults.set(value, forKey: storageKey)
         }
     }
 

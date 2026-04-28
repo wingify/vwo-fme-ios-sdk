@@ -136,6 +136,44 @@ class SettingsUtil {
             }
             settings.features[i] = feature
         }
+        
+        // Iterate over each holdout group to check if gateway service is required
+        if var holdoutGroups = settings.holdoutGroups {
+            for i in 0..<holdoutGroups.count {
+                var holdout = holdoutGroups[i]
+                if let segments = holdout.segments {
+                    do {
+                        // Convert segments to JSON-compatible structure
+                        let jsonCompatibleStructure = segments.mapValues { $0.toJSONCompatible() }
+                        
+                        // Serialize segments to JSON string
+                        let jsonData = try JSONSerialization.data(withJSONObject: jsonCompatibleStructure, options: [.prettyPrinted])
+                        let jsonString = String(data: jsonData, encoding: .utf8)!
+                        
+                        // Match regex pattern in JSON string
+                        let matches = regex.matches(in: jsonString, options: [], range: NSRange(location: 0, length: jsonString.count))
+                        
+                        for match in matches {
+                            let matchString = (jsonString as NSString).substring(with: match.range)
+                            // Check if match is within a custom variable
+                            if matchString.range(of: "\\b(country|region|city|os|device_type|browser_string|ua)\\b", options: .regularExpression) != nil {
+                                if !isWithinCustomVariable(startIndex: match.range.location, input: jsonString) {
+                                    holdout.isGatewayServiceRequired = true
+                                    break
+                                }
+                            } else {
+                                holdout.isGatewayServiceRequired = true
+                                break
+                            }
+                        }
+                    } catch {
+                        LoggerService.log(level: .error, message: "Exception occurred while processing holdout settings \(error.localizedDescription)")
+                    }
+                }
+                holdoutGroups[i] = holdout
+            }
+            settings.holdoutGroups = holdoutGroups
+        }
     }
     
     /**

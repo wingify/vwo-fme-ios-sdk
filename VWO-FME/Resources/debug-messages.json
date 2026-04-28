@@ -1,4 +1,5 @@
 {
+  "BATCHING_DISABLED_DUE_TO_GATEWAY": "Online event batching is disabled because gatewayService is configured in VWOInitOptions.{note}",
   "API_CALLED": "API called: {apiName}",
   "SERVICE_INITIALIZED": "VWO {service} initialized while creating an instance of SDK",
 
@@ -11,4 +12,24 @@
   "IMPRESSION_FOR_TRACK_GOAL": "Impression built for {eventName} event for Account ID:{accountId}, and user ID:{userId}",
   "IMPRESSION_FOR_SYNC_VISITOR_PROP": "Impression built for {eventName} event for Account ID:{accountId}, and user ID:{userId}",
   "NETWORK_CALL_FAILED": "Error occurred while sending {method} request. Error: {err}",
+  
+  "USER_IN_HOLDOUT_GROUP": "User {userId} is in holdout group {holdoutGroupName} for feature {featureKey} - feature excluded",
+  "HOLDOUT_GROUP_EVALUATION": "Evaluating holdout group {holdoutGroupId} for user {userId} and feature {featureId}",
+  "HOLDOUT_GROUP_BUCKETED": "User {userId} bucketed into holdout group {holdoutGroupId} with bucket value {bucketValue} and threshold {threshold}",
+  "HOLDOUT_GROUP_FOUND_IN_STORAGE": "Holdout group assignment found in storage for user {userId} in holdout group {holdoutName} for feature {featureKey}",
+  
+  "HOLDOUT_FEATURE_ID_NULL": "While evaluating holdouts, featureId = null, only checking global holdouts.",
+  "HOLDOUT_SEGMENTATION_FAIL": "User: {userId} did not qualify segmentation for Holdout: {holdoutGroupName}",
+  "HOLDOUT_SHOULD_EXCLUDE_USER": "User {userId} ({bucketValue}%) is in HOLDOUT named: {holdoutGroupName} with targeted traffic percent: {percentTraffic}% for feature with id: {featureId}.",
+  "HOLDOUT_SHOULD_NOT_EXCLUDE_USER": "User {userId} is NOT part of HOLDOUT named {holdoutGroupName}.",
+  "HOLDOUT_NOT_CONFIGURED": "Holdout configuration was not found in the received server settings.",
+  "HOLDOUT_SETTINGS_INVALID": "Invalid value detected in holdout settings, review configuration in App",
+  
+  "STORED_HOLDOUT_DECISION_FOUND": "User id: {userId} already part of holdout id: {holdoutId} feature key: {featureKey}.",
+  "PART_OF_HOLDOUT_IN_MEG": "MEG: User id {userId} is part of holdout: {holdoutId} for feature key: {featureKey}.",
+  "HOLDOUT_SKIP_EVALUATION": "Skip holdout reevaluation for holdout id : {holdoutName} because {reason}",
+  "SAVE_NOT_IN_HOLDOUT": "User id: {userId} was not part of any applicable holdout: {holdoutIds}",
+  "HOLDOUT_SEGMENTATION_SKIP": "Holdout segmentation skipped for holdout: {holdoutGroupName} because segments is null/empty.",
+  "USER_EXCLUDED_DUE_TO_HOLDOUT": "User {userId} excluded due to holdout group {holdoutGroupName} for feature key: {featureKey}.",
+  "USER_NOT_EXCLUDED_DUE_TO_HOLDOUT": "User {userId} not excluded due to holdout because no applicable holdout groups matched for feature key: {featureKey}."
 }

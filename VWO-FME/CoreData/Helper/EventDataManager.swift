@@ -171,11 +171,11 @@ class EventDataManager {
         }
         
         let headers = ["Authorization": sdkKey]
-        let properties = NetworkUtil.getBatchEventsBaseProperties()
+        let properties = NetworkUtil.getBatchEventsBaseProperties(serviceContainer: serviceContainer)
         // Get instance-specific base URL
         let baseUrl = UrlService.getBaseUrl(serviceContainer: serviceContainer)
-        // Get accountId for the request
-        let accountId = serviceContainer?.getAccountId()
+        // Get accountId for the request; fallback to first event's accountId in case container is unavailable.
+        let accountId = serviceContainer?.getAccountId() ?? events.first.map { Int($0.accountId) }
         
         var request = RequestModel(url: baseUrl,
                                    method: HTTPMethod.post.rawValue,

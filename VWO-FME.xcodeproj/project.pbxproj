@@ -26,6 +26,9 @@
 		BA5DD5E52E321FED00D3A127 /* SdkMetaInfo.swift in Sources */ = {isa = PBXBuildFile; fileRef = BA5DD5E42E321FDF00D3A127 /* SdkMetaInfo.swift */; };
 		BA5DD5E72E3225DC00D3A127 /* EventsUtils.swift in Sources */ = {isa = PBXBuildFile; fileRef = BA5DD5E62E3225D200D3A127 /* EventsUtils.swift */; };
 		BA6CF04F2E431F9E00FE5740 /* DeviceUtil.swift in Sources */ = {isa = PBXBuildFile; fileRef = BA6CF04D2E431E8700FE5740 /* DeviceUtil.swift */; };
+		BA72A5252F430261001FF615 /* HoldoutGroup.swift in Sources */ = {isa = PBXBuildFile; fileRef = BA72A5242F430261001FF615 /* HoldoutGroup.swift */; };
+		BA72A5272F430284001FF615 /* HoldoutGroupService.swift in Sources */ = {isa = PBXBuildFile; fileRef = BA72A5262F430284001FF615 /* HoldoutGroupService.swift */; };
+		BA72A53E2F436C91001FF615 /* HoldoutGroupServiceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = BA72A53D2F436C91001FF615 /* HoldoutGroupServiceTests.swift */; };
 		BA76097B2E704B8300E1EDA9 /* DebuggerCategoryEnum.swift in Sources */ = {isa = PBXBuildFile; fileRef = BA76097A2E704B8300E1EDA9 /* DebuggerCategoryEnum.swift */; };
 		BA76097D2E70503400E1EDA9 /* DebuggerServiceUtil.swift in Sources */ = {isa = PBXBuildFile; fileRef = BA76097C2E70502300E1EDA9 /* DebuggerServiceUtil.swift */; };
 		BA7E952C2EB33F1D00D28A7F /* ServiceContainer.swift in Sources */ = {isa = PBXBuildFile; fileRef = BA7E952B2EB33F1D00D28A7F /* ServiceContainer.swift */; };
@@ -194,6 +197,9 @@
 		BA5DD5E42E321FDF00D3A127 /* SdkMetaInfo.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SdkMetaInfo.swift; sourceTree = "<group>"; };
 		BA5DD5E62E3225D200D3A127 /* EventsUtils.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EventsUtils.swift; sourceTree = "<group>"; };
 		BA6CF04D2E431E8700FE5740 /* DeviceUtil.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeviceUtil.swift; sourceTree = "<group>"; };
+		BA72A5242F430261001FF615 /* HoldoutGroup.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HoldoutGroup.swift; sourceTree = "<group>"; };
+		BA72A5262F430284001FF615 /* HoldoutGroupService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HoldoutGroupService.swift; sourceTree = "<group>"; };
+		BA72A53D2F436C91001FF615 /* HoldoutGroupServiceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HoldoutGroupServiceTests.swift; sourceTree = "<group>"; };
 		BA76097A2E704B8300E1EDA9 /* DebuggerCategoryEnum.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DebuggerCategoryEnum.swift; sourceTree = "<group>"; };
 		BA76097C2E70502300E1EDA9 /* DebuggerServiceUtil.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DebuggerServiceUtil.swift; sourceTree = "<group>"; };
 		BA7E952B2EB33F1D00D28A7F /* ServiceContainer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ServiceContainer.swift; sourceTree = "<group>"; };
@@ -454,6 +460,7 @@
 		EB06C79C2C9023C200A25E07 /* Models */ = {
 			isa = PBXGroup;
 			children = (
+				BA72A5242F430261001FF615 /* HoldoutGroup.swift */,
 				BA5DD5E42E321FDF00D3A127 /* SdkMetaInfo.swift */,
 				EB06C7B22C9023DA00A25E07 /* Campaign.swift */,
 				EB06C7AF2C9023DA00A25E07 /* Feature.swift */,
@@ -574,6 +581,7 @@
 		EB06C7F32C90246300A25E07 /* Services */ = {
 			isa = PBXGroup;
 			children = (
+				BA72A5262F430284001FF615 /* HoldoutGroupService.swift */,
 				BA7E952B2EB33F1D00D28A7F /* ServiceContainer.swift */,
 				EB06C7F52C90246E00A25E07 /* CampaignDecisionService.swift */,
 				EB06C7F42C90246E00A25E07 /* HooksManager.swift */,
@@ -735,6 +743,7 @@
 				EB373E762D9E7DF4005713D1 /* SegmentEvaluator */,
 				EB373E712D9D2B62005713D1 /* DecisionMaker */,
 				EB373E692D9D2B51005713D1 /* VWO_FMETests.swift */,
+				BA72A53D2F436C91001FF615 /* HoldoutGroupServiceTests.swift */,
 				EB373E7B2D9E99C9005713D1 /* TestDataLoader.swift */,
 			);
 			path = "VWO-FMETests";
@@ -1165,6 +1174,7 @@
 				BA5DD5E52E321FED00D3A127 /* SdkMetaInfo.swift in Sources */,
 				EB06C8952C9026F400A25E07 /* SegmentEvaluator.swift in Sources */,
 				EB06C8A02C90274C00A25E07 /* EventArchPayload.swift in Sources */,
+				BA72A5272F430284001FF615 /* HoldoutGroupService.swift in Sources */,
 				EB06C7B92C9023E500A25E07 /* Metric.swift in Sources */,
 				EB8D4B0F2D2BE96800DB924A /* NetworkMonitor.swift in Sources */,
 				BA7E952C2EB33F1D00D28A7F /* ServiceContainer.swift in Sources */,
@@ -1189,6 +1199,7 @@
 				EB8D4B0C2D2BB49F00DB924A /* EventBatchQueryParams.swift in Sources */,
 				EB5500902CA51C3C00A8B729 /* SetUserAliasRequest.swift in Sources */,
 				EB5500912CA51C3C00A8B729 /* SetUserAliasResponse.swift in Sources */,
+				BA72A5252F430261001FF615 /* HoldoutGroup.swift in Sources */,
 				EB5500922CA51C3C00A8B729 /* GetUserAliasResponse.swift in Sources */,
 				EB06C7992C90239C00A25E07 /* VWOBuilder.swift in Sources */,
 				EB06C8802C90269F00A25E07 /* ResponseModel.swift in Sources */,
@@ -1216,6 +1227,7 @@
 				BAE6CFE92E4396360041118A /* DeviceUtilTests.swift in Sources */,
 				BAE7B5E02F6187F6003FC298 /* CoreDataStackCorruptionTests.swift in Sources */,
 				EB373E752D9D484C005713D1 /* DecisionMakerTests.swift in Sources */,
+				BA72A53E2F436C91001FF615 /* HoldoutGroupServiceTests.swift in Sources */,
 				EB544F072DD5FBA6006AA817 /* EnumTests.swift in Sources */,
 				EB373E782D9E7E08005713D1 /* SegmentEvaluatorTests.swift in Sources */,
 				BA5DD5E32E2655CE00D3A127 /* DeviceIDUtilTests.swift in Sources */,

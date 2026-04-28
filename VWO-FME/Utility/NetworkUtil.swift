@@ -292,7 +292,9 @@ class NetworkUtil {
     // Returns the payload data for the track user API
 
     class func getTrackUserPayloadData(settings: Settings, userId: String?, eventName: String, campaignId: Int, variationId: Int, visitorUserAgent: String?, ipAddress: String?,sessionId: Int64?, context: VWOUserContext, serviceContainer: ServiceContainer? = nil) -> [String: Any] {
+
         var properties = NetworkUtil.getEventBasePayload(userId: userId, eventName: eventName, visitorUserAgent: visitorUserAgent, ipAddress: ipAddress, sessionId: sessionId, serviceContainer: serviceContainer)
+
         
         properties.d?.event?.props?.id = campaignId
         properties.d?.event?.props?.variation = "\(variationId)"
@@ -359,6 +361,7 @@ class NetworkUtil {
     // Returns the payload data for the attribute API
 
     static func getAttributePayloadData(settings: Settings, userId: String?, eventName: String,sessionId: Int64?, attributes: [String: Any], serviceContainer: ServiceContainer? = nil) -> [String: Any] {
+
         var properties = NetworkUtil.getEventBasePayload(userId: userId, eventName: eventName, visitorUserAgent: nil, ipAddress: nil, sessionId: sessionId, serviceContainer: serviceContainer)
 
         properties.d?.event?.props?.setIsCustomEvent(true)

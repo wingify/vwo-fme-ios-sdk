@@ -31,9 +31,36 @@ struct Storage: Codable {
     var experimentId: Int?
     var experimentKey: String?
     var experimentVariationId: Int?
+    var isInHoldout: Bool?
+    var holdout: Bool?
+    /// In-holdout IDs
+    var holdoutIds: [Int]?
+    /// Not-in-holdout IDs
+    var notInHoldoutIds: [Int]?
+    /// Legacy: single holdout id list
+    var holdoutId: [Int]?
+    /// Legacy: holdout group id list 
+    var holdoutGroupId: [Int]?
     /// Decision expiry time in milliseconds (timestamp when decision becomes invalid). Nil or non-positive = valid indefinitely.
     var decisionExpiryTime: Int64?
-
+    
+    enum CodingKeys: String, CodingKey {
+        case featureKey
+        case user = "userId"
+        case rolloutId
+        case rolloutKey
+        case rolloutVariationId
+        case experimentId
+        case experimentKey
+        case experimentVariationId
+        case isInHoldout
+        case holdout
+        case holdoutIds
+        case notInHoldoutIds
+        case holdoutId
+        case holdoutGroupId
+    }
+    
     /// Returns true when the stored decision has expired (decisionExpiryTime is a positive timestamp in the past).
     func isDecisionExpired() -> Bool {
         guard let expiry = decisionExpiryTime, expiry > 0 else { return false }

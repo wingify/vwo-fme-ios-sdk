@@ -289,7 +289,6 @@ enum SDKState {
     
     private static func sendSdkInitEvent(sdkInitTime: Int64, client: VWOClient, serviceContainer: ServiceContainer?) {
         let wasInitializedEarlier = client.processedSettings?.sdkMetaInfo?.wasInitializedEarlier
-        
         if client.isSettingsValid && (wasInitializedEarlier == false || wasInitializedEarlier == nil) {
             EventsUtils().sendSdkInitEvent(settingsFetchTime: client.settingsFetchTime, sdkInitTime: sdkInitTime, serviceContainer: serviceContainer)
         }
@@ -397,4 +396,17 @@ enum SDKState {
         }
     }
     
+    /**
+         * Public helper for hybrid SDKs (e.g. Flutter) to send the SDK init event.
+         *
+         * Looks up the default instance, builds a service container and delegates to the
+         * internal sendSdkInitEvent(sdkInitTime:client:serviceContainer:) helper.
+         *
+         * - Parameter sdkInitTime: The duration (in ms) it took to initialize the SDK.
+         */
+        public func sendSdkInitEvent(sdkInitTime: Int64) {
+            guard let client = vwoClient else { return }
+            let serviceContainer = client.createServiceContainer()
+            VWOFme.sendSdkInitEvent(sdkInitTime: sdkInitTime, client: client, serviceContainer: serviceContainer)
+        }
 }

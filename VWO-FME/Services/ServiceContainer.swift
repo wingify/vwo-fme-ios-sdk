@@ -63,10 +63,19 @@ class ServiceContainer {
         // Set account info in StorageService for multi-instance support
         self.storage?.setAccountInfo(accountId: getAccountId(), sdkKey: getSdkKey())
         
-        // Initialize SyncManager with batch settings from options
+        // Initialize SyncManager with batch settings from options.
+        // Gateway mode sends events through the gateway immediately; online batching is not enabled when gateway is configured.
         let batchSize = options.batchMinSize
         let batchTime = options.batchUploadTimeInterval
-        let isAllowed = syncManager.checkOnlineBatchingAllowed(batchSize: batchSize, batchUploadInterval: batchTime)
+        let gatewayConfigured = options.isGatewayServiceConfigured
+        let userRequestedOnlineBatching = syncManager.checkOnlineBatchingAllowed(batchSize: batchSize, batchUploadInterval: batchTime)
+        if gatewayConfigured {
+            let note = (batchSize != nil || batchTime != nil)
+                ? " batchMinSize and batchUploadTimeInterval are ignored."
+                : ""
+            loggerService?.log(level: .debug, key: "BATCHING_DISABLED_DUE_TO_GATEWAY", details: ["note": note])
+        }
+        let isAllowed = userRequestedOnlineBatching && !gatewayConfigured
         if isAllowed {
             syncManager.initialize(minBatchSize: batchSize, timeInterval: batchTime)
         }
