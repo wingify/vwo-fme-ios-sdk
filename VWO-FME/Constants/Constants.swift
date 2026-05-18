@@ -20,7 +20,7 @@ struct Constants {
     static let defaultString: String = ""
     static let PLATFORM: String = "ios"
 
-    static let SDK_VERSION: String = "1.17.0"
+    static let SDK_VERSION: String = "1.17.1"
 
     static let MAX_TRAFFIC_PERCENT: Int = 100
     static let MAX_TRAFFIC_VALUE: Int = 10000
@@ -102,6 +102,8 @@ struct Constants {
     static let SETTINGS_MAX_RETRY_ATTEMPTS = 1
     static let MAX_RETRY_ATTEMPTS = 4
     static let HTTP_STATUS_CODE_200 = 200
+    static let HTTP_STATUS_CODE_400 = 400
+    static let HTTP_STATUS_CODE_401 = 401
 
     
 }

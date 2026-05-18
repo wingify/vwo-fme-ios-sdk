@@ -116,13 +116,25 @@ class NetworkClient: NetworkClientInterface {
     private func getMaxRetryCount(request: RequestModel, response: ResponseModel? = nil) -> Int {
         let isSettingsEndpoint = (request.path?.contains(Constants.SETTINGS_ENDPOINT) ?? false)
         
-        if isSettingsEndpoint, let response = response, (response.statusCode != Constants.HTTP_STATUS_CODE_200) {
+        if isSettingsEndpoint, let response = response, (response.statusCode == Constants.HTTP_STATUS_CODE_400 || response.statusCode == Constants.HTTP_STATUS_CODE_401) {
             return Constants.SETTINGS_MAX_RETRY_ATTEMPTS
         }
         
         // Assume max retry count is MAX_RETRY_ATTEMPTS for SETTINGS_ENDPOINT,
         // we can only effectively determine actual retry based on status code
         return Constants.MAX_RETRY_ATTEMPTS
+    }
+    
+    /// Retry is not required for deterministic terminal responses.
+    private func shouldRetry(statusCode: Int) -> Bool {
+        return statusCode != Constants.HTTP_STATUS_CODE_200 && statusCode != Constants.HTTP_STATUS_CODE_400
+    }
+
+    /// Prevent debug-event recursion loops for /events/t failures.
+    private func shouldSendDebugEvent(for request: RequestModel) -> Bool {
+        let isDebuggerEvent = request.eventName.contains(EventEnum.VWO_DEBUGGER_EVENT.rawValue)
+        let isEventsEndpoint = request.path == UrlEnum.events.rawValue
+        return !isDebuggerEvent && !isEventsEndpoint
     }
     
     private func performRequestWithRetry( request: URLRequest,originalRequestModel: RequestModel, completion: @escaping (ResponseModel) -> Void, retryCount: Int = 4,delay: TimeInterval = 1.0,
@@ -172,7 +184,7 @@ class NetworkClient: NetworkClientInterface {
                 responseModel.totalAttempts = attempt - 1  // Number of retries (excluding initial attempt)
 
                 // Final retry failed - send debug event and log
-                if attempt > 1 && !updatedRequestModel.eventName.contains(EventEnum.VWO_DEBUGGER_EVENT.rawValue){
+                if attempt > 1 && shouldSendDebugEvent(for: updatedRequestModel) {
                     let debugEventProps = createNetworkAndRetryDebugEvent(request: updatedRequestModel, response: responseModel)
                     DebuggerServiceUtil.sendDebugEventToVWO(eventProps: removeNullValues(debugEventProps))
                 }
@@ -208,7 +220,7 @@ class NetworkClient: NetworkClientInterface {
             responseModel.totalAttempts = attempt - 1  // Number of retries (excluding initial attempt)
             
             // Send debug event to dashboard only when request succeeds after retries
-            if attempt > 1 && !updatedRequestModel.eventName.contains(EventEnum.VWO_DEBUGGER_EVENT.rawValue) {
+            if attempt > 1 && shouldSendDebugEvent(for: updatedRequestModel) {
                 let debugEventProps = createNetworkAndRetryDebugEvent(request: updatedRequestModel, response: responseModel)
                 DebuggerServiceUtil.sendDebugEventToVWO(eventProps: removeNullValues(debugEventProps))
             }
@@ -226,7 +238,7 @@ class NetworkClient: NetworkClientInterface {
 
             responseModel.error = .requestFailed
 
-            if retryCount > 0 {
+            if retryCount > 0 && shouldRetry(statusCode: responseModel.statusCode) {
                 if attempt > 1 {
                     let data: [String: Any] = [
                         END_Point: updatedRequestModel.path ?? "",
@@ -262,7 +274,7 @@ class NetworkClient: NetworkClientInterface {
             } else {
                 responseModel.totalAttempts = attempt - 1  // Number of retries (excluding initial attempt)
 
-                if attempt > 1 {
+                if attempt > 1 && shouldSendDebugEvent(for: updatedRequestModel) {
                     let debugEventProps = createNetworkAndRetryDebugEvent(request: updatedRequestModel, response: responseModel)
                     DebuggerServiceUtil.sendDebugEventToVWO(eventProps: removeNullValues(debugEventProps))
                 }
@@ -281,7 +293,7 @@ class NetworkClient: NetworkClientInterface {
                 
                 // Check for invalid credentials
                 let isSettingsEndpoint = (updatedRequestModel.path?.contains(Constants.SETTINGS_ENDPOINT) ?? false)
-                if isSettingsEndpoint && (responseModel.statusCode != Constants.HTTP_STATUS_CODE_200) {
+                if isSettingsEndpoint && (responseModel.statusCode != Constants.HTTP_STATUS_CODE_200) && (responseModel.totalAttempts != Constants.MAX_RETRY_ATTEMPTS) {
                     LoggerService.log(level: .error, key: "INVALID_CREDENTIALS", details: nil)
                     LoggerService.errorLog(
                         key: "INVALID_CREDENTIALS",
