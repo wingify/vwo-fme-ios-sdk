@@ -231,6 +231,19 @@ class SettingsManager {
     }
     
     /**
+       * Triggers a background settings refresh without invoking caller completion.
+       *
+       * This is used when cached settings are returned immediately and the SDK should
+       * refresh the cache asynchronously in the background.
+       */
+      private func refreshSettingsInBackground() {
+          guard !self.isSettingsFetchInProgress else { return }
+          self.fetchSettings { _ in
+              // Intentionally ignored: cache/logging is handled inside fetchSettings.
+          }
+      }
+    
+    /**
      * Fetches settings from cache or server.
      *
      * - Parameters:
@@ -241,6 +254,7 @@ class SettingsManager {
                 // Use instance-specific logger if available, otherwise fallback to static logger
                 self.loggerService?.log(level: .info, key: "SETTINGS_FETCH_SUCCESS", details: [:]) ?? LoggerService.log(level: .info, key: "SETTINGS_FETCH_SUCCESS", details: [:])
                 completion(settingObj)
+            self.refreshSettingsInBackground()
         } else {
             // Cache expired or no cached settings - log and fetch from server
             // Only log if cache expiry is enabled (cachedSettingsExpiryInterval > 0) and cache was invalid
@@ -294,6 +308,13 @@ class SettingsManager {
             let error = result.errorMessage
             if let data = result.data2, error == nil {
                 if let settingsObj = try? JSONDecoder().decode(Settings.self, from: data) {
+                    let validedSetting = SettingsSchema().isSettingsValid(settingsObj)
+                    if !validedSetting {
+                        self.isSettingsValid = false
+                        LoggerService.errorLog(key: "INVALID_SETTINGS_SCHEMA", data: ["err": "Setting is invalid"],debugData: ["an": ApiEnum.Init.rawValue])
+                        completion(nil)
+                        return
+                    }
                     // Use instance-specific logger if available, otherwise fallback to static logger
                     self.loggerService?.log(level: .info, key: "SETTINGS_FETCH_SUCCESS", details: [:]) ?? LoggerService.log(level: .info, key: "SETTINGS_FETCH_SUCCESS", details: [:])
                     self.saveSettingInUserDefaults(settingObj: settingsObj)
@@ -320,7 +341,7 @@ class SettingsManager {
                         self.isSettingsValid = true
                         completion(cachedSetting)
                     } else {
-                        LoggerService.errorLog(key: "ERROR_FETCHING_SETTINGS", data: ["err":"\(result.errorMessage ?? "Unknown error")"],debugData: ["an":Constants.MOBILE_STORAGE])
+                        LoggerService.errorLog(key: "ERROR_FETCHING_SETTINGS", data: ["err":"\(result.errorMessage ?? "Unknown error")"],debugData: ["an":Constants.MOBILE_STORAGE],shouldSendToVWO:  false)
                         completion(nil)
                     }
                 } else {
