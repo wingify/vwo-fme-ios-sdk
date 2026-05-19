@@ -52,11 +52,12 @@ import Foundation
      *   - postSegmentationVariables: A list of Key variables that addes customVariable for postSegmentaion.
      */
 
-    public init(id: String? = nil, shouldUseDeviceIdAsUserId: Bool = false,customVariables: [String: Any], postSegmentationVariables: [String]? = nil) {
+    public init(id: String? = nil, shouldUseDeviceIdAsUserId: Bool = false,customVariables: [String: Any], postSegmentationVariables: [String]? = nil,ipAddress: String? = nil) {
         self.shouldUseDeviceIdAsUserId = shouldUseDeviceIdAsUserId
         self.customVariables = customVariables
         self.id = id
         self.postSegmentationVariables = postSegmentationVariables
+        self.ipAddress = ipAddress ?? ""
         if shouldUseDeviceIdAsUserId && id == nil {
             if let deviceId = DeviceIDUtil().getDeviceID() {
                 self.id = deviceId

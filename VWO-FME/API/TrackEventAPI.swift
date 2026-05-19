@@ -82,7 +82,7 @@ class TrackEventAPI {
         let properties = NetworkUtil.getEventsBaseProperties(
             eventName: eventName,
             visitorUserAgent: ImpressionUtil.encodeURIComponent(context.userAgent),
-            ipAddress: context.ipAddress,
+            ipAddress: nil,
             serviceContainer: serviceContainer
         )
 
@@ -97,6 +97,6 @@ class TrackEventAPI {
         )
 
         // Send the constructed properties and payload as a POST request
-        NetworkUtil.sendPostApiRequest(properties: properties, payload: payload, userAgent: context.userAgent, ipAddress: context.ipAddress, serviceContainer: serviceContainer)
+        NetworkUtil.sendPostApiRequest(properties: properties, payload: payload, userAgent: context.userAgent, ipAddress: nil, serviceContainer: serviceContainer)
     }
 }

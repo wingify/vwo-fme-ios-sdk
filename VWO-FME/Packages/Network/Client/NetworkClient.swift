@@ -238,7 +238,7 @@ class NetworkClient: NetworkClientInterface {
 
             responseModel.error = .requestFailed
 
-            if retryCount > 0 && shouldRetry(statusCode: responseModel.statusCode) {
+            if retryCount > 0 && shouldRetry(statusCode: responseModel.statusCode){
                 if attempt > 1 {
                     let data: [String: Any] = [
                         END_Point: updatedRequestModel.path ?? "",
@@ -309,6 +309,11 @@ class NetworkClient: NetworkClientInterface {
         }
     }
 
+    /// Retry is not required for deterministic terminal responses.
+    private func shouldRetry(statusCode: Int) -> Bool {
+        return statusCode != Constants.HTTP_STATUS_CODE_200 && statusCode != Constants.HTTP_STATUS_CODE_400
+    }
+    
     func removeNullValues(_ dictionary: [String: Any?]) -> [String: Any] {
         return dictionary.compactMapValues { $0 }
     }

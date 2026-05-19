@@ -74,9 +74,6 @@ class SegmentationManager {
         if (feature.isGatewayServiceRequired || isGatewayServiceRequiredForHoldouts) && context.vwo == nil {
             
             var queryParams: [String: String] = [:]
-            if context.userAgent.isEmpty && context.ipAddress.isEmpty {
-                return
-            }
             
             let storageService = serviceContainer.storage ?? StorageService()
             if let cachedResult = storageService.getUserDetail() {
@@ -86,7 +83,12 @@ class SegmentationManager {
             
             queryParams["userAgent"] = context.userAgent
             queryParams["accountId"] = "\(serviceContainer.getAccountId())"
-
+            
+            if !context.ipAddress.isEmpty {
+                queryParams["ipAddress"] = context.ipAddress
+            }
+            
+            
             let dispatchGroup = DispatchGroup()
             dispatchGroup.enter()
             

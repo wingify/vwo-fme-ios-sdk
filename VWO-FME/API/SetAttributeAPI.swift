@@ -48,7 +48,7 @@ class SetAttributeAPI {
         let properties = NetworkUtil.getEventsBaseProperties(
             eventName: EventEnum.vwoSyncVisitorProp.rawValue,
             visitorUserAgent: ImpressionUtil.encodeURIComponent(context.userAgent),
-            ipAddress: context.ipAddress,
+            ipAddress: nil,
             serviceContainer: serviceContainer
         )
 
@@ -64,6 +64,6 @@ class SetAttributeAPI {
         )
 
         // Send the constructed properties and payload as a POST request
-        NetworkUtil.sendPostApiRequest(properties: properties, payload: payload, userAgent: context.userAgent, ipAddress: context.ipAddress, serviceContainer: serviceContainer)
+        NetworkUtil.sendPostApiRequest(properties: properties, payload: payload, userAgent: context.userAgent, ipAddress: nil, serviceContainer: serviceContainer)
     }
 }
