@@ -27,11 +27,16 @@ import XCTest
 
 final class NetworkManagerConfigRaceTests: XCTestCase {
 
+    private let stubClient = StubNetworkClient()
+
     override func setUp() {
         super.setUp()
-        // Clear config so tests start from a known state. The real client is only set once;
-        // the first test that runs will install the stub client.
+        // attachClient is one-shot in the process; install the stub before any test in this class runs.
+        NetworkManager.attachClient(client: stubClient)
         NetworkManager.config = nil
+        // Other test classes may leave online batching enabled; postAsync skips completion when it is on.
+        SyncManager.shared.stopSyncing()
+        SyncManager.shared.initialize(minBatchSize: 0, timeInterval: 0)
     }
 
     // MARK: - Stub network client (avoids real I/O in test 2)
@@ -78,11 +83,11 @@ final class NetworkManagerConfigRaceTests: XCTestCase {
         }
     }
 
-    // MARK: - Test 2: Concurrent postAsync calls racing with config replacement
+    // MARK: - Test 2: Concurrent post calls racing with config replacement
 
-    /// Fires many postAsync() calls while the main thread keeps replacing config.
-    /// This mimics SDK init (writing config) happening at the same time as in-flight
-    /// requests (reading config). StubNetworkClient is used so we don’t hit the real network.
+    /// Fires many network posts on a background queue while the test thread keeps replacing config.
+    /// Mirrors postAsync’s background read of config without the online-batching early return
+    /// (which does not invoke the completion handler and can hang CI when other tests enable batching).
     /// Without a fix this can crash or Thread Sanitizer will report a data race.
     func testPostAsyncRacesWithConfigReplacement() {
         var base = GlobalRequestModel()
@@ -91,24 +96,24 @@ final class NetworkManagerConfigRaceTests: XCTestCase {
         base.headers = ["Authorization": "Bearer test-key"]
         NetworkManager.config = base
 
-        // Use stub client so postAsync returns immediately. attachClient() clears config, so set it again.
-        NetworkManager.attachClient(client: StubNetworkClient())
-        NetworkManager.config = base
-
-        let group = DispatchGroup()
         let concurrency = 100
+        let expectation = XCTestExpectation(description: "background post completions")
+        expectation.expectedFulfillmentCount = concurrency
 
         for i in 0..<concurrency {
-            group.enter()
             var request = RequestModel(port: 443)
             request.url = "https://dev.visualwebsiteoptimizer.com"
             request.path = "/server-side/track-user"
             request.query = ["a": "\(i)"]
-            NetworkManager.postAsync(request) { _ in
-                group.leave()
+
+            // Same queue semantics as NetworkManager.postAsync (background), without batching branch.
+            DispatchQueue.global(qos: .background).async {
+                NetworkManager.post(request) { _ in
+                    expectation.fulfill()
+                }
             }
 
-            // Replace config on the main thread while postAsync (on background queue) reads it — that’s the race.
+            // Replace config while the background work reads it — that’s the race.
             var replacement = GlobalRequestModel()
             replacement.baseUrl = "https://dev.visualwebsiteoptimizer.com"
             replacement.query = ["env": "race-\(i)"]
@@ -116,6 +121,6 @@ final class NetworkManagerConfigRaceTests: XCTestCase {
             NetworkManager.config = replacement
         }
 
-        group.wait()
+        wait(for: [expectation], timeout: 30.0)
     }
 }

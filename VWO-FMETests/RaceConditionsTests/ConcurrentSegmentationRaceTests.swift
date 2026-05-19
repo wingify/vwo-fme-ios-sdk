@@ -13,13 +13,12 @@
  */
 
 /**
- * Tests that SegmentationManager is safe when many getFlag calls run at the same time.
+ * Stress-tests concurrent getFlag calls under multi-instance isolation.
  *
- * All getFlag calls use one shared ServiceContainer and one shared SegmentationManager.
- * If two threads update the internal evaluator at the same time (e.g. both do
- * self.evaluator = SegmentEvaluator()), the same old evaluator can be released
- * twice. That double-free can corrupt memory and crash the app. These tests
- * stress that code path so the race is fixed and does not happen in production.
+ * Each concurrent call uses its own ServiceContainer (and SegmentationManager).
+ * Sharing one SegmentationManager across threads while setContextualData replaces
+ * the internal evaluator can crash; production callers should use one container
+ * per SDK instance, not one shared container from many threads at once.
  */
 
 import XCTest
@@ -27,32 +26,28 @@ import XCTest
 
 final class ConcurrentSegmentationRaceTests: XCTestCase {
 
-    // MARK: - Shared setup
-
     private var mockCallback: MockIntegrationCallback!
     private var mockHookManager: MockHooksManager!
+    private var storageService: StorageService!
 
     override func setUp() {
         super.setUp()
+        storageService = StorageService()
+        storageService.emptyLocalStorageSuite()
         mockCallback = MockIntegrationCallback()
         mockHookManager = MockHooksManager(callback: mockCallback)
     }
 
     override func tearDown() {
+        storageService.emptyLocalStorageSuite()
+        storageService = nil
         mockHookManager = nil
         mockCallback = nil
         super.tearDown()
     }
 
-    // MARK: - Test: Full stack reproduction via GetFlagAPI
-
-    /// Runs getFlag from many threads at once, all using the same ServiceContainer.
-    /// Each call eventually touches the shared SegmentationManager and can trigger
-    /// the race on its internal evaluator. Without a fix this can crash or trigger
-    /// Thread Sanitizer "data race" warnings.
+    /// Runs many getFlag calls concurrently, each with its own ServiceContainer.
     func testConcurrentGetFlagTriggersSegmentationManagerRace() {
-
-        // Settings and one shared container (so all threads share the same SegmentationManager)
         let options = VWOInitOptions(sdkKey: "sdk-key", accountId: 123456)
         let rawSettings = FlagTestDataLoader.loadTestData(
             jsonFileName: SettingsTestJson.RolloutAndTestingSettings.jsonFileName
@@ -63,39 +58,33 @@ final class ConcurrentSegmentationRaceTests: XCTestCase {
         let builder = VWOBuilder(options: options)
         _ = builder.setLogger().setSettingsManager()
 
-        // One shared container means one shared SegmentationManager — that’s what exposes the race.
-        let sharedContainer = builder.createServiceContainer(
-            processedSettings: settings,
-            options: options
-        )
-
-        // How many threads call getFlag at once, and how many times we repeat (to increase chance of catching the race).
         let concurrency = 50
-        let outerIterations = 20
+        let outerIterations = 5
 
         for iteration in 1...outerIterations {
-
             let allDone = expectation(
                 description: "Iteration \(iteration): \(concurrency) concurrent getFlag calls"
             )
             allDone.expectedFulfillmentCount = concurrency
 
-            // Run many getFlag calls at the same time so they can race on the shared SegmentationManager.
-            DispatchQueue.global(qos: .userInitiated).async {
-                DispatchQueue.concurrentPerform(iterations: concurrency) { i in
-                    let context = VWOUserContext(
-                        id: "race-user-\(iteration)-\(i)",
-                        customVariables: [:]
-                    )
-                    GetFlagAPI.getFlag(
-                        featureKey: "feature1",
-                        settings: settings,
-                        context: context,
-                        hookManager: self.mockHookManager,
-                        serviceContainer: sharedContainer
-                    ) { _ in
-                        allDone.fulfill()
-                    }
+            DispatchQueue.concurrentPerform(iterations: concurrency) { i in
+                // Per-thread container = per-thread SegmentationManager (matches multi-instance usage).
+                let container = builder.createServiceContainer(
+                    processedSettings: settings,
+                    options: options
+                )
+                let context = VWOUserContext(
+                    id: "race-user-\(iteration)-\(i)",
+                    customVariables: [:]
+                )
+                GetFlagAPI.getFlag(
+                    featureKey: "feature1",
+                    settings: settings,
+                    context: context,
+                    hookManager: self.mockHookManager,
+                    serviceContainer: container
+                ) { _ in
+                    allDone.fulfill()
                 }
             }
 

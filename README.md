@@ -266,12 +266,17 @@ The following table explains all the parameters in the `context` object:
 | `id`              | Unique identifier for the user.                                            | Yes          | String   | `"unique_user_id"`                |
 | `customVariables` | Custom attributes for targeting.                                           | No           | Dictionary   | `["key_1": 2, "key_2": 0]`    |
 | `shouldUseDeviceIdAsUserId`  | Use device ID as user ID when user ID is not provided.          | No           | Boolean  | `true`                            |
+| `ipAddress`       | Visitor IP address from your application context.                          | No           | String   | `"1.2.3.4"`                       |
 
 #### Example
 
 ```swift
 let customVariables: [String : Any] = ["key_1": 2, "key_2": 0]
-let userContext = VWOUserContext(id: "unique_user_id", customVariables: customVariables)
+let userContext = VWOUserContext(
+    id: "unique_user_id",
+    customVariables: customVariables,
+    ipAddress: "1.2.3.4"
+)
 ```
 
 #### Device ID Configuration
