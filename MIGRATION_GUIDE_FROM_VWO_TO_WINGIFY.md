@@ -1,0 +1,647 @@
+# Migration Guide: VWO -> Wingify (iOS SDK)
+
+As part of our branding exercise, we changed the developer-facing SDK names and public-facing identifiers from **VWO** to **Wingify** while keeping feature-flag functionality the same.
+
+## What changed (high level)
+
+- SDK product/repo naming (documentation badges, Pod/SPM guidance)
+- Swift module import (`VWO_FME` -> `Wingify_FME`)
+- Primary API types (`VWOFme` -> `WingifyFme`)
+- Initialization/context types (`VWOInitOptions` -> `WingifyInitOptions`, `VWOUserContext` -> `WingifyUserContext`)
+- Logging text now uses Wingify terminology when using the Wingify product configuration
+- HTTP routing for Wingify product differs by request type:
+  - `GET` uses `servingUrl`
+  - `POST` uses `collectionUrl`
+
+## Pointers: what is impacted
+
+The table below summarizes what customer apps typically need to adjust.
+
+| Area | What changed | Customer impact | What to do |
+| --- | --- | --- | --- |
+| Package / import | `import VWO_FME` -> `import Wingify_FME` | Swift compile errors until imports are updated | Replace the import statement |
+| Initialization | `VWOInitOptions` -> `WingifyInitOptions` | Type mismatch/compile errors | Update type name |
+| SDK entrypoint | `VWOFme.initialize/getFlag/trackEvent/...` -> `WingifyFme.initialize/getFlag/trackEvent/...` | API compile errors | Replace `VWOFme` with `WingifyFme` |
+| User context | `VWOUserContext` -> `WingifyUserContext` | Type mismatch/compile errors | Update context type name |
+| Logging | VWO wording in log templates is replaced with Wingify wording for the Wingify product | Mostly informational | No code change required |
+| Deprecated VWO API | VWO-branded methods/types emit deprecation warnings in the Wingify SDK | Build warnings if you keep using old VWO names | Migrate to Wingify names |
+
+## What needs to be done at customer’s end
+
+1. Update imports in Swift/SPM:
+   - `import VWO_FME` -> `import Wingify_FME`
+2. Update initialization:
+   - `VWOInitOptions` -> `WingifyInitOptions`
+3. Update SDK entrypoints:
+   - `VWOFme` -> `WingifyFme`
+4. Update user context:
+   - `VWOUserContext` -> `WingifyUserContext`
+5. If you see deprecation warnings, ignore them only temporarily and complete migration to avoid future removals.
+
+## Sample code (before/after)
+
+### Before (VWO)
+
+```swift
+import VWO_FME
+
+let options = VWOInitOptions(sdkKey: SDK_KEY, accountId: ACCOUNT_ID)
+
+VWOFme.initialize(options: options) { result in
+    switch result {
+    case .success:
+        let userContext = VWOUserContext(id: "unique_user_id", customVariables: ["key_1": 2])
+        VWOFme.getFlag(featureKey: "feature_flag_name", context: userContext) { flag in
+            print("Flag enabled:", flag.isEnabled())
+        }
+    case .failure(let error):
+        print("Init failed:", error)
+    }
+}
+```
+
+### After (Wingify)
+
+```swift
+import Wingify_FME
+
+let options = WingifyInitOptions(sdkKey: SDK_KEY, accountId: ACCOUNT_ID)
+
+WingifyFme.initialize(options: options) { result in
+    switch result {
+    case .success:
+        let userContext = WingifyUserContext(id: "unique_user_id", customVariables: ["key_1": 2])
+        WingifyFme.getFlag(featureKey: "feature_flag_name", context: userContext) { flag in
+            print("Flag enabled:", flag.isEnabled())
+        }
+    case .failure(let error):
+        print("Init failed:", error)
+    }
+}
+```
+
+---
+
+# Wingify Feature Management and Experimentation SDK for iOS
+
+[![pod version](https://img.shields.io/cocoapods/v/Wingify-FME?style=for-the-badge&color=grey)](https://github.com/wingify/wingify-fme-ios-sdk)
+[![License](https://img.shields.io/github/license/wingify/wingify-fme-ios-sdk?style=for-the-badge&color=blue)](http://www.apache.org/licenses/LICENSE-2.0)
+
+[![CI](https://img.shields.io/github/actions/workflow/status/wingify/wingify-fme-ios-sdk/main.yml?style=for-the-badge&logo=github)](https://github.com/wingify/wingify-fme-ios-sdk/actions?query=workflow%3ACI)
+
+## Overview
+
+The **Wingify Feature Management and Experimentation SDK** (Wingify FME iOS SDK) enables developers to integrate feature flagging and experimentation into their applications across Apple platforms. This SDK provides full control over feature rollout, A/B testing, and event tracking, allowing teams to manage features dynamically and gain insights into user behavior.
+
+## Supported Platforms
+
+The SDK is compatible with the following Apple platforms and minimum OS versions:
+
+- iOS 12.0 and later
+- watchOS 7.0 and later
+- tvOS 12.0 and later
+- macOS 10.14 and later
+
+## Installation
+
+### CocoaPods
+
+Wingify FME is available through [CocoaPods](http://cocoapods.org).
+
+To install it, simply add the following line to your Podfile:
+
+```bash
+pod 'Wingify-FME'
+```
+
+And then run:
+
+```bash
+pod install
+```
+
+### Swift Package Manager
+
+To install Wingify FME using [Swift Package Manager](https://github.com/swiftlang/swift-package-manager) you can follow the [tutorial published by Apple](https://developer.apple.com/documentation/xcode/adding-package-dependencies-to-your-app) using the URL for the Wingify FME repo with the current version:
+
+1. In Xcode, select “File” → “Add Package Dependencies...”
+1. Enter https://github.com/wingify/wingify-fme-ios-sdk
+1. Add package
+
+## Basic Usage
+
+```swift
+import Wingify_FME
+
+// Initialize Wingify SDK with your SDK_KEY and ACCOUNT_ID
+let options = WingifyInitOptions(sdkKey: SDK_KEY, accountId: ACCOUNT_ID)
+
+WingifyFme.initialize(options: options) { result in
+    switch result {
+        case .success(let message):
+            print("Wingify init success")
+
+            // for targeting conditions
+            let customVariables: [String : Any] = ["key_1": 2, "key_2": 0]
+            // Create WingifyUserContext object
+            let userContext = WingifyUserContext(id: "unique_user_id", customVariables: customVariables)
+            
+            // Or
+            // if you want to configure DeviceID
+            let userContext = WingifyUserContext(shouldUseDeviceIdAsUserId: true, customVariables: customVariables)
+
+            // Get the GetFlag object for the feature key and context
+            WingifyFme.getFlag(featureKey: "feature_flag_name", context: userContext, completion: { featureFlagObj in
+                // Check if flag is enabled
+                let isFlagEnabled = featureFlagObj.isEnabled()
+                            
+                // Get the variable value for the given variable key and default value
+                let variable1 = featureFlagObj.getVariable(key: "feature_flag_variable", defaultValue: "default-value")
+            })
+
+            // Track the event for the given event name and context
+            let eventProperties: [String: Any] = ["cart_value":"999"]
+            WingifyFme.trackEvent(eventName: "event_name", context: userContext, eventProperties: eventProperties)
+
+            // Send attributes data
+            let attributeName1 = "attribute-name-string"
+            let attributeValue1 = "attribute-value-text"
+            let attributeName2 = "attribute-name-float"
+            let attributeValue2 = 7.0
+
+            let attributeDict: [String: Any] = [attributeName1: attributeValue1,
+                                                attributeName2: attributeValue2]
+
+            WingifyFme.setAttribute(attributes: attributeDict, context: userContext)
+
+        case .failure(let error):
+            break
+    }
+}
+```
+
+## Advanced Configuration Options
+
+To customize the SDK further, additional parameters can be passed to the `WingifyInitOptions` initializer. Here’s a table describing each option:
+
+| **Parameter**                | **Description**                                                                                                                                             | **Required** | **Type** | **Example**                     |
+| ---------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------ | -------- | ------------------------------- |
+| `accountId`                  | Wingify Account ID for authentication.                                                                                                                          | Yes          | Int      | `123456`                        |
+| `sdkKey`                     | SDK key corresponding to the specific environment to initialize the Wingify SDK Client. You can get this key from Wingify Application.                              | Yes          | String   | `"32-alpha-numeric-sdk-key"`    |
+| `logLevel`                   | The level of logging to be used.                                                                                                                            | No           | Enum     | `.error`                        |
+| `logPrefix`                  | A prefix to be added to log messages.                                                                                                                        | No           | String   | `"Wingify"`                         |
+| `pollInterval`               | Time interval for fetching updates from Wingify servers (in milliseconds).                                                                                      | No           | Int64    | `60000`                         |
+| `integrations`               | Callback for integrations.                                                                                                                                  | No           | IntegrationCallback | See [Integrations](#integrations) section |
+| `cachedSettingsExpiryTime`   | Expiry time for cached settings in milliseconds.                                                                                                            | No           | Int64    | `3600000`                       |
+| `cachedDecisionExpiryTime`   | Expiry time for cached Get Flag decisions in milliseconds. When set to a value > 0, stored decisions are re-evaluated after this duration. Use `0` (default) for decisions to remain valid indefinitely. | No           | Int64    | `60000`                         |
+| `batchMinSize`               | Minimum size of batch to upload.                                                                                                                            | No           | Int      | `10`                            |
+| `batchUploadTimeInterval`    | Batch upload time interval in milliseconds.                                                                                                                 | No           | Int64    | `300000`                        |
+| `logTransport`               | Custom log transport for handling log messages.                                                                                                             | No           | LogTransport  | See [LogTransport](#logtransport) section |
+
+Refer to the [official Wingify documentation](https://developers.vwo.com/v2/docs/fme-ios-install) for additional parameter details.
+
+### Multi-Instance Support
+
+The Wingify FME iOS SDK supports initializing and managing multiple SDK instances simultaneously. This is particularly useful when you need to work with different Wingify accounts, environments, or configurations within the same application.
+
+#### Use Cases
+
+- **Multiple Accounts**: Managing feature flags from different Wingify accounts in the same app
+- **Environment Separation**: Using different SDK keys for development, staging, and production environments
+- **Independent Configuration**: Each instance can have its own batch upload settings, polling intervals, and logging configurations
+- **Isolated Data**: Each instance maintains its own event storage, settings cache, and user data
+
+#### Initializing Multiple Instances
+
+Each instance is identified by a unique combination of `accountId` and `sdkKey`. You can initialize multiple instances as follows:
+
+```swift
+import Wingify_FME
+
+// Initialize first instance
+let options1 = WingifyInitOptions(
+    sdkKey: "first_sdk_key",
+    accountId: 123456,
+    logLevel: .info,
+    logPrefix: "Instance1",
+    batchUploadTimeInterval: 60000  // 1 minute
+)
+
+WingifyFme.initialize(options: options1) { result in
+    switch result {
+    case .success:
+        print("First instance initialized")
+        
+        let userContext1 = WingifyUserContext(id: "user_123")
+        WingifyFme.getFlag(featureKey: "feature_1", context: userContext1) { flag in
+            // Use flag from first instance
+        }
+    case .failure(let error):
+        print("First instance initialization failed: \(error)")
+    }
+}
+
+// Initialize second instance with different configuration
+let options2 = WingifyInitOptions(
+    sdkKey: "second_sdk_key",
+    accountId: 789012,
+    logLevel: .debug,
+    logPrefix: "Instance2",
+    batchUploadTimeInterval: 120000  // 2 minutes
+)
+
+WingifyFme.initialize(options: options2) { result in
+    switch result {
+    case .success:
+        print("Second instance initialized")
+        
+        let userContext2 = WingifyUserContext(id: "user_456")
+        WingifyFme.getFlag(featureKey: "feature_2", context: userContext2) { flag in
+            // Use flag from second instance
+        }
+    case .failure(let error):
+        print("Second instance initialization failed: \(error)")
+    }
+}
+```
+
+#### Getting an Instance
+
+After initialization, you can retrieve a specific WingifyFme instance using the `getInstance()` method:
+
+```swift
+// Get a specific instance by accountId and sdkKey
+if let wingifyInstance = WingifyFme.getInstance(accountId: 123456, sdkKey: "first_sdk_key") {
+    // Use the instance for operations
+    let userContext = WingifyUserContext(id: "user_123")
+    
+    // Instance-specific operations
+    wingifyInstance.getFlag(featureKey: "feature_1", context: userContext) { flag in
+        // Handle flag
+    }
+    
+    wingifyInstance.trackEvent(eventName: "event_name", context: userContext)
+    wingifyInstance.setAttribute(attributes: ["key": "value"], context: userContext)
+} else {
+    print("Instance not found. Make sure it has been initialized first.")
+}
+```
+
+**Note**: The `getInstance()` method returns `nil` if the instance hasn't been initialized yet. Always check for `nil` before using the instance.
+
+#### Using Instance vs Static Methods
+
+The SDK provides two ways to perform operations:
+
+**1. Static Methods (Backward Compatible)**
+
+```swift
+// Uses the default (most recently initialized) instance
+WingifyFme.getFlag(featureKey: "feature_1", context: userContext) { flag in
+    // Handle flag
+}
+```
+
+**2. Instance Methods (Recommended for Multi-Instance)**
+
+```swift
+// Get the specific instance first
+if let wingifyInstance = WingifyFme.getInstance(accountId: 123456, sdkKey: "first_sdk_key") {
+    // Use instance methods for guaranteed instance-specific behavior
+    wingifyInstance.getFlag(featureKey: "feature_1", context: userContext) { flag in
+        // Handle flag
+    }
+}
+```
+
+**Recommendation**: When working with multiple instances, always use `getInstance()` to retrieve the specific instance and then use instance methods. This ensures operations are performed on the correct instance.
+
+#### Instance Isolation
+
+Each instance maintains complete isolation:
+
+- **Storage**: Settings, events, and user data are stored separately per instance
+- **Network Requests**: All API calls include the correct account information
+- **Batch Processing**: Each instance has its own batch upload timer and event queue
+- **Logging**: Instance-specific log prefixes help identify which instance generated each log
+
+#### Important Notes
+
+- Each instance must have a unique combination of `accountId` and `sdkKey`
+- All operations automatically route to the correct instance based on account information
+- Logs include instance prefixes (e.g., "Instance1:", "Instance2:") for easy identification
+- Gateway service configuration is instance-specific when provided
+
+### User Context
+
+The `context` object uniquely identifies users and is crucial for consistent feature rollouts. A typical `context` includes an `id` for identifying the user. It can also include other attributes that can be used for targeting and segmentation, such as `customVariables`.
+
+#### Parameters Table
+
+The following table explains all the parameters in the `context` object:
+
+| **Parameter**     | **Description**                                                            | **Required** | **Type** | **Example**                       |
+| ----------------- | -------------------------------------------------------------------------- | ------------ | -------- | --------------------------------- |
+| `id`              | Unique identifier for the user.                                            | Yes          | String   | `"unique_user_id"`                |
+| `customVariables` | Custom attributes for targeting.                                           | No           | Dictionary   | `["key_1": 2, "key_2": 0]`    |
+| `shouldUseDeviceIdAsUserId`  | Use device ID as user ID when user ID is not provided.          | No           | Boolean  | `true`                            |
+| `ipAddress`       | Visitor IP address from your application context.                          | No           | String   | `"1.2.3.4"`                       |
+
+#### Example
+
+```swift
+let customVariables: [String : Any] = ["key_1": 2, "key_2": 0]
+let userContext = WingifyUserContext(
+    id: "unique_user_id",
+    customVariables: customVariables,
+    ipAddress: "1.2.3.4"
+)
+```
+
+#### Device ID Configuration
+
+The SDK supports automatic device ID generation when a user ID is not provided. This feature helps maintain consistent user identification across app sessions.
+
+##### Enable Device ID
+
+To enable device ID generation, set the `shouldUseDeviceIdAsUserId` property in your `WingifyUserContext`:
+
+##### How It Works
+
+- User ID Priority: If a user ID is provided, it takes precedence over device ID
+- Device ID Fallback: When no user ID is available and `shouldUseDeviceIdAsUserId` is enabled, the SDK generates a persistent device ID
+- Persistent: Device IDs remain consistent across app uninstalls/reinstalls but may change on factory resets
+
+#### Example 
+
+```swift
+let customVariables: [String : Any] = ["key_1": 2, "key_2": 0]
+let userContext = WingifyUserContext(shouldUseDeviceIdAsUserId: true, customVariables: customVariables )
+```
+
+##### Error Handling
+
+If neither a user ID is provided nor device ID is enabled, the SDK will log an error.
+
+This feature is particularly useful for anonymous users or scenarios where explicit user identification is not available.
+
+### Basic Feature Flagging
+
+Feature Flags serve as the foundation for all testing, personalization, and rollout rules within FME. To implement a feature flag, first use the `getFlag` API to retrieve the flag configuration. The `getFlag` API provides a simple way to check if a feature is enabled for a specific user and access its variables. It returns a feature flag object that contains methods for checking the feature's status and retrieving any associated variables.
+
+| **Parameter** | **Description**                                                      | **Required** | **Type** | **Example**          |
+| ------------- | -------------------------------------------------------------------- | ------------ | -------- | -------------------- |
+| `featureKey`  | Unique identifier of the feature flag                                | Yes          | String   | `"new_checkout"`     |
+| `context`     | Object containing user identification and contextual information     | Yes          | WingifyUserContext | `WingifyUserContext(id: "user_123", customVariables: ["key": "value"])` |
+
+Example usage:
+
+```swift
+let userContext = WingifyUserContext(id: "user_123", customVariables: ["key": "value"])
+
+WingifyFme.getFlag(featureKey: "feature_flag_name", context: userContext) { featureFlagObj in
+    // Check if flag is enabled
+    let isFlagEnabled = featureFlagObj.isEnabled()
+    
+    // Get all variables for a feature flag                      
+    let variables = featureFlag.getVariables()
+    
+    // Get the variable value for the given variable key and default value
+    let variable1 = featureFlagObj.getVariable(key: "feature_flag_variable", defaultValue: "default-value")
+}
+```
+
+### Custom Event Tracking
+
+Feature flags can be enhanced with connected metrics to track key performance indicators (KPIs) for your features. These metrics help measure the effectiveness of your testing rules by comparing control versus variation performance, and evaluate the impact of personalization and rollout campaigns. Use the `trackEvent` API to track custom events like conversions, user interactions, and other important metrics:
+
+| **Parameter**     | **Description**                                                            | **Required** | **Type** | **Example**                                      |
+| ----------------- | -------------------------------------------------------------------------- | ------------ | -------- | ------------------------------------------------ |
+| `eventName`       | Name of the event you want to track                                        | Yes          | String   | `"purchase_completed"`                           |
+| `context`         | Object containing user identification and other contextual information     | Yes          | WingifyUserContext | `WingifyUserContext(id: "user_123", customVariables: ["key": "value"])` |
+| `eventProperties` | Additional properties/metadata associated with the event                   | No           | Dictionary | `["amount": 49.99]`                              |
+
+Example usage:
+
+```swift
+// Create user context
+let userContext = WingifyUserContext(id: "user_123", customVariables: ["key": "value"])
+
+// Track the event for the given event name and context
+let eventProperties: [String: Any] = ["cart_value": 999]
+
+WingifyFme.trackEvent(eventName: "event_name", context: userContext, eventProperties: eventProperties)
+```
+
+See [Tracking Conversions](https://developers.vwo.com/v2/docs/fme-ios-metrics#usage) documentation for more information.
+
+### Pushing Attributes
+
+User attributes provide rich contextual information about users, enabling powerful personalization. The `setAttribute` method provides a simple way to associate these attributes with users in Wingify for advanced segmentation. Here's what you need to know about the method parameters:
+
+| **Parameter**    | **Description**                                                            | **Required** | **Type**   | **Example**                                                                                          |
+| ---------------- | -------------------------------------------------------------------------- | ------------ | ---------- | ---------------------------------------------------------------------------------------------------- |
+| `attributeKey`   | The unique identifier/name of the attribute you want to set                | Yes          | String     | `"attribute-name"`                                                  |
+| `attributeValue` | The value to be assigned to the attribute                                  | Yes          | String, Number, Boolean        | `"attribute-value-text"`, `7.0, true`                                                                      |
+| `context`        | Object containing user identification and other contextual information     | Yes          | WingifyUserContext | `WingifyUserContext(id: "user_123", customVariables: ["key": "value"])`                                      |
+
+Example usage:
+
+```swift
+// Create user context
+let userContext = WingifyUserContext(id: "user_123", customVariables: ["key": "value"])
+
+// Send attributes data
+let attributeName1 = "attribute-name-string"
+let attributeValue1 = "attribute-value-text"
+let attributeName2 = "attribute-name-float"
+let attributeValue2 = 7.0
+
+let attributeDict: [String: Any] = [
+    attributeName1: attributeValue1,
+    attributeName2: attributeValue2
+]
+
+WingifyFme.setAttribute(attributes: attributeDict, context: userContext)
+```
+
+See [Pushing Attributes](https://developers.vwo.com/v2/docs/fme-ios-attributes#usage) documentation for additional information.
+
+### User Alias Management
+
+The `setAlias` method allows you to link a temporary user ID to an original user ID. This is particularly useful when users start as anonymous (with a temporary ID) and later log in with their actual user ID, ensuring consistent user identification across sessions.
+
+| **Parameter** | **Description**                                                            | **Required** | **Type**   | **Example**                                                                                          |
+| -------------- | -------------------------------------------------------------------------- | ------------ | ---------- | ---------------------------------------------------------------------------------------------------- |
+| `userContext`  | WingifyUserContext containing the temporary user ID                           | Yes          | WingifyUserContext | `WingifyUserContext(id: "temp_user_123", customVariables: ["key": "value"])` |
+| `alias`        | The original/authenticated user ID to link to the temporary ID            | Yes          | String     | `"authenticated_user_456"`                                                                           |
+
+#### Use Cases
+
+- **Anonymous to Authenticated**: When a user starts using your app anonymously and later logs in
+- **Cross-Device Tracking**: Linking user sessions across different devices
+- **User Journey Continuity**: Maintaining consistent user identification throughout the user lifecycle
+
+#### Example Usage
+
+```swift
+// Create user context with temporary ID (anonymous user)
+let tempUserContext = WingifyUserContext(id: "temp_user_123", customVariables: ["key": "value"])
+
+// When user logs in, link the temporary ID to their authenticated ID
+WingifyFme.setAlias(from: tempUserContext, to: "authenticated_user_456")
+```
+
+#### Important Notes
+
+- The alias feature must be enabled in your Wingify account settings
+- The temporary user ID and alias cannot be the same
+- Both user IDs must be non-empty strings
+- The method will log appropriate success/error messages for debugging
+
+### Integrations
+
+Wingify SDKs help you integrate with several third-party destinations. SDKs help you integrate with any kind of tool, be it analytics, monitoring, customer data platforms, messaging, etc. by implementing a very basic and generic callback that is capable of receiving Wingify-specific properties.
+
+Example usage:
+
+```swift
+class MyClass: IntegrationCallback {
+    func execute(_ properties: [String: Any]) {
+        // Handle the integration callback here
+        print("Integration callback executed with properties: \(properties)")
+    }
+}
+
+// Create an instance of your class
+let integrationClass = MyClass()
+
+let options = WingifyInitOptions(sdkKey: SDK_KEY, accountId: ACCOUNT_ID, integrations: integrationClass)
+```
+
+See [Integrations](https://developers.vwo.com/v2/docs/fme-ios-integrations#usage) documentation for additional information.
+
+### Log Transport
+
+You can implement the `LogTransport` protocol to customize how logs are handled and sent to external systems
+
+Example usage:
+
+```swift
+// Define a class that conforms to the LogTransport protocol
+class MyClass: LogTransport {
+    // Implement the log method to handle log messages
+    func log(logType: String, message: String) {
+        // Send log to a third-party service or handle it as needed
+        print("Log Type: \(logType), Message: \(message)")
+    }
+}
+
+// Create an instance of your class
+let logClass = MyClass()
+
+// Initialize WingifyInitOptions with the custom log transport
+let options = WingifyInitOptions(sdkKey: SDK_KEY, accountId: ACCOUNT_ID,  logTransport:logClass)
+```
+
+See [Logging](https://developers.vwo.com/v2/docs/fme-ios-logging) documentation for additional information.
+
+### Polling Interval Adjustment
+
+The `pollInterval` is an optional parameter that allows the SDK to automatically fetch and update settings from the Wingify server at specified intervals. Setting this parameter ensures your application always uses the latest configuration.
+
+Example usage:
+
+```swift
+// Initialize WingifyInitOptions with a custom polling interval in milliseconds
+let options = WingifyInitOptions(sdkKey: SDK_KEY, accountId: ACCOUNT_ID, pollInterval:600000)
+```
+
+See [Polling](https://developers.vwo.com/v2/docs/polling) documentation for additional information.
+
+### Cached Settings Expiry Time
+
+The `cachedSettingsExpiryTime` parameter allows you to specify how long the cached settings should be considered valid before fetching new settings from the Wingify server. This helps in managing the freshness of the configuration data.
+
+Example usage:
+
+```swift
+// Initialize WingifyInitOptions with a custom cached settings expiry time
+let options = WingifyInitOptions(sdkKey: SDK_KEY, accountId: ACCOUNT_ID, cachedSettingsExpiryTime:600000)
+```
+
+### Cached Decision Expiry Time
+
+The `cachedDecisionExpiryTime` parameter controls how long a stored Get Flag decision (rollout/experiment assignment) is considered valid. When set to a value **greater than 0** (in milliseconds), the SDK stores an expiry timestamp with each decision. After that duration has passed, the next `getFlag` call for that feature and user will **re-evaluate** instead of reusing the stored result, so users can get fresh assignments (e.g. after campaign or traffic changes).
+
+- **`0` (default)**: Stored decisions never expire; the SDK reuses them until the app is updated or storage is cleared. Use this when you want maximum consistency and minimal re-evaluation.
+- **`> 0`**: Stored decisions expire after the given number of milliseconds. After expiry, the SDK re-evaluates and may log a warning (e.g. `DECISION_EXPIRED`) before computing a new decision.
+
+Example usage:
+
+```swift
+// Decisions expire after 60 seconds (60_000 ms); re-evaluation happens on the next getFlag call
+let options = WingifyInitOptions(sdkKey: SDK_KEY, accountId: ACCOUNT_ID, cachedDecisionExpiryTime: 60000)
+
+// Default: decisions never expire (infinite validity)
+let optionsDefault = WingifyInitOptions(sdkKey: SDK_KEY, accountId: ACCOUNT_ID)  // cachedDecisionExpiryTime is 0
+```
+
+### Event Batching Configuration
+
+The Wingify SDK supports storing impression events while the device is offline, ensuring no data loss. These events are batched and seamlessly synchronized with Wingify servers once the device reconnects to the internet. Additionally, online event batching allows synchronization of impression events while the device is online. This feature can be configured by setting either the minimum batch size or the batch upload time interval during SDK initialization. 
+
+#### NOTE: The uploading of events will get triggered based on whichever condition is met first if using both options.
+
+| **Parameter**               | **Description**                                                                                     | **Required** | **Type** | **Example** |
+| --------------------------- | --------------------------------------------------------------------------------------------------- | ------------ | -------- | ----------- |
+| `batchMinSize`              | Minimum size of the batch to upload.                                                               | No           | Int      | `10`        |
+| `batchUploadTimeInterval`   | Batch upload time interval in milliseconds. Please specify at least a few minutes.                  | No           | Int64    | `300000`    |
+
+Example usage:
+
+```swift
+// Initialize WingifyInitOptions with batch configuration
+let options = WingifyInitOptions(sdkKey: SDK_KEY, accountId: ACCOUNT_ID, batchMinSize:10, batchUploadTimeInterval: 300000)
+```
+
+## Running Tests
+
+To ensure the reliability of our iOS SDK, follow these steps to run tests in Xcode:
+
+1. **Clone the Repository**: 
+   ```bash
+   git clone https://github.com/wingify/wingify-fme-ios-sdk.git
+   cd wingify-fme-ios-sdk
+   ```
+
+2. **Open the Project**: Launch Xcode and open the project.
+
+3. **Choose Target**: Select the test target `Wingify-FMETests`.
+
+4. **Run Tests**: Press `Cmd + U` to execute all tests. Alternatively, you can go to the menu bar and select `Product > Test`.
+
+5. **View Results**: Check the Test Navigator for results and logs.
+
+## Authors
+
+* [Vishwajeet Singh](https://github.com/vishwajeet-wingify)
+
+## Changelog
+
+Refer [CHANGELOG.md](https://github.com/wingify/wingify-fme-ios-sdk/blob/master/CHANGELOG.md)
+
+## Contributing
+
+Please go through our [contributing guidelines](https://github.com/wingify/wingify-fme-ios-sdk/blob/master/CONTRIBUTING.md)
+
+## Code of Conduct
+
+[Code of Conduct](https://github.com/wingify/wingify-fme-ios-sdk/blob/master/CODE_OF_CONDUCT.md)
+
+## License
+
+[Apache License, Version 2.0](https://github.com/wingify/wingify-fme-ios-sdk/blob/master/LICENSE)
+
+Copyright 2024-2026 Wingify Software Pvt. Ltd.
+

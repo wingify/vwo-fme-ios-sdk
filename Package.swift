@@ -4,7 +4,9 @@
 import PackageDescription
 
 let package = Package(
-    name: "VWO-FME",
+    // Package identity used when referencing this repo from another Package.swift
+    // (e.g. .package(url: "...", from: "1.18.0") + package: "vwo-fme-ios-sdk")
+    name: "Wingify-FME",
     platforms: [
         .iOS(.v12),
         .tvOS(.v12),
@@ -12,32 +14,47 @@ let package = Package(
         .watchOS(.v7)
     ],
     products: [
+        // Recommended for new integrations
+        .library(
+            name: "Wingify-FME",
+            targets: ["Wingify-FME"]
+        ),
+        // Legacy VWO-branded product (thin re-export of Wingify-FME)
         .library(
             name: "VWO-FME",
-            targets: ["VWO-FME"]),
+            targets: ["VWO-FME"]
+        ),
     ],
-    dependencies: [
-        // Add any dependencies here, if needed.
-    ],
+    dependencies: [],
     targets: [
         .target(
-            name: "VWO-FME",
+            name: "Wingify-FME",
             dependencies: [],
-            path: "VWO-FME",
-            exclude: [],
+            path: "Wingify-FME",
             resources: [
                 .process("Resources"),
                 .process("CoreData/Model/OffineEventData.xcdatamodeld")
             ],
             publicHeadersPath: ".",
             cSettings: [
-                .headerSearchPath("VWO-FME")
+                .headerSearchPath(".")
             ]
         ),
-	    .testTarget(
-            name: "VWO-FMETests",
-            dependencies: ["VWO-FME"],
-            path: "VWO-FMETests"
+        .target(
+            name: "VWO-FME",
+            dependencies: ["Wingify-FME"],
+            path: "VWO-FME"
+        ),
+        .testTarget(
+            name: "Wingify-FMETests",
+            dependencies: ["Wingify-FME"],
+            path: "Wingify-FMETests",
+            resources: [
+                .copy("SettingsJson"),
+                .copy("GetFlag"),
+                .copy("SegmentEvaluator"),
+                .copy("Utility/TestJson")
+            ]
         )
     ],
     swiftLanguageVersions: [.v5]

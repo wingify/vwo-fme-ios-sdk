@@ -5,6 +5,75 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.50.0] - 2026-05-29
+
+This release introduces **Wingify** as the primary SDK branding and package namespace, while keeping existing **VWO** integrations fully supported.
+
+### Added
+
+- **Wingify public API** - use `WingifyFme`, `WingifyInitOptions`, and `WingifyUserContext` from `Wingify_FME` as the recommended entry point for new integrations.
+
+```swift
+import Wingify_FME
+
+let options = WingifyInitOptions(
+    sdkKey: "32-alpha-numeric-sdk-key",
+    accountId: 123456
+)
+
+WingifyFme.initialize(options: options) { result in
+    switch result {
+    case .success:
+        let context = WingifyUserContext(id: "user-123")
+        let flag = WingifyFme.getFlag(featureKey: "feature-key", context: context)
+        _ = flag?.isEnabled()
+    case .failure(let error):
+        print(error.localizedDescription)
+    }
+}
+```
+
+### Changed
+
+- The SDK now provides Wingify-branded APIs and package import (`Wingify_FME`) for new integrations.
+- Log messages and documentation have been updated to reflect Wingify branding.
+- **No breaking changes for existing integrations** - server event names, payload keys, and runtime behavior remain compatible with the VWO platform.
+
+### Deprecated
+
+The following **VWO** symbols are deprecated but **continue to work without modification**:
+
+| Deprecated (still supported) | Use instead |
+|---|---|
+| `VWOFme` | `WingifyFme` |
+| `VWOInitOptions` | `WingifyInitOptions` |
+| `VWOUserContext` | `WingifyUserContext` |
+| `VWOStorageConnector` | `WingifyStorageConnector` |
+
+Existing code does not need to change immediately. We recommend adopting the Wingify API for new projects and migrating when convenient:
+
+```swift
+// Still supported - no action required today
+import VWO_FME
+
+let options = VWOInitOptions(
+    sdkKey: "32-alpha-numeric-sdk-key",
+    accountId: 123456
+)
+
+VWOFme.initialize(options: options) { result in
+    switch result {
+    case .success:
+        let context = VWOUserContext(id: "user-123")
+        _ = VWOFme.getFlag(featureKey: "feature-key", context: context)
+    case .failure(let error):
+        print(error.localizedDescription)
+    }
+}
+```
+
+**Migration tip:** Replace `VWOFme` -> `WingifyFme`, `VWOInitOptions` -> `WingifyInitOptions`, and `VWOUserContext` -> `WingifyUserContext`, and update imports from `VWO_FME` to `Wingify_FME`. Method signatures and SDK behavior are unchanged.
+
 ## [1.17.2] - 2026-05-18
 
 ## Changed
@@ -16,6 +85,7 @@ Updated gateway user details request context handling to include ipAddress only 
 ### Added
 
 Fetch settings parallelly even when cache is not expired
+
 
 ## [1.17.0] - 2026-04-28
 
