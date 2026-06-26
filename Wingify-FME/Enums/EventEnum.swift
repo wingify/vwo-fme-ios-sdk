@@ -58,4 +58,10 @@ enum EventEnum: String {
 
     /** Holdout exclusion event*/
     case VWO_HOLDOUT_EVENT = "vwo_holdout"
+
+    /**
+     * User-tracking event sent when `getFlag` evaluates a user without dispatching `vwo_variationShown`.
+     * Server event name: `vwo_feTrackUsage`. Used only when user tracking billing is enabled (`Settings.isMAU == true`).
+     */
+    case vwoFmeUserTrackingEvaluated = "vwo_feTrackUsage"
 }

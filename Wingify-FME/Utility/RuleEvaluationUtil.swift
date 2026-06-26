@@ -25,9 +25,22 @@ import Foundation
  */
 struct RuleEvaluationUtil {
     /**
-     * This method is used to evaluate the rule for a given feature and campaign.
+     * Evaluates the rule for a given feature and campaign.
+     *
+     * - Parameters:
+     *   - settings: SDK settings for the current account.
+     *   - feature: Feature being evaluated.
+     *   - campaign: Rollout or experiment campaign rule to evaluate.
+     *   - context: User context for the evaluation.
+     *   - evaluatedFeatureMap: Map of evaluated feature metadata, updated in place.
+     *   - megGroupWinnerCampaigns: MEG winner campaigns map, updated in place.
+     *   - storageService: Storage service for cached user decisions.
+     *   - serviceContainer: Service container for service access.
+     *   - decision: Integration decision object, updated in place.
+     *   - variationShownTracker: Optional tracker used by `getFlag` to record `variationShown`
+     *     impressions (e.g. whitelist hits) for user-tracking billing decisions.
+     * - Returns: Dictionary with `preSegmentationResult`, optional `whitelistedObject`, and `updatedDecision`.
      */
-    
     static func evaluateRule(
         settings: Settings,
         feature: Feature?,
@@ -37,7 +50,8 @@ struct RuleEvaluationUtil {
         megGroupWinnerCampaigns: inout [Int: String]?,
         storageService: StorageService,
         serviceContainer: ServiceContainer,
-        decision: inout [String: Any]
+        decision: inout [String: Any],
+        variationShownTracker: VariationShownTracker? = nil
     ) -> [String: Any] {
         // Check if the campaign satisfies the whitelisting and pre-segmentation
         let checkResult = DecisionUtil.checkWhitelistingAndPreSeg(
@@ -65,13 +79,23 @@ struct RuleEvaluationUtil {
             decision["experimentVariationId"] = whitelistedId
             
             // Send an impression for the variation shown
-            ImpressionUtil.createAndSendImpressionForVariationShown(
-                settings: settings,
-                campaignId: cmpId,
-                variationId: whitelistedId,
-                context: context,
-                serviceContainer: serviceContainer
-            )
+            if let tracker = variationShownTracker {
+                tracker.recordVariationShown(
+                    settings: settings,
+                    campaignId: cmpId,
+                    variationId: whitelistedId,
+                    context: context,
+                    serviceContainer: serviceContainer
+                )
+            } else {
+                ImpressionUtil.createAndSendImpressionForVariationShown(
+                    settings: settings,
+                    campaignId: cmpId,
+                    variationId: whitelistedId,
+                    context: context,
+                    serviceContainer: serviceContainer
+                )
+            }
         }
         
         // Return the results of the evaluation

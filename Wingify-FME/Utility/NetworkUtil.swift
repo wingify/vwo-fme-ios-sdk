@@ -329,6 +329,69 @@ class NetworkUtil {
         let cleanedPayload = removeNullValues(originalMap: payloadDict)
         return cleanedPayload
     }
+
+    /**
+     * Returns the POST body for a user-tracking event (`vwo_fmeMauEvaluated`).
+     *
+     * Used when `getFlag` evaluates a user but no `variationShown` impression is sent, so DaCDN
+     * can record per-user usage. The payload includes `props.data.featureKey` and optional `fId`.
+     *
+     * - Parameters:
+     *   - settings: SDK settings for the current account.
+     *   - context: User context for the evaluation.
+     *   - userId: Visitor ID used for the event.
+     *   - featureKey: Feature key that was evaluated.
+     *   - featureId: Feature ID from settings, if available.
+     *   - serviceContainer: Service container for account and logging context.
+     * - Returns: Serialized event payload ready for `POST /events/t`.
+     */
+    static func getUserTrackingPayloadData(
+        settings: Settings,
+        context: WingifyUserContext,
+        userId: String?,
+        featureKey: String,
+        featureId: Int?,
+        serviceContainer: ServiceContainer? = nil
+    ) -> [String: Any] {
+        var properties = NetworkUtil.getEventBasePayload(
+            userId: userId,
+            eventName: EventEnum.vwoFmeUserTrackingEvaluated.rawValue,
+            visitorUserAgent: context.userAgent,
+            ipAddress: context.ipAddress,
+            sessionId: context.sessionId,
+            serviceContainer: serviceContainer
+        )
+
+        properties.d?.event?.props?.setData(["featureKey": featureKey])
+        if let featureId = featureId {
+            properties.d?.event?.props?.fId = featureId
+        }
+
+        if let container = serviceContainer, let logger = container.getLoggerService() {
+            logger.log(
+                level: .debug,
+                key: "IMPRESSION_FOR_USER_TRACKING",
+                details: [
+                    "accountId": "\(settings.accountId ?? 0)",
+                    "userId": userId ?? "",
+                    "featureKey": featureKey
+                ]
+            )
+        } else {
+            LoggerService.log(
+                level: .debug,
+                key: "IMPRESSION_FOR_USER_TRACKING",
+                details: [
+                    "accountId": "\(settings.accountId ?? 0)",
+                    "userId": userId ?? "",
+                    "featureKey": featureKey
+                ]
+            )
+        }
+
+        let payloadDict = properties.toDictionary()
+        return removeNullValues(originalMap: payloadDict)
+    }
     
     // Returns the payload data for the goal API
 

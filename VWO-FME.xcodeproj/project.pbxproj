@@ -165,6 +165,7 @@
 		BAFC4B752FC861390087E01B /* WingifyFacadeTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = BAFC4AE02FC861390087E01B /* WingifyFacadeTests.swift */; };
 		BAFC4B762FC861390087E01B /* NetworkUtil.swift in Sources */ = {isa = PBXBuildFile; fileRef = BAFC4A912FC861390087E01B /* NetworkUtil.swift */; };
 		BAFC4B772FC861390087E01B /* ImpressionUtil.swift in Sources */ = {isa = PBXBuildFile; fileRef = BAFC4A8E2FC861390087E01B /* ImpressionUtil.swift */; };
+		BAFC4C012FC861390087E01B /* UserTrackingUsageUtil.swift in Sources */ = {isa = PBXBuildFile; fileRef = BAFC4C002FC861390087E01B /* UserTrackingUsageUtil.swift */; };
 		BAFC4B782FC861390087E01B /* SetUserAliasAPI.swift in Sources */ = {isa = PBXBuildFile; fileRef = BAFC4A132FC861390087E01B /* SetUserAliasAPI.swift */; };
 		BAFC4B792FC861390087E01B /* EventData+CoreDataClass.swift in Sources */ = {isa = PBXBuildFile; fileRef = BAFC4A1D2FC861390087E01B /* EventData+CoreDataClass.swift */; };
 		BAFC4B7A2FC861390087E01B /* EventsUtils.swift in Sources */ = {isa = PBXBuildFile; fileRef = BAFC4A8B2FC861390087E01B /* EventsUtils.swift */; };
@@ -294,6 +295,7 @@
 		BAFC4A8C2FC861390087E01B /* FunctionUtil.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FunctionUtil.swift; sourceTree = "<group>"; };
 		BAFC4A8D2FC861390087E01B /* GatewayServiceUtil.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GatewayServiceUtil.swift; sourceTree = "<group>"; };
 		BAFC4A8E2FC861390087E01B /* ImpressionUtil.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ImpressionUtil.swift; sourceTree = "<group>"; };
+		BAFC4C002FC861390087E01B /* UserTrackingUsageUtil.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UserTrackingUsageUtil.swift; sourceTree = "<group>"; };
 		BAFC4A8F2FC861390087E01B /* LogMessageUtil.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LogMessageUtil.swift; sourceTree = "<group>"; };
 		BAFC4A902FC861390087E01B /* MegUtil.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MegUtil.swift; sourceTree = "<group>"; };
 		BAFC4A912FC861390087E01B /* NetworkUtil.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NetworkUtil.swift; sourceTree = "<group>"; };
@@ -714,6 +716,7 @@
 				BAFC4A942FC861390087E01B /* SettingUtil.swift */,
 				BAFC4A952FC861390087E01B /* UsageStatsUtil.swift */,
 				BAFC4A962FC861390087E01B /* UserIdUtil.swift */,
+				BAFC4C002FC861390087E01B /* UserTrackingUsageUtil.swift */,
 				BAFC4A972FC861390087E01B /* UUIDUtils.swift */,
 			);
 			path = Utility;
@@ -1260,6 +1263,7 @@
 				BAFC4B752FC861390087E01B /* WingifyFacadeTests.swift in Sources */,
 				BAFC4B762FC861390087E01B /* NetworkUtil.swift in Sources */,
 				BAFC4B772FC861390087E01B /* ImpressionUtil.swift in Sources */,
+				BAFC4C012FC861390087E01B /* UserTrackingUsageUtil.swift in Sources */,
 				BAFC4B782FC861390087E01B /* SetUserAliasAPI.swift in Sources */,
 				BAFC4B792FC861390087E01B /* EventData+CoreDataClass.swift in Sources */,
 				BAFC4B7A2FC861390087E01B /* EventsUtils.swift in Sources */,

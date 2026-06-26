@@ -37,6 +37,7 @@ class GetFlagAPI {
             var shouldCheckForExperimentsRules = false
             var passedRulesInformation: [String: Any] = [:]
             var evaluatedFeatureMap: [String: Any] = [:]
+            let variationShownTracker = VariationShownTracker()
             
             // get feature object from feature key
             let feature: Feature? = FunctionUtil.getFeatureFromKey(settings: settings, featureKey: featureKey)
@@ -57,6 +58,15 @@ class GetFlagAPI {
 
                 serviceContainer.getLoggerService()?.errorLog(key: "FEATURE_NOT_FOUND",data: ["featureKey":featureKey], debugData: debugEventProps)
                 getFlag.setIsEnabled(isEnabled: false)
+                UserTrackingUsageUtil.shouldTrackUsage(
+                    settings: settings,
+                    context: context,
+                    featureKey: featureKey,
+                    feature: nil,
+                    serviceContainer: serviceContainer,
+                    flag: getFlag,
+                    variationShownSent: false
+                )
                 dispatchGroup.leave()
                 return
             }
@@ -141,9 +151,12 @@ class GetFlagAPI {
                             let holdoutGroupService = HoldoutGroupService(serviceContainer: serviceContainer, storageService: storageService)
                             let (_, newImpressions) = holdoutGroupService.getHoldoutsFor(settings: settings, feature: feature, context: context, storageService: storageService)
                             if !newImpressions.isEmpty {
-                                for imp in newImpressions {
-                                    ImpressionUtil.createAndSendImpressionForVariationShown(settings: settings, campaignId: imp.campaignId, variationId: imp.variationId, context: context, serviceContainer: serviceContainer)
-                                }
+                                variationShownTracker.recordHoldoutImpressions(
+                                    settings: settings,
+                                    impressions: newImpressions,
+                                    context: context,
+                                    serviceContainer: serviceContainer
+                                )
                                 let evaluatedIds = Set(newImpressions.map { $0.campaignId })
                                 let inIds = Set(newImpressions.filter { $0.variationId == Constants.Holdouts.VARIATION_IS_PART_OF_HOLDOUT }.map { $0.campaignId })
                                 let notInIds = evaluatedIds.subtracting(inIds)
@@ -172,6 +185,14 @@ class GetFlagAPI {
                             Self.updateDebugEventProps(&debugEventProps, decision: decision)
                             DebuggerServiceUtil.sendDebugEventToWingify(eventProps: debugEventProps, serviceContainer: serviceContainer)
                         }
+                        UserTrackingUsageUtil.shouldTrackStoredDecision(
+                            settings: settings,
+                            context: context,
+                            featureKey: featureKey,
+                            feature: feature,
+                            serviceContainer: serviceContainer,
+                            variationShownSent: variationShownTracker.sent
+                        )
                         dispatchGroup.leave()
                         return
                     }
@@ -192,9 +213,12 @@ class GetFlagAPI {
                                     newIds: onServerButNotEvaluatedLocally,
                                     storedNotInHoldoutIds: storedData.notInHoldoutIds
                                 )
-                                for imp in notInImpressions {
-                                    ImpressionUtil.createAndSendImpressionForVariationShown(settings: settings, campaignId: imp.campaignId, variationId: imp.variationId, context: context, serviceContainer: serviceContainer)
-                                }
+                                variationShownTracker.recordHoldoutImpressions(
+                                    settings: settings,
+                                    impressions: notInImpressions,
+                                    context: context,
+                                    serviceContainer: serviceContainer
+                                )
                                 if !updatedNotInHoldoutIds.isEmpty {
                                     storageService.updateDataInStorage(featureKey: featureKey, context: context, data: [
                                         Constants.Holdouts.KEY_STORAGE_NOT_IN_HOLDOUT_IDS: updatedNotInHoldoutIds
@@ -213,6 +237,14 @@ class GetFlagAPI {
                                     Self.updateDebugEventProps(&debugEventProps, decision: decision)
                                     DebuggerServiceUtil.sendDebugEventToWingify(eventProps: debugEventProps, serviceContainer: serviceContainer)
                                 }
+                                UserTrackingUsageUtil.shouldTrackStoredDecision(
+                                    settings: settings,
+                                    context: context,
+                                    featureKey: featureKey,
+                                    feature: feature,
+                                    serviceContainer: serviceContainer,
+                                    variationShownSent: variationShownTracker.sent
+                                )
                                 dispatchGroup.leave()
                                 return
                             }
@@ -249,9 +281,12 @@ class GetFlagAPI {
                                 newIds: onServerButNotEvaluatedLocally,
                                 storedNotInHoldoutIds: storedData.notInHoldoutIds
                             )
-                            for imp in notInImpressions {
-                                ImpressionUtil.createAndSendImpressionForVariationShown(settings: settings, campaignId: imp.campaignId, variationId: imp.variationId, context: context, serviceContainer: serviceContainer)
-                            }
+                            variationShownTracker.recordHoldoutImpressions(
+                                settings: settings,
+                                impressions: notInImpressions,
+                                context: context,
+                                serviceContainer: serviceContainer
+                            )
                             if !updatedNotInHoldoutIds.isEmpty {
                                 storageService.updateDataInStorage(featureKey: featureKey, context: context, data: [
                                     Constants.Holdouts.KEY_STORAGE_NOT_IN_HOLDOUT_IDS: updatedNotInHoldoutIds
@@ -279,6 +314,14 @@ class GetFlagAPI {
                                 Self.updateDebugEventProps(&debugEventProps, decision: decision)
                                 DebuggerServiceUtil.sendDebugEventToWingify(eventProps: debugEventProps, serviceContainer: serviceContainer)
                             }
+                            UserTrackingUsageUtil.shouldTrackStoredDecision(
+                                settings: settings,
+                                context: context,
+                                featureKey: featureKey,
+                                feature: feature,
+                                serviceContainer: serviceContainer,
+                                variationShownSent: variationShownTracker.sent
+                            )
                             dispatchGroup.leave()
                             return
                         }
@@ -300,9 +343,12 @@ class GetFlagAPI {
             let (holdoutGroups, holdoutImpressions) = holdoutGroupService.getHoldoutsFor(settings: settings, feature: feature, context: context, storageService: storageService)
 
             // Send holdout impressions (both "in holdout" and "not in holdout" for reporting)
-            for imp in holdoutImpressions {
-                ImpressionUtil.createAndSendImpressionForVariationShown(settings: settings, campaignId: imp.campaignId, variationId: imp.variationId, context: context, serviceContainer: serviceContainer)
-            }
+            variationShownTracker.recordHoldoutImpressions(
+                settings: settings,
+                impressions: holdoutImpressions,
+                context: context,
+                serviceContainer: serviceContainer
+            )
 
             decision["holdoutIDs"] = [Int]()
             decision["isPartOfHoldout"] = false
@@ -357,7 +403,7 @@ class GetFlagAPI {
                     
                     var megGroupWinnerCampaigns: [Int : String]? = [:]
                     
-                    let evaluateRuleResult = RuleEvaluationUtil.evaluateRule(settings: settings, feature: feature, campaign: rule, context: context, evaluatedFeatureMap: &evaluatedFeatureMap, megGroupWinnerCampaigns: &megGroupWinnerCampaigns, storageService: storageService, serviceContainer: serviceContainer, decision: &decision)
+                    let evaluateRuleResult = RuleEvaluationUtil.evaluateRule(settings: settings, feature: feature, campaign: rule, context: context, evaluatedFeatureMap: &evaluatedFeatureMap, megGroupWinnerCampaigns: &megGroupWinnerCampaigns, storageService: storageService, serviceContainer: serviceContainer, decision: &decision, variationShownTracker: variationShownTracker)
                     
                     
                     let preSegmentationResult = evaluateRuleResult["preSegmentationResult"] as? Bool ?? false
@@ -386,7 +432,13 @@ class GetFlagAPI {
                         decision["isUserPartOfCampaign"] = true
                         GetFlagAPI.updateIntegrationsDecisionObject(campaign: passedRolloutCampaign, variation: variation, passedRulesInformation: &passedRulesInformation, decision: &decision)
                         
-                        ImpressionUtil.createAndSendImpressionForVariationShown(settings: settings, campaignId: passedRolloutCampaign.id ?? 0, variationId: variation.id ?? 0, context: context, serviceContainer: serviceContainer)
+                        variationShownTracker.recordVariationShown(
+                            settings: settings,
+                            campaignId: passedRolloutCampaign.id ?? 0,
+                            variationId: variation.id ?? 0,
+                            context: context,
+                            serviceContainer: serviceContainer
+                        )
                     }
                 }
             } else {
@@ -407,7 +459,7 @@ class GetFlagAPI {
                 
                 for rule in experimentRules {
                     // Evaluate the rule here
-                    let evaluateRuleResult = RuleEvaluationUtil.evaluateRule(settings: settings, feature: feature, campaign: rule, context: context, evaluatedFeatureMap: &evaluatedFeatureMap, megGroupWinnerCampaigns: &megGroupWinnerCampaigns, storageService: storageService, serviceContainer: serviceContainer, decision: &decision)
+                    let evaluateRuleResult = RuleEvaluationUtil.evaluateRule(settings: settings, feature: feature, campaign: rule, context: context, evaluatedFeatureMap: &evaluatedFeatureMap, megGroupWinnerCampaigns: &megGroupWinnerCampaigns, storageService: storageService, serviceContainer: serviceContainer, decision: &decision, variationShownTracker: variationShownTracker)
                     
                     let preSegmentationResult = evaluateRuleResult["preSegmentationResult"] as? Bool ?? false
                     // If pre-segmentation passes, check if the rule has whitelisted variation or not
@@ -439,7 +491,13 @@ class GetFlagAPI {
                         decision["isUserPartOfCampaign"] = true
                         GetFlagAPI.updateIntegrationsDecisionObject(campaign: campaign, variation: variation, passedRulesInformation: &passedRulesInformation, decision: &decision)
                         
-                        ImpressionUtil.createAndSendImpressionForVariationShown(settings: settings, campaignId: campaign.id ?? 0, variationId: variation.id ?? 0, context: context, serviceContainer: serviceContainer)
+                        variationShownTracker.recordVariationShown(
+                            settings: settings,
+                            campaignId: campaign.id ?? 0,
+                            variationId: variation.id ?? 0,
+                            context: context,
+                            serviceContainer: serviceContainer
+                        )
                     }
                 }
             }
@@ -495,8 +553,24 @@ class GetFlagAPI {
                     "featureKey": featureKey,
                     "status": getFlag.isEnabled() ? "enabled" : "disabled"
                 ])
-                ImpressionUtil.createAndSendImpressionForVariationShown(settings: settings, campaignId: impactCampaignId, variationId: getFlag.isEnabled() ? 2 : 1, context: context, serviceContainer: serviceContainer)
+                variationShownTracker.recordVariationShown(
+                    settings: settings,
+                    campaignId: impactCampaignId,
+                    variationId: getFlag.isEnabled() ? 2 : 1,
+                    context: context,
+                    serviceContainer: serviceContainer
+                )
             }
+
+            UserTrackingUsageUtil.shouldTrackUsage(
+                settings: settings,
+                context: context,
+                featureKey: featureKey,
+                feature: feature,
+                serviceContainer: serviceContainer,
+                flag: getFlag,
+                variationShownSent: variationShownTracker.sent
+            )
             dispatchGroup.leave()
         }
         dispatchGroup.wait()

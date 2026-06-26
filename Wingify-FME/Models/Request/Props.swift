@@ -30,6 +30,8 @@ struct Props {
     var id: Int?
     var isFirst: Int?
     var isMII: Bool?
+    /// Feature ID included in user-tracking event props (`vwo_fmeMauEvaluated`).
+    var fId: Int?
     var isCustomEvent: Bool?
     var additionalProperties: [String: Any] = [:]
     var product: String?
@@ -97,6 +99,9 @@ struct Props {
         }
         if let isMII = isMII {
             dict["isMII"] = isMII
+        }
+        if let fId = fId {
+            dict["fId"] = fId
         }
         if let product = product {
             dict["product"] = product

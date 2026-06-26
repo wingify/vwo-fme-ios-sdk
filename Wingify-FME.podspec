@@ -2,7 +2,7 @@
 Pod::Spec.new do |spec|
 
   spec.name         	= "Wingify-FME"
-  spec.version      	= "1.50.0"
+  spec.version      	= "1.55.0"
   spec.summary      	= "Wingify iOS SDK for Feature Management and Experimentation"
   spec.description  	= "Wingify iOS SDK for Feature Management and Experimentation."
 

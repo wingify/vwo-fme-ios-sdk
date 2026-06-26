@@ -9,6 +9,8 @@
   "USER_BUCKET_TO_VARIATION": "User ID: {userId} for experiment: {campaignKey} having percent traffic: {percentTraffic} got bucket-value as {bucketValue} and hash-value as {hashValue}",
 
   "IMPRESSION_FOR_TRACK_USER": "Impression built for vwo_variationShown event for Account ID:{accountId}, User ID:{userId}, and experiment ID:{campaignId}",
+  "IMPRESSION_FOR_USER_TRACKING": "Impression built User tracking event for user {userId} on feature {featureKey} (account {accountId})",
+  "USER_TRACKED": "User {userId} tracked for feature {featureKey} (account {accountId})",
   "IMPRESSION_FOR_TRACK_GOAL": "Impression built for {eventName} event for Account ID:{accountId}, and user ID:{userId}",
   "IMPRESSION_FOR_SYNC_VISITOR_PROP": "Impression built for {eventName} event for Account ID:{accountId}, and user ID:{userId}",
   "NETWORK_CALL_FAILED": "Error occurred while sending {method} request. Error: {err}",

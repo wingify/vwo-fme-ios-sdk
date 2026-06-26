@@ -35,6 +35,14 @@ public struct Settings: Codable, Equatable {
     var sdkMetaInfo:  SdkMetaInfo?
     var usageStatsAccountId : Int?
     var holdoutGroups: [HoldoutGroup]?
+    /**
+     * Enables per-user tracking billing for the account (settings key: `isMAU`).
+     *
+     * Sent by DaCDN only for accounts on user-tracking billing. When `true`, `getFlag` may emit
+     * a user-tracking event (`vwo_fmeMauEvaluated`) for evaluations without a `variationShown`
+     * impression. When absent, `false`, or `null`, the SDK uses the standard per-impression flow.
+     */
+    var isMAU: Bool?
 
     enum CodingKeys: String, CodingKey {
         case features
@@ -50,6 +58,7 @@ public struct Settings: Codable, Equatable {
         case sdkMetaInfo
         case usageStatsAccountId
         case holdoutGroups = "holdouts"
+        case isMAU
     }
     
     public init(from decoder: Decoder) throws {
@@ -74,6 +83,7 @@ public struct Settings: Codable, Equatable {
         collectionPrefix = try container.decodeIfPresent(String.self, forKey: .collectionPrefix)
         sdkMetaInfo = try container.decodeIfPresent(SdkMetaInfo.self, forKey: .sdkMetaInfo)
         usageStatsAccountId = try container.decodeIfPresent(Int.self, forKey: .usageStatsAccountId)
+        isMAU = try container.decodeIfPresent(Bool.self, forKey: .isMAU)
 
         // Holdouts can come as an array, an object map, or an empty object ({}).
         // Be lenient here so decoding doesn't fail when there are no holdouts.
