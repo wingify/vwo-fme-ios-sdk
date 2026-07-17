@@ -106,4 +106,50 @@ final class CoreDataStackCorruptionTests: XCTestCase {
         XCTAssertTrue(walURL.path.hasSuffix("OffineEventData.sqlite-wal"), "WAL path should end with -wal")
         XCTAssertTrue(shmURL.path.hasSuffix("OffineEventData.sqlite-shm"), "SHM path should end with -shm")
     }
+
+    /// Simulates CoreDataStack behavior when createDirectory fails (e.g. ENOSPC): skip SQLite
+    /// and fall back to an in-memory store so the host app is not terminated.
+    func testDirectoryCreationFailureFallsBackToInMemoryStore() throws {
+        let bundle = Bundle(for: CoreDataStack.self)
+        guard let modelURL = bundle.url(forResource: modelName, withExtension: "momd"),
+              let mom = NSManagedObjectModel(contentsOf: modelURL) else {
+            XCTFail("Could not load Core Data model")
+            return
+        }
+
+        // A path whose parent is a file (not a directory) causes createDirectory to fail,
+        // mirroring environmental failures like disk-full without crashing.
+        let blockerFile = tempDir.appendingPathComponent("blocker")
+        try Data([0x00]).write(to: blockerFile)
+        let impossibleDir = blockerFile.appendingPathComponent("CoreData", isDirectory: true)
+
+        var directoryCreationFailed = false
+        do {
+            try FileManager.default.createDirectory(at: impossibleDir, withIntermediateDirectories: true, attributes: nil)
+        } catch {
+            directoryCreationFailed = true
+        }
+        XCTAssertTrue(directoryCreationFailed, "Expected createDirectory to fail for path under a file")
+
+        let coordinator = NSPersistentStoreCoordinator(managedObjectModel: mom)
+        do {
+            _ = try coordinator.addPersistentStore(ofType: NSInMemoryStoreType, configurationName: nil, at: nil, options: nil)
+        } catch {
+            XCTFail("In-memory fallback should succeed after directory creation failure: \(error)")
+        }
+
+        let context = NSManagedObjectContext(concurrencyType: .privateQueueConcurrencyType)
+        context.persistentStoreCoordinator = coordinator
+        var fetchError: Error?
+        context.performAndWait {
+            let request = NSFetchRequest<NSFetchRequestResult>(entityName: "EventData")
+            do {
+                _ = try context.fetch(request)
+            } catch {
+                fetchError = error
+            }
+        }
+        XCTAssertNil(fetchError, "Fetch against in-memory fallback should succeed")
+        XCTAssertEqual(coordinator.persistentStores.first?.type, NSInMemoryStoreType)
+    }
 }

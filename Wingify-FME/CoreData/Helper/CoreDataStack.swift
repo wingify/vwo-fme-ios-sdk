@@ -59,44 +59,62 @@ class CoreDataStack {
         // Use Caches directory to avoid sandbox permission issues during tests and app runs
         let cachesDir = FileManager.default.urls(for: .cachesDirectory, in: .userDomainMask).first!
         let storeDir = cachesDir.appendingPathComponent("\(ProductConfig.current.coreDataDirectoryName)/CoreData", isDirectory: true)
+
+        var canUseDiskStore = true
         do {
             try FileManager.default.createDirectory(at: storeDir, withIntermediateDirectories: true, attributes: nil)
         } catch {
-            fatalError("Failed to create Core Data directory at \(storeDir): \(error)")
+            // Environmental failures (e.g. ENOSPC / disk full) must not crash the host app.
+            // Fall back to an in-memory store so initialize() can continue.
+            let freeSpace = CoreDataStack.getFreeDiskSpaceDescription()
+            LoggerService.log(
+                level: .error,
+                message: "CoreData directory creation failed at \(storeDir): \(error.localizedDescription). Free disk space: \(freeSpace). Falling back to in-memory store."
+            )
+            canUseDiskStore = false
+            CoreDataStack.addInMemoryStore(to: persistentStoreCoordinator)
         }
-        let storeURL = storeDir.appendingPathComponent("\(self.storeName)")
-        let options = [NSMigratePersistentStoresAutomaticallyOption: true,
-                             NSInferMappingModelAutomaticallyOption: true]
-        
-        do {
-            try persistentStoreCoordinator.addPersistentStore(ofType: NSSQLiteStoreType, configurationName: nil, at: storeURL, options: options)
-        } catch {
-            // If store is corrupted, don't crash host app. Try delete + retry once; otherwise use in-memory store.
-            LoggerService.log(level: .error, message: "CoreData addPersistentStore failed: \(error.localizedDescription).")
-            let fm = FileManager.default
-            try? fm.removeItem(at: storeURL)
-            try? fm.removeItem(at: URL(fileURLWithPath: storeURL.path + "-wal"))
-            try? fm.removeItem(at: URL(fileURLWithPath: storeURL.path + "-shm"))
-            
+
+        if canUseDiskStore {
+            let storeURL = storeDir.appendingPathComponent("\(self.storeName)")
+            let options = [NSMigratePersistentStoresAutomaticallyOption: true,
+                                 NSInferMappingModelAutomaticallyOption: true]
+
             do {
                 try persistentStoreCoordinator.addPersistentStore(ofType: NSSQLiteStoreType, configurationName: nil, at: storeURL, options: options)
             } catch {
-                LoggerService.log(level: .error, message: "CoreData addPersistentStore retry failed: \(error.localizedDescription). Falling back to in-memory store.")
+                // If store is corrupted, don't crash host app. Try delete + retry once; otherwise use in-memory store.
+                LoggerService.log(level: .error, message: "CoreData addPersistentStore failed: \(error.localizedDescription).")
+                let fm = FileManager.default
+                try? fm.removeItem(at: storeURL)
+                try? fm.removeItem(at: URL(fileURLWithPath: storeURL.path + "-wal"))
+                try? fm.removeItem(at: URL(fileURLWithPath: storeURL.path + "-shm"))
+
                 do {
-                    try persistentStoreCoordinator.addPersistentStore(ofType: NSInMemoryStoreType, configurationName: nil, at: nil, options: nil)
+                    try persistentStoreCoordinator.addPersistentStore(ofType: NSSQLiteStoreType, configurationName: nil, at: storeURL, options: options)
                 } catch {
-                    let freeSpace = CoreDataStack.getFreeDiskSpaceDescription()
-                    LoggerService.log(
-                        level: .error,
-                        message: "CoreData in-memory fallback failed: \(error.localizedDescription). Free disk space: \(freeSpace)"
-                    )
+                    LoggerService.log(level: .error, message: "CoreData addPersistentStore retry failed: \(error.localizedDescription). Falling back to in-memory store.")
+                    CoreDataStack.addInMemoryStore(to: persistentStoreCoordinator)
                 }
             }
         }
-        
+
         self.context = NSManagedObjectContext(concurrencyType: .privateQueueConcurrencyType)
         self.context.persistentStoreCoordinator = persistentStoreCoordinator
         self.context.automaticallyMergesChangesFromParent = true
+    }
+
+    /// Adds an in-memory persistent store. Logs on failure without crashing the host app.
+    private static func addInMemoryStore(to coordinator: NSPersistentStoreCoordinator) {
+        do {
+            try coordinator.addPersistentStore(ofType: NSInMemoryStoreType, configurationName: nil, at: nil, options: nil)
+        } catch {
+            let freeSpace = getFreeDiskSpaceDescription()
+            LoggerService.log(
+                level: .error,
+                message: "CoreData in-memory fallback failed: \(error.localizedDescription). Free disk space: \(freeSpace)"
+            )
+        }
     }
 
     /// Returns a human-readable description of free disk space on the current device (e.g. \"123.45 MB\" or \"unknown\").

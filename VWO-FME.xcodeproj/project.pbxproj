@@ -21,7 +21,6 @@
 /* End PBXAggregateTarget section */
 
 /* Begin PBXBuildFile section */
-		BAFC493C2FC56F790087E01B /* WingifyExports.swift in Sources */ = {isa = PBXBuildFile; fileRef = BAFC493A2FC56F790087E01B /* WingifyExports.swift */; };
 		BAFC4AE72FC861390087E01B /* Wingify_FME.h in Headers */ = {isa = PBXBuildFile; fileRef = BAFC4A9E2FC861390087E01B /* Wingify_FME.h */; };
 		BAFC4AE82FC861390087E01B /* SettingsWithSameSalt.json in Resources */ = {isa = PBXBuildFile; fileRef = BAFC4ACA2FC861390087E01B /* SettingsWithSameSalt.json */; };
 		BAFC4AE92FC861390087E01B /* RolloutAndTestingSettingsWithPreSegmentMobileUA.json in Resources */ = {isa = PBXBuildFile; fileRef = BAFC4AC82FC861390087E01B /* RolloutAndTestingSettingsWithPreSegmentMobileUA.json */; };
@@ -165,7 +164,6 @@
 		BAFC4B752FC861390087E01B /* WingifyFacadeTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = BAFC4AE02FC861390087E01B /* WingifyFacadeTests.swift */; };
 		BAFC4B762FC861390087E01B /* NetworkUtil.swift in Sources */ = {isa = PBXBuildFile; fileRef = BAFC4A912FC861390087E01B /* NetworkUtil.swift */; };
 		BAFC4B772FC861390087E01B /* ImpressionUtil.swift in Sources */ = {isa = PBXBuildFile; fileRef = BAFC4A8E2FC861390087E01B /* ImpressionUtil.swift */; };
-		BAFC4C012FC861390087E01B /* UserTrackingUsageUtil.swift in Sources */ = {isa = PBXBuildFile; fileRef = BAFC4C002FC861390087E01B /* UserTrackingUsageUtil.swift */; };
 		BAFC4B782FC861390087E01B /* SetUserAliasAPI.swift in Sources */ = {isa = PBXBuildFile; fileRef = BAFC4A132FC861390087E01B /* SetUserAliasAPI.swift */; };
 		BAFC4B792FC861390087E01B /* EventData+CoreDataClass.swift in Sources */ = {isa = PBXBuildFile; fileRef = BAFC4A1D2FC861390087E01B /* EventData+CoreDataClass.swift */; };
 		BAFC4B7A2FC861390087E01B /* EventsUtils.swift in Sources */ = {isa = PBXBuildFile; fileRef = BAFC4A8B2FC861390087E01B /* EventsUtils.swift */; };
@@ -184,7 +182,8 @@
 		BAFC4B872FC861390087E01B /* EventDataManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = BAFC4A1A2FC861390087E01B /* EventDataManager.swift */; };
 		BAFC4B882FC861390087E01B /* Visitor.swift in Sources */ = {isa = PBXBuildFile; fileRef = BAFC4A422FC861390087E01B /* Visitor.swift */; };
 		BAFC4B892FC861390087E01B /* StorageConnectorProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = BAFC4A702FC861390087E01B /* StorageConnectorProvider.swift */; };
-		EB373E6B2D9D2B51005713D1 /* VWO_FME.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = EB06C7802C90229B00A25E07 /* VWO_FME.framework */; };
+		BAFC4C012FC861390087E01B /* UserTrackingUsageUtil.swift in Sources */ = {isa = PBXBuildFile; fileRef = BAFC4C002FC861390087E01B /* UserTrackingUsageUtil.swift */; };
+		EB373E6B2D9D2B51005713D1 /* Wingify_FME.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = EB06C7802C90229B00A25E07 /* Wingify_FME.framework */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -198,7 +197,6 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
-		BAFC493A2FC56F790087E01B /* WingifyExports.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WingifyExports.swift; sourceTree = "<group>"; };
 		BAFC4A102FC861390087E01B /* GetFlagAPI.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GetFlagAPI.swift; sourceTree = "<group>"; };
 		BAFC4A112FC861390087E01B /* GetUserAliasAPI.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GetUserAliasAPI.swift; sourceTree = "<group>"; };
 		BAFC4A122FC861390087E01B /* SetAttributeAPI.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SetAttributeAPI.swift; sourceTree = "<group>"; };
@@ -295,7 +293,6 @@
 		BAFC4A8C2FC861390087E01B /* FunctionUtil.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FunctionUtil.swift; sourceTree = "<group>"; };
 		BAFC4A8D2FC861390087E01B /* GatewayServiceUtil.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GatewayServiceUtil.swift; sourceTree = "<group>"; };
 		BAFC4A8E2FC861390087E01B /* ImpressionUtil.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ImpressionUtil.swift; sourceTree = "<group>"; };
-		BAFC4C002FC861390087E01B /* UserTrackingUsageUtil.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UserTrackingUsageUtil.swift; sourceTree = "<group>"; };
 		BAFC4A8F2FC861390087E01B /* LogMessageUtil.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LogMessageUtil.swift; sourceTree = "<group>"; };
 		BAFC4A902FC861390087E01B /* MegUtil.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MegUtil.swift; sourceTree = "<group>"; };
 		BAFC4A912FC861390087E01B /* NetworkUtil.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NetworkUtil.swift; sourceTree = "<group>"; };
@@ -361,7 +358,8 @@
 		BAFC4AE32FC861390087E01B /* TestDataLoader.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TestDataLoader.swift; sourceTree = "<group>"; };
 		BAFC4AE42FC861390087E01B /* VWO_FMETests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VWO_FMETests.swift; sourceTree = "<group>"; };
 		BAFC4AE62FC861390087E01B /* OffineEventData.xcdatamodel */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcdatamodel; path = OffineEventData.xcdatamodel; sourceTree = "<group>"; };
-		EB06C7802C90229B00A25E07 /* VWO_FME.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = VWO_FME.framework; sourceTree = BUILT_PRODUCTS_DIR; };
+		BAFC4C002FC861390087E01B /* UserTrackingUsageUtil.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UserTrackingUsageUtil.swift; sourceTree = "<group>"; };
+		EB06C7802C90229B00A25E07 /* Wingify_FME.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Wingify_FME.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		EB373E672D9D2B51005713D1 /* VWO-FMETests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "VWO-FMETests.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
@@ -377,21 +375,13 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				EB373E6B2D9D2B51005713D1 /* VWO_FME.framework in Frameworks */,
+				EB373E6B2D9D2B51005713D1 /* Wingify_FME.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
-		BAFC493B2FC56F790087E01B /* Wingify-FME */ = {
-			isa = PBXGroup;
-			children = (
-				BAFC493A2FC56F790087E01B /* WingifyExports.swift */,
-			);
-			path = "Wingify-FME";
-			sourceTree = "<group>";
-		};
 		BAFC4A152FC861390087E01B /* API */ = {
 			isa = PBXGroup;
 			children = (
@@ -965,7 +955,6 @@
 			children = (
 				BAFC4A9F2FC861390087E01B /* Wingify-FME */,
 				BAFC4AE52FC861390087E01B /* Wingify-FMETests */,
-				BAFC493B2FC56F790087E01B /* Wingify-FME */,
 				EB06C7812C90229B00A25E07 /* Products */,
 				EB06C8BF2C9028D200A25E07 /* Frameworks */,
 			);
@@ -974,7 +963,7 @@
 		EB06C7812C90229B00A25E07 /* Products */ = {
 			isa = PBXGroup;
 			children = (
-				EB06C7802C90229B00A25E07 /* VWO_FME.framework */,
+				EB06C7802C90229B00A25E07 /* Wingify_FME.framework */,
 				EB373E672D9D2B51005713D1 /* VWO-FMETests.xctest */,
 			);
 			name = Products;
@@ -1016,7 +1005,7 @@
 			);
 			name = "VWO-FME";
 			productName = "VWO-FME";
-			productReference = EB06C7802C90229B00A25E07 /* VWO_FME.framework */;
+			productReference = EB06C7802C90229B00A25E07 /* Wingify_FME.framework */;
 			productType = "com.apple.product-type.framework";
 		};
 		EB373E662D9D2B51005713D1 /* VWO-FMETests */ = {
@@ -1083,28 +1072,10 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				BAFC4AE82FC861390087E01B /* SettingsWithSameSalt.json in Resources */,
-				BAFC4AE92FC861390087E01B /* RolloutAndTestingSettingsWithPreSegmentMobileUA.json in Resources */,
-				BAFC4AEA2FC861390087E01B /* GetFlagTest.json in Resources */,
-				BAFC4AEB2FC861390087E01B /* RolloutAndTestingSettings.json in Resources */,
-				BAFC4AEC2FC861390087E01B /* OnlyRolloutSettings.json in Resources */,
-				BAFC4AED2FC861390087E01B /* RolloutAndTestingSettingsWithPreSegmentFeatureFlagStatus.json in Resources */,
-				BAFC4AEE2FC861390087E01B /* RolloutAndTestingSettingsWithPreSegmentMobile.json in Resources */,
 				BAFC4AEF2FC861390087E01B /* info-messages.json in Resources */,
-				BAFC4AF02FC861390087E01B /* RolloutAndTestingSettingsUserInlist.json in Resources */,
-				BAFC4AF12FC861390087E01B /* NoRolloutAndOnlyTestingSettings.json in Resources */,
-				BAFC4AF22FC861390087E01B /* SettingsWithDifferentSalt.json in Resources */,
-				BAFC4AF32FC861390087E01B /* SettingsWithWhitelisting.json in Resources */,
-				BAFC4AF42FC861390087E01B /* RolloutAndTestingSettingsWithPreSegment.json in Resources */,
-				BAFC4AF52FC861390087E01B /* MegAdvanceAlgoCampaignSettings.json in Resources */,
 				BAFC4AF62FC861390087E01B /* error-messages.json in Resources */,
-				BAFC4AF72FC861390087E01B /* RolloutAndTestingSettingsInlist.json in Resources */,
-				BAFC4AF82FC861390087E01B /* MegRandomAlgoCampaignSettings.json in Resources */,
 				BAFC4AF92FC861390087E01B /* trace-messages.json in Resources */,
 				BAFC4AFA2FC861390087E01B /* debug-messages.json in Resources */,
-				BAFC4AFB2FC861390087E01B /* UtilitySettings.json in Resources */,
-				BAFC4AFC2FC861390087E01B /* SegmentEvaluatorTest.json in Resources */,
-				BAFC4AFD2FC861390087E01B /* EmptySettings.json in Resources */,
 				BAFC4AFE2FC861390087E01B /* warn-messages.json in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -1113,6 +1084,24 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				BAFC4AE82FC861390087E01B /* SettingsWithSameSalt.json in Resources */,
+				BAFC4AE92FC861390087E01B /* RolloutAndTestingSettingsWithPreSegmentMobileUA.json in Resources */,
+				BAFC4AEA2FC861390087E01B /* GetFlagTest.json in Resources */,
+				BAFC4AEB2FC861390087E01B /* RolloutAndTestingSettings.json in Resources */,
+				BAFC4AEC2FC861390087E01B /* OnlyRolloutSettings.json in Resources */,
+				BAFC4AED2FC861390087E01B /* RolloutAndTestingSettingsWithPreSegmentFeatureFlagStatus.json in Resources */,
+				BAFC4AEE2FC861390087E01B /* RolloutAndTestingSettingsWithPreSegmentMobile.json in Resources */,
+				BAFC4AF02FC861390087E01B /* RolloutAndTestingSettingsUserInlist.json in Resources */,
+				BAFC4AF12FC861390087E01B /* NoRolloutAndOnlyTestingSettings.json in Resources */,
+				BAFC4AF22FC861390087E01B /* SettingsWithDifferentSalt.json in Resources */,
+				BAFC4AF32FC861390087E01B /* SettingsWithWhitelisting.json in Resources */,
+				BAFC4AF42FC861390087E01B /* RolloutAndTestingSettingsWithPreSegment.json in Resources */,
+				BAFC4AF52FC861390087E01B /* MegAdvanceAlgoCampaignSettings.json in Resources */,
+				BAFC4AF72FC861390087E01B /* RolloutAndTestingSettingsInlist.json in Resources */,
+				BAFC4AF82FC861390087E01B /* MegRandomAlgoCampaignSettings.json in Resources */,
+				BAFC4AFB2FC861390087E01B /* UtilitySettings.json in Resources */,
+				BAFC4AFC2FC861390087E01B /* SegmentEvaluatorTest.json in Resources */,
+				BAFC4AFD2FC861390087E01B /* EmptySettings.json in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -1143,44 +1132,33 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				BAFC493C2FC56F790087E01B /* WingifyExports.swift in Sources */,
 				BAFC4AFF2FC861390087E01B /* WingifyClient.swift in Sources */,
 				BAFC4B002FC861390087E01B /* EventData+CoreDataProperties.swift in Sources */,
-				BAFC4B012FC861390087E01B /* TrackEventTests.swift in Sources */,
 				BAFC4B022FC861390087E01B /* Group.swift in Sources */,
 				BAFC4B032FC861390087E01B /* GetUserAliasResponse.swift in Sources */,
 				BAFC4B042FC861390087E01B /* LogLevelEnum.swift in Sources */,
 				BAFC4B052FC861390087E01B /* DebuggerServiceUtil.swift in Sources */,
-				BAFC4B062FC861390087E01B /* LogManagerTests.swift in Sources */,
 				BAFC4B072FC861390087E01B /* Event.swift in Sources */,
-				BAFC4B082FC861390087E01B /* FmeConfigTests.swift in Sources */,
-				BAFC4B092FC861390087E01B /* DecisionUtilTests.swift in Sources */,
 				BAFC4B0A2FC861390087E01B /* WingifyUserContext.swift in Sources */,
 				BAFC4B0B2FC861390087E01B /* GetFlagAPI.swift in Sources */,
 				BAFC4B0C2FC861390087E01B /* ServiceContainer.swift in Sources */,
-				BAFC4B0D2FC861390087E01B /* DecisionMakerTests.swift in Sources */,
 				BAFC4B0E2FC861390087E01B /* Rule.swift in Sources */,
 				BAFC4B0F2FC861390087E01B /* HooksEnum.swift in Sources */,
-				BAFC4B102FC861390087E01B /* SegmentOperandEvaluatorTests.swift in Sources */,
 				BAFC4B112FC861390087E01B /* SegmentUtil.swift in Sources */,
 				BAFC4B122FC861390087E01B /* GatewayServiceUtil.swift in Sources */,
 				BAFC4B132FC861390087E01B /* LogManager.swift in Sources */,
 				BAFC4B142FC861390087E01B /* Variable.swift in Sources */,
 				BAFC4B152FC861390087E01B /* SDKMetaUtil.swift in Sources */,
-				BAFC4B162FC861390087E01B /* SettingUtilTests.swift in Sources */,
 				BAFC4B172FC861390087E01B /* MegUtil.swift in Sources */,
 				BAFC4B182FC861390087E01B /* Feature.swift in Sources */,
 				BAFC4B192FC861390087E01B /* LocalStorageService.swift in Sources */,
-				BAFC4B1A2FC861390087E01B /* FeatureTests.swift in Sources */,
 				BAFC4B1B2FC861390087E01B /* SegmentOperandEvaluator.swift in Sources */,
 				BAFC4B1C2FC861390087E01B /* SettingUtil.swift in Sources */,
 				BAFC4B1D2FC861390087E01B /* HoldoutGroup.swift in Sources */,
-				BAFC4B1E2FC861390087E01B /* HoldoutGroupServiceTests.swift in Sources */,
 				BAFC4B1F2FC861390087E01B /* SyncManager.swift in Sources */,
 				BAFC4B202FC861390087E01B /* SettingsQueryParams.swift in Sources */,
 				BAFC4B212FC861390087E01B /* HoldoutGroupService.swift in Sources */,
 				BAFC4B222FC861390087E01B /* Variation.swift in Sources */,
-				BAFC4B232FC861390087E01B /* DataTypeUtilTests.swift in Sources */,
 				BAFC4B242FC861390087E01B /* DataTypeUtil.swift in Sources */,
 				BAFC4B252FC861390087E01B /* EventArchPayload.swift in Sources */,
 				BAFC4B262FC861390087E01B /* GlobalRequestModel.swift in Sources */,
@@ -1190,7 +1168,6 @@
 				BAFC4B2A2FC861390087E01B /* FmeSession.swift in Sources */,
 				BAFC4B2B2FC861390087E01B /* Metric.swift in Sources */,
 				BAFC4B2C2FC861390087E01B /* RequestHandler.swift in Sources */,
-				BAFC4B2D2FC861390087E01B /* VWO_FMETests.swift in Sources */,
 				BAFC4B2E2FC861390087E01B /* UrlEnum.swift in Sources */,
 				BAFC4B2F2FC861390087E01B /* ProductConfig.swift in Sources */,
 				BAFC4B312FC861390087E01B /* EventBatchQueryParams.swift in Sources */,
@@ -1199,17 +1176,12 @@
 				BAFC4B342FC861390087E01B /* UserIdUtil.swift in Sources */,
 				BAFC4B352FC861390087E01B /* SegmentOperandRegexEnum.swift in Sources */,
 				BAFC4B362FC861390087E01B /* FunctionUtil.swift in Sources */,
-				BAFC4B372FC861390087E01B /* UsageStatsTests.swift in Sources */,
 				BAFC4B382FC861390087E01B /* EventEnum.swift in Sources */,
 				BAFC4B392FC861390087E01B /* CampaignDecisionService.swift in Sources */,
-				BAFC4B3A2FC861390087E01B /* DeviceIDUtilTests.swift in Sources */,
 				BAFC4B3B2FC861390087E01B /* DecisionMaker.swift in Sources */,
 				BAFC4B3C2FC861390087E01B /* WingifyStorageConnector.swift in Sources */,
 				BAFC4B3D2FC861390087E01B /* Setting.swift in Sources */,
 				BAFC4B3E2FC861390087E01B /* Constants.swift in Sources */,
-				BAFC4B3F2FC861390087E01B /* DeviceUtilTests.swift in Sources */,
-				BAFC4B402FC861390087E01B /* SyncManagerTests.swift in Sources */,
-				BAFC4B412FC861390087E01B /* FunctionUtilTests.swift in Sources */,
 				BAFC4B422FC861390087E01B /* Campaign.swift in Sources */,
 				BAFC4B432FC861390087E01B /* Storage.swift in Sources */,
 				BAFC4B442FC861390087E01B /* NetworkManager.swift in Sources */,
@@ -1220,31 +1192,21 @@
 				BAFC4B492FC861390087E01B /* AliasIdentifierManager.swift in Sources */,
 				BAFC4B4A2FC861390087E01B /* ResponseModel.swift in Sources */,
 				BAFC4B4B2FC861390087E01B /* RequestModel.swift in Sources */,
-				BAFC4B4C2FC861390087E01B /* TestDataLoader.swift in Sources */,
 				BAFC4B4D2FC861390087E01B /* GetFlag.swift in Sources */,
 				BAFC4B4E2FC861390087E01B /* DeviceIDUtil.swift in Sources */,
 				BAFC4B4F2FC861390087E01B /* WingifyInitOptions.swift in Sources */,
-				BAFC4B502FC861390087E01B /* UUIDUtilsTests.swift in Sources */,
 				BAFC4B512FC861390087E01B /* CoreDataStack.swift in Sources */,
 				BAFC4B522FC861390087E01B /* SegmentDslModel.swift in Sources */,
-				BAFC4B532FC861390087E01B /* MockHookManager.swift in Sources */,
 				BAFC4B542FC861390087E01B /* SegmentationManager.swift in Sources */,
-				BAFC4B552FC861390087E01B /* EnumTests.swift in Sources */,
 				BAFC4B562FC861390087E01B /* ImpactCampaign.swift in Sources */,
 				BAFC4B572FC861390087E01B /* TrackEventAPI.swift in Sources */,
 				BAFC4B582FC861390087E01B /* SegmentEvaluator.swift in Sources */,
-				BAFC4B592FC861390087E01B /* SegmentEvaluatorTests.swift in Sources */,
 				BAFC4B5A2FC861390087E01B /* DeviceUtil.swift in Sources */,
 				BAFC4B5B2FC861390087E01B /* SegmentOperatorValueEnum.swift in Sources */,
-				BAFC4B5C2FC861390087E01B /* NetworkManagerConfigRaceTests.swift in Sources */,
 				BAFC4B5D2FC861390087E01B /* SegmentOperandValueEnum.swift in Sources */,
-				BAFC4B5F2FC861390087E01B /* DictionaryTests.swift in Sources */,
 				BAFC4B602FC861390087E01B /* SetAttributeAPI.swift in Sources */,
-				BAFC4B612FC861390087E01B /* SettingsSchemaTests.swift in Sources */,
-				BAFC4B622FC861390087E01B /* EventDataManagerTests.swift in Sources */,
 				BAFC4B632FC861390087E01B /* ApiEnum.swift in Sources */,
 				BAFC4B642FC861390087E01B /* LogMessageUtil.swift in Sources */,
-				BAFC4B652FC861390087E01B /* FlagTestDataLoader.swift in Sources */,
 				BAFC4B662FC861390087E01B /* SettingSchema.swift in Sources */,
 				BAFC4B672FC861390087E01B /* UrlService.swift in Sources */,
 				BAFC4B682FC861390087E01B /* LoggerService.swift in Sources */,
@@ -1255,23 +1217,17 @@
 				BAFC4B6D2FC861390087E01B /* DecisionUtil.swift in Sources */,
 				BAFC4B6E2FC861390087E01B /* HeadersEnum.swift in Sources */,
 				BAFC4B6F2FC861390087E01B /* StorageEnum.swift in Sources */,
-				BAFC4B702FC861390087E01B /* CampaignUtilTests.swift in Sources */,
-				BAFC4B712FC861390087E01B /* ConcurrentSegmentationRaceTests.swift in Sources */,
 				BAFC4B722FC861390087E01B /* GetUserAliasAPI.swift in Sources */,
 				BAFC4B732FC861390087E01B /* CampaignUtil.swift in Sources */,
 				BAFC4B742FC861390087E01B /* StatusEnum.swift in Sources */,
-				BAFC4B752FC861390087E01B /* WingifyFacadeTests.swift in Sources */,
 				BAFC4B762FC861390087E01B /* NetworkUtil.swift in Sources */,
 				BAFC4B772FC861390087E01B /* ImpressionUtil.swift in Sources */,
 				BAFC4C012FC861390087E01B /* UserTrackingUsageUtil.swift in Sources */,
 				BAFC4B782FC861390087E01B /* SetUserAliasAPI.swift in Sources */,
 				BAFC4B792FC861390087E01B /* EventData+CoreDataClass.swift in Sources */,
 				BAFC4B7A2FC861390087E01B /* EventsUtils.swift in Sources */,
-				BAFC4B7B2FC861390087E01B /* SegmentOperatorValueEnumTests.swift in Sources */,
 				BAFC4B7C2FC861390087E01B /* DebuggerCategoryEnum.swift in Sources */,
-				BAFC4B7D2FC861390087E01B /* CoreDataStackCorruptionTests.swift in Sources */,
 				BAFC4B7E2FC861390087E01B /* Props.swift in Sources */,
-				BAFC4B7F2FC861390087E01B /* GetFlagTests.swift in Sources */,
 				BAFC4B802FC861390087E01B /* WingifyInitEnum.swift in Sources */,
 				BAFC4B812FC861390087E01B /* HooksManager.swift in Sources */,
 				BAFC4B822FC861390087E01B /* GatewayService.swift in Sources */,
@@ -1289,6 +1245,38 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				BAFC4B012FC861390087E01B /* TrackEventTests.swift in Sources */,
+				BAFC4B062FC861390087E01B /* LogManagerTests.swift in Sources */,
+				BAFC4B082FC861390087E01B /* FmeConfigTests.swift in Sources */,
+				BAFC4B092FC861390087E01B /* DecisionUtilTests.swift in Sources */,
+				BAFC4B0D2FC861390087E01B /* DecisionMakerTests.swift in Sources */,
+				BAFC4B102FC861390087E01B /* SegmentOperandEvaluatorTests.swift in Sources */,
+				BAFC4B162FC861390087E01B /* SettingUtilTests.swift in Sources */,
+				BAFC4B1A2FC861390087E01B /* FeatureTests.swift in Sources */,
+				BAFC4B1E2FC861390087E01B /* HoldoutGroupServiceTests.swift in Sources */,
+				BAFC4B232FC861390087E01B /* DataTypeUtilTests.swift in Sources */,
+				BAFC4B2D2FC861390087E01B /* VWO_FMETests.swift in Sources */,
+				BAFC4B372FC861390087E01B /* UsageStatsTests.swift in Sources */,
+				BAFC4B3A2FC861390087E01B /* DeviceIDUtilTests.swift in Sources */,
+				BAFC4B3F2FC861390087E01B /* DeviceUtilTests.swift in Sources */,
+				BAFC4B402FC861390087E01B /* SyncManagerTests.swift in Sources */,
+				BAFC4B412FC861390087E01B /* FunctionUtilTests.swift in Sources */,
+				BAFC4B4C2FC861390087E01B /* TestDataLoader.swift in Sources */,
+				BAFC4B502FC861390087E01B /* UUIDUtilsTests.swift in Sources */,
+				BAFC4B532FC861390087E01B /* MockHookManager.swift in Sources */,
+				BAFC4B552FC861390087E01B /* EnumTests.swift in Sources */,
+				BAFC4B592FC861390087E01B /* SegmentEvaluatorTests.swift in Sources */,
+				BAFC4B5C2FC861390087E01B /* NetworkManagerConfigRaceTests.swift in Sources */,
+				BAFC4B5F2FC861390087E01B /* DictionaryTests.swift in Sources */,
+				BAFC4B612FC861390087E01B /* SettingsSchemaTests.swift in Sources */,
+				BAFC4B622FC861390087E01B /* EventDataManagerTests.swift in Sources */,
+				BAFC4B652FC861390087E01B /* FlagTestDataLoader.swift in Sources */,
+				BAFC4B702FC861390087E01B /* CampaignUtilTests.swift in Sources */,
+				BAFC4B712FC861390087E01B /* ConcurrentSegmentationRaceTests.swift in Sources */,
+				BAFC4B752FC861390087E01B /* WingifyFacadeTests.swift in Sources */,
+				BAFC4B7B2FC861390087E01B /* SegmentOperatorValueEnumTests.swift in Sources */,
+				BAFC4B7D2FC861390087E01B /* CoreDataStackCorruptionTests.swift in Sources */,
+				BAFC4B7F2FC861390087E01B /* GetFlagTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -1439,7 +1427,8 @@
 				DYLIB_COMPATIBILITY_VERSION = 1;
 				DYLIB_CURRENT_VERSION = 1;
 				DYLIB_INSTALL_NAME_BASE = "@rpath";
-				ENABLE_MODULE_VERIFIER = YES;
+				ENABLE_MODULE_VERIFIER = NO;
+				ENABLE_TESTABILITY = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
 				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
@@ -1454,7 +1443,8 @@
 				MODULE_VERIFIER_SUPPORTED_LANGUAGES = "objective-c objective-c++";
 				MODULE_VERIFIER_SUPPORTED_LANGUAGE_STANDARDS = "gnu17 gnu++20";
 				PRODUCT_BUNDLE_IDENTIFIER = com.wingify.Wingify;
-				PRODUCT_NAME = "$(TARGET_NAME:c99extidentifier)";
+				PRODUCT_NAME = Wingify_FME;
+				PRODUCT_MODULE_NAME = Wingify_FME;
 				SKIP_INSTALL = YES;
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 5.0;
@@ -1475,7 +1465,7 @@
 				DYLIB_COMPATIBILITY_VERSION = 1;
 				DYLIB_CURRENT_VERSION = 1;
 				DYLIB_INSTALL_NAME_BASE = "@rpath";
-				ENABLE_MODULE_VERIFIER = YES;
+				ENABLE_MODULE_VERIFIER = NO;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
 				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
@@ -1490,7 +1480,8 @@
 				MODULE_VERIFIER_SUPPORTED_LANGUAGES = "objective-c objective-c++";
 				MODULE_VERIFIER_SUPPORTED_LANGUAGE_STANDARDS = "gnu17 gnu++20";
 				PRODUCT_BUNDLE_IDENTIFIER = com.wingify.Wingify;
-				PRODUCT_NAME = "$(TARGET_NAME:c99extidentifier)";
+				PRODUCT_NAME = Wingify_FME;
+				PRODUCT_MODULE_NAME = Wingify_FME;
 				SKIP_INSTALL = YES;
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 5.0;
