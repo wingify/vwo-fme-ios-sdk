@@ -183,6 +183,10 @@
 		BAFC4B882FC861390087E01B /* Visitor.swift in Sources */ = {isa = PBXBuildFile; fileRef = BAFC4A422FC861390087E01B /* Visitor.swift */; };
 		BAFC4B892FC861390087E01B /* StorageConnectorProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = BAFC4A702FC861390087E01B /* StorageConnectorProvider.swift */; };
 		BAFC4C012FC861390087E01B /* UserTrackingUsageUtil.swift in Sources */ = {isa = PBXBuildFile; fileRef = BAFC4C002FC861390087E01B /* UserTrackingUsageUtil.swift */; };
+		BAFC4DB32FD6AA510087E01B /* VWOExports.swift in Sources */ = {isa = PBXBuildFile; fileRef = BAFC4DB12FD6AA510087E01B /* VWOExports.swift */; };
+		BAFC4DBE2FD6EB240087E01B /* BucketingIdResolverTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = BAFC4DBD2FD6EB240087E01B /* BucketingIdResolverTests.swift */; };
+		BAFC4DC02FD6EB740087E01B /* BucketingIdResolver.swift in Sources */ = {isa = PBXBuildFile; fileRef = BAFC4DBF2FD6EB740087E01B /* BucketingIdResolver.swift */; };
+		BAE7B6452F67FCF9003FC298 /* CustomBucketingSeedTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = BAE7B6442F67FCF9003FC298 /* CustomBucketingSeedTests.swift */; };
 		EB373E6B2D9D2B51005713D1 /* Wingify_FME.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = EB06C7802C90229B00A25E07 /* Wingify_FME.framework */; };
 /* End PBXBuildFile section */
 
@@ -359,6 +363,10 @@
 		BAFC4AE42FC861390087E01B /* VWO_FMETests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VWO_FMETests.swift; sourceTree = "<group>"; };
 		BAFC4AE62FC861390087E01B /* OffineEventData.xcdatamodel */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcdatamodel; path = OffineEventData.xcdatamodel; sourceTree = "<group>"; };
 		BAFC4C002FC861390087E01B /* UserTrackingUsageUtil.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UserTrackingUsageUtil.swift; sourceTree = "<group>"; };
+		BAFC4DB12FD6AA510087E01B /* VWOExports.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VWOExports.swift; sourceTree = "<group>"; };
+		BAFC4DBD2FD6EB240087E01B /* BucketingIdResolverTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BucketingIdResolverTests.swift; sourceTree = "<group>"; };
+		BAFC4DBF2FD6EB740087E01B /* BucketingIdResolver.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BucketingIdResolver.swift; sourceTree = "<group>"; };
+		BAE7B6442F67FCF9003FC298 /* CustomBucketingSeedTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CustomBucketingSeedTests.swift; sourceTree = "<group>"; };
 		EB06C7802C90229B00A25E07 /* Wingify_FME.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Wingify_FME.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		EB373E672D9D2B51005713D1 /* VWO-FMETests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "VWO-FMETests.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
@@ -688,6 +696,7 @@
 		BAFC4A982FC861390087E01B /* Utility */ = {
 			isa = PBXGroup;
 			children = (
+				BAFC4DBF2FD6EB740087E01B /* BucketingIdResolver.swift */,
 				BAFC4A852FC861390087E01B /* CampaignUtil.swift */,
 				BAFC4A862FC861390087E01B /* DataTypeUtil.swift */,
 				BAFC4A872FC861390087E01B /* DebuggerServiceUtil.swift */,
@@ -792,6 +801,7 @@
 		BAFC4AB02FC861390087E01B /* GetFlag */ = {
 			isa = PBXGroup;
 			children = (
+				BAE7B6442F67FCF9003FC298 /* CustomBucketingSeedTests.swift */,
 				BAFC4AAC2FC861390087E01B /* FlagTestDataLoader.swift */,
 				BAFC4AAD2FC861390087E01B /* GetFlagTest.json */,
 				BAFC4AAE2FC861390087E01B /* GetFlagTests.swift */,
@@ -901,6 +911,7 @@
 		BAFC4ADF2FC861390087E01B /* Utility */ = {
 			isa = PBXGroup;
 			children = (
+				BAFC4DBD2FD6EB240087E01B /* BucketingIdResolverTests.swift */,
 				BAFC4AD62FC861390087E01B /* TestJson */,
 				BAFC4AD72FC861390087E01B /* CampaignUtilTests.swift */,
 				BAFC4AD82FC861390087E01B /* DataTypeUtilTests.swift */,
@@ -950,9 +961,18 @@
 			path = "Wingify-FMETests";
 			sourceTree = "<group>";
 		};
+		BAFC4DB22FD6AA510087E01B /* VWO-FME */ = {
+			isa = PBXGroup;
+			children = (
+				BAFC4DB12FD6AA510087E01B /* VWOExports.swift */,
+			);
+			path = "VWO-FME";
+			sourceTree = "<group>";
+		};
 		EB06C7762C90229B00A25E07 = {
 			isa = PBXGroup;
 			children = (
+				BAFC4DB22FD6AA510087E01B /* VWO-FME */,
 				BAFC4A9F2FC861390087E01B /* Wingify-FME */,
 				BAFC4AE52FC861390087E01B /* Wingify-FMETests */,
 				EB06C7812C90229B00A25E07 /* Products */,
@@ -1123,7 +1143,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "# Define variables\nPROJECT=\"VWO-FME.xcodeproj\"\nFRAMEWORK_NAME=\"VWO-FME\"\nDiff_FRAMEWORK_NAME=\"VWO_FME\"\nCONFIGURATION=\"Release\" # Ensure this matches your intended build configuration\n\n# Build paths might need adjustment based on CocoaPods structure\nBUILD_DIR=\"${SRCROOT}/build\"\nOUTPUT_DIR=\"${HOME}/Desktop/${Diff_FRAMEWORK_NAME}.xcframework\"\n\n# Ensure CocoaPods is set up\n# pod install\n\n# Clean up any existing artifacts\nrm -rf \"${BUILD_DIR}\"\nrm -rf \"${OUTPUT_DIR}\"\nmkdir -p \"${OUTPUT_DIR}\"\n\nxcodebuild -project \"${PROJECT}\" -scheme \"${FRAMEWORK_NAME}\" -configuration ${CONFIGURATION} -sdk iphoneos clean build CONFIGURATION_BUILD_DIR=${BUILD_DIR}/iphoneos\nxcodebuild -project \"${PROJECT}\" -scheme \"${FRAMEWORK_NAME}\" -configuration ${CONFIGURATION} -sdk iphonesimulator clean build CONFIGURATION_BUILD_DIR=${BUILD_DIR}/iphonesimulator\n\n# Create the .xcframework from the built frameworks\nxcodebuild -create-xcframework \\\n    -framework \"${BUILD_DIR}/iphoneos/${Diff_FRAMEWORK_NAME}.framework\" \\\n    -framework \"${BUILD_DIR}/iphonesimulator/${Diff_FRAMEWORK_NAME}.framework\" \\\n    -output \"${OUTPUT_DIR}\"\n";
+			shellScript = "# Define variables\nPROJECT=\"VWO-FME.xcodeproj\"\nFRAMEWORK_NAME=\"VWO-FME\"\nDiff_FRAMEWORK_NAME=\"Wingify_FME\"\nCONFIGURATION=\"Release\" # Ensure this matches your intended build configuration\n\n# Build paths might need adjustment based on CocoaPods structure\nBUILD_DIR=\"${SRCROOT}/build\"\nOUTPUT_DIR=\"${HOME}/Desktop/${Diff_FRAMEWORK_NAME}.xcframework\"\n\n# Ensure CocoaPods is set up\n# pod install\n\n# Clean up any existing artifacts\nrm -rf \"${BUILD_DIR}\"\nrm -rf \"${OUTPUT_DIR}\"\nmkdir -p \"${OUTPUT_DIR}\"\n\nxcodebuild -project \"${PROJECT}\" -scheme \"${FRAMEWORK_NAME}\" -configuration ${CONFIGURATION} -sdk iphoneos clean build CONFIGURATION_BUILD_DIR=${BUILD_DIR}/iphoneos\nxcodebuild -project \"${PROJECT}\" -scheme \"${FRAMEWORK_NAME}\" -configuration ${CONFIGURATION} -sdk iphonesimulator clean build CONFIGURATION_BUILD_DIR=${BUILD_DIR}/iphonesimulator\n\n# Create the .xcframework from the built frameworks\nxcodebuild -create-xcframework \\\n    -framework \"${BUILD_DIR}/iphoneos/${Diff_FRAMEWORK_NAME}.framework\" \\\n    -framework \"${BUILD_DIR}/iphonesimulator/${Diff_FRAMEWORK_NAME}.framework\" \\\n    -output \"${OUTPUT_DIR}\"\n";
 		};
 /* End PBXShellScriptBuildPhase section */
 
@@ -1190,6 +1210,7 @@
 				BAFC4B472FC861390087E01B /* RuleEvaluationUtil.swift in Sources */,
 				BAFC4B482FC861390087E01B /* RequestQueryParams.swift in Sources */,
 				BAFC4B492FC861390087E01B /* AliasIdentifierManager.swift in Sources */,
+				BAFC4DC02FD6EB740087E01B /* BucketingIdResolver.swift in Sources */,
 				BAFC4B4A2FC861390087E01B /* ResponseModel.swift in Sources */,
 				BAFC4B4B2FC861390087E01B /* RequestModel.swift in Sources */,
 				BAFC4B4D2FC861390087E01B /* GetFlag.swift in Sources */,
@@ -1272,10 +1293,12 @@
 				BAFC4B622FC861390087E01B /* EventDataManagerTests.swift in Sources */,
 				BAFC4B652FC861390087E01B /* FlagTestDataLoader.swift in Sources */,
 				BAFC4B702FC861390087E01B /* CampaignUtilTests.swift in Sources */,
+				BAFC4DBE2FD6EB240087E01B /* BucketingIdResolverTests.swift in Sources */,
 				BAFC4B712FC861390087E01B /* ConcurrentSegmentationRaceTests.swift in Sources */,
 				BAFC4B752FC861390087E01B /* WingifyFacadeTests.swift in Sources */,
 				BAFC4B7B2FC861390087E01B /* SegmentOperatorValueEnumTests.swift in Sources */,
 				BAFC4B7D2FC861390087E01B /* CoreDataStackCorruptionTests.swift in Sources */,
+				BAE7B6452F67FCF9003FC298 /* CustomBucketingSeedTests.swift in Sources */,
 				BAFC4B7F2FC861390087E01B /* GetFlagTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -1443,8 +1466,8 @@
 				MODULE_VERIFIER_SUPPORTED_LANGUAGES = "objective-c objective-c++";
 				MODULE_VERIFIER_SUPPORTED_LANGUAGE_STANDARDS = "gnu17 gnu++20";
 				PRODUCT_BUNDLE_IDENTIFIER = com.wingify.Wingify;
-				PRODUCT_NAME = Wingify_FME;
 				PRODUCT_MODULE_NAME = Wingify_FME;
+				PRODUCT_NAME = Wingify_FME;
 				SKIP_INSTALL = YES;
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 5.0;
@@ -1480,8 +1503,8 @@
 				MODULE_VERIFIER_SUPPORTED_LANGUAGES = "objective-c objective-c++";
 				MODULE_VERIFIER_SUPPORTED_LANGUAGE_STANDARDS = "gnu17 gnu++20";
 				PRODUCT_BUNDLE_IDENTIFIER = com.wingify.Wingify;
-				PRODUCT_NAME = Wingify_FME;
 				PRODUCT_MODULE_NAME = Wingify_FME;
+				PRODUCT_NAME = Wingify_FME;
 				SKIP_INSTALL = YES;
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 5.0;
@@ -1498,8 +1521,17 @@
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = DBN26NC8KE;
 				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				FRAMEWORK_SEARCH_PATHS = (
+					"$(inherited)",
+					"$(BUILT_PRODUCTS_DIR)",
+				);
 				GENERATE_INFOPLIST_FILE = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 13.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@loader_path/Frameworks",
+					"@executable_path/Frameworks",
+				);
 				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = "com.wingify.demoapp.VWO-FMETests";
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -1516,8 +1548,17 @@
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = DBN26NC8KE;
 				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				FRAMEWORK_SEARCH_PATHS = (
+					"$(inherited)",
+					"$(BUILT_PRODUCTS_DIR)",
+				);
 				GENERATE_INFOPLIST_FILE = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 13.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@loader_path/Frameworks",
+					"@executable_path/Frameworks",
+				);
 				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = "com.wingify.demoapp.VWO-FMETests";
 				PRODUCT_NAME = "$(TARGET_NAME)";

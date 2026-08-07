@@ -31,6 +31,8 @@ import Foundation
     var variationTargetingVariables: [String: Any] = [:]
     var vwo: GatewayService?
     var shouldUseDeviceIdAsUserId: Bool = false
+    /// Optional custom bucketing seed. When set, it is used for bucketing instead of id.
+    var bucketingSeed: String? = nil
     var postSegmentationVariables: [String]? = nil
 
     internal lazy var uuid: String = {
@@ -50,13 +52,15 @@ import Foundation
      *   - customVariables: A dictionary of custom variables associated with the user.
      *   - shouldUseDeviceIdAsUserId: If true, uses device ID when id is nil.
      *   - postSegmentationVariables: A list of Key variables that addes customVariable for postSegmentaion.
+     *   - bucketingSeed: Optional custom seed for bucketing when provided.
      */
 
-    public init(id: String? = nil, shouldUseDeviceIdAsUserId: Bool = false,customVariables: [String: Any], postSegmentationVariables: [String]? = nil,ipAddress: String? = nil) {
+    public init(id: String? = nil, shouldUseDeviceIdAsUserId: Bool = false,customVariables: [String: Any], postSegmentationVariables: [String]? = nil, bucketingSeed: String? = nil,ipAddress: String? = nil) {
         self.shouldUseDeviceIdAsUserId = shouldUseDeviceIdAsUserId
         self.customVariables = customVariables
         self.id = id
         self.postSegmentationVariables = postSegmentationVariables
+        self.bucketingSeed = bucketingSeed
         self.ipAddress = ipAddress ?? ""
         if shouldUseDeviceIdAsUserId && id == nil {
             if let deviceId = DeviceIDUtil().getDeviceID() {

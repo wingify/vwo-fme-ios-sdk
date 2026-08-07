@@ -16,7 +16,7 @@
 
 import XCTest
 import Security
-@testable import Wingify_FME
+@testable import VWO_FME
 
 class DeviceIDUtilTests: XCTestCase {
     let deviceIdKey = "com.vwo.fme.deviceIdKey"

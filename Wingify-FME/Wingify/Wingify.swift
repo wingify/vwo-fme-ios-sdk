@@ -46,14 +46,18 @@ enum SDKState {
      * Key format: "accountId_sdkKey"
      */
     private static var accountStates: [String: SDKState] = [:]
-    private static let stateQueue = DispatchQueue(label: "com.wingify.fme.accountStates", attributes: .concurrent)
+    private static let stateQueue = DispatchQueue(label: "com.wingify.fme.accountStates")
     
     /**
      * Cache of Wingify instances per account to avoid re-initialization.
      * Key format: "accountId_sdkKey"
      */
     private static var wingifyInstances: [String: WingifyFme] = [:]
-    private static let instancesQueue = DispatchQueue(label: "com.wingify.fme.instances", attributes: .concurrent)
+    private static let instancesQueue = DispatchQueue(label: "com.wingify.fme.instances")
+    /// Account key used by static APIs (`getFlag`, `trackEvent`, etc.).
+    /// Pinned to the first account that begins initialization so a later multi-account
+    /// init cannot steal the default when its settings fetch finishes first.
+    private static var defaultAccountKey: String?
     
     // Private instance variable for WingifyClient
     private var wingifyClient: WingifyClient?
@@ -91,8 +95,19 @@ enum SDKState {
      * @param state The new state
      */
     private static func setAccountState(accountKey: String, state: SDKState) {
-        stateQueue.async(flags: .barrier) {
+        stateQueue.sync {
             accountStates[accountKey] = state
+        }
+    }
+    
+    /**
+     * Pins the default account for static APIs to the first account that starts init.
+     */
+    private static func pinDefaultAccountKeyIfNeeded(_ accountKey: String) {
+        instancesQueue.sync {
+            if defaultAccountKey == nil {
+                defaultAccountKey = accountKey
+            }
         }
     }
     
@@ -109,12 +124,16 @@ enum SDKState {
     
     /**
      * Caches a VWO instance for an account.
+     * Uses sync so the instance is available before init completion returns.
      * @param accountKey The account key
      * @param instance The VWO instance to cache
      */
     private static func cacheInstance(accountKey: String, instance: WingifyFme) {
-        instancesQueue.async(flags: .barrier) {
+        instancesQueue.sync {
             wingifyInstances[accountKey] = instance
+            if defaultAccountKey == nil {
+                defaultAccountKey = accountKey
+            }
         }
     }
     
@@ -149,6 +168,8 @@ enum SDKState {
         
         // Set state to initializing
         setAccountState(accountKey: accountKey, state: .initializing)
+        // Keep static APIs on the first account the app started initializing
+        pinDefaultAccountKeyIfNeeded(accountKey)
         
         DispatchQueue.global(qos: .background).async {
             guard let sdkKey = options.sdkKey, !sdkKey.isEmpty else {
@@ -247,8 +268,11 @@ enum SDKState {
    
     public static func clearInstance(accountId: Int?, sdkKey: String?) {
         let accountKey = "\(accountId ?? 0)_\(sdkKey ?? "")"
-        instancesQueue.async(flags: .barrier) {
+        instancesQueue.sync {
             wingifyInstances.removeValue(forKey: accountKey)
+            if defaultAccountKey == accountKey {
+                defaultAccountKey = wingifyInstances.keys.first
+            }
         }
         setAccountState(accountKey: accountKey, state: .notInitialized)
         
@@ -264,10 +288,11 @@ enum SDKState {
      * This will force re-initialization for all accounts on next init() calls.
      */
     public static func clearAllInstances() {
-        instancesQueue.async(flags: .barrier) {
+        instancesQueue.sync {
             wingifyInstances.removeAll()
+            defaultAccountKey = nil
         }
-        stateQueue.async(flags: .barrier) {
+        stateQueue.sync {
             accountStates.removeAll()
         }
     }
@@ -314,12 +339,15 @@ enum SDKState {
     }
     
     /**
-     * Gets the default Wingify instance (most recently initialized).
-     * Used by static methods for backward compatibility.
+     * Gets the default Wingify instance for static APIs.
+     * Uses the first account that began initialization (see `defaultAccountKey`).
+     * For multi-account apps, prefer `getInstance(accountId:sdkKey:)`.
      */
     private static func getDefaultInstance() -> WingifyFme? {
         return instancesQueue.sync {
-            // Return the first available instance
+            if let key = defaultAccountKey, let instance = wingifyInstances[key] {
+                return instance
+            }
             return wingifyInstances.values.first
         }
     }
@@ -333,7 +361,13 @@ enum SDKState {
     
     // Gets the flag value for the given feature key
     public static func getFlag(featureKey: String, context: WingifyUserContext, completion: @escaping (GetFlag) -> Void) {
-        getDefaultInstance()?.getFlag(featureKey: featureKey, context: context, completion: completion)
+        guard let instance = getDefaultInstance() else {
+            let flag = GetFlag()
+            flag.setIsEnabled(isEnabled: false)
+            completion(flag)
+            return
+        }
+        instance.getFlag(featureKey: featureKey, context: context, completion: completion)
     }
     
     // Tracks an event with properties
@@ -371,7 +405,13 @@ enum SDKState {
     
     // Gets the flag value for the given feature key
     public func getFlag(featureKey: String, context: WingifyUserContext, completion: @escaping (GetFlag) -> Void) {
-        wingifyClient?.getFlag(featureKey: featureKey, context: context, completion: completion)
+        guard let client = wingifyClient else {
+            let flag = GetFlag()
+            flag.setIsEnabled(isEnabled: false)
+            completion(flag)
+            return
+        }
+        client.getFlag(featureKey: featureKey, context: context, completion: completion)
     }
     
     // Tracks an event with properties

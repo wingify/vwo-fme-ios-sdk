@@ -89,7 +89,7 @@ class NetworkManager {
         })
     }
     
-    static func postAsync(_ request: RequestModel, completion: @escaping (ResponseModel) -> Void) {
+    static func postAsync(_ request: RequestModel, serviceContainer: ServiceContainer? = nil, completion: @escaping (ResponseModel) -> Void) {
         executorService.async {
             let payloadToStore = request.body ?? [:]
             
@@ -97,17 +97,15 @@ class NetworkManager {
             let accountId = request.accountId
             let sdkKey = request.sdkKey ?? request.headers?["Authorization"] ?? ""
             
-            // Try to get ServiceContainer for this account to determine correct SyncManager
-            var serviceContainer: ServiceContainer? = nil
-            var syncManager: SyncManager? = nil
-            
-            if let accountId = accountId, !sdkKey.isEmpty {
-                serviceContainer = EventDataManager.getServiceContainer(accountId: accountId, sdkKey: sdkKey)
-                syncManager = serviceContainer?.getSyncManager()
+            // Prefer the ServiceContainer passed by the caller (Android parity); fall back to registry lookup.
+            var resolvedServiceContainer = serviceContainer
+            if resolvedServiceContainer == nil,
+               let accountId = accountId,
+               !sdkKey.isEmpty {
+                resolvedServiceContainer = EventDataManager.getServiceContainer(accountId: accountId, sdkKey: sdkKey)
             }
             
-            // Fallback to SyncManager.shared if ServiceContainer not found
-            let effectiveSyncManager = syncManager ?? SyncManager.shared
+            let effectiveSyncManager = resolvedServiceContainer?.getSyncManager() ?? SyncManager.shared
             
             // Check if the request is for event batching
             let isEventBatchingRequest = request.path == Constants.EVENT_BATCH_ENDPOINT

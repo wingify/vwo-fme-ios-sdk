@@ -27,7 +27,7 @@ class EventDataManager {
     // Store ServiceContainer references per account for multi-instance support
     // Key format: "accountId_sdkKey"
     private static var accountServiceContainers: [String: WeakServiceContainer] = [:]
-    private static let containersQueue = DispatchQueue(label: "com.wingify.fme.eventdatamanager.containers", attributes: .concurrent)
+    private static let containersQueue = DispatchQueue(label: "com.wingify.fme.eventdatamanager.containers")
     
     /**
      * Helper class to store weak references to ServiceContainer
@@ -47,7 +47,7 @@ class EventDataManager {
      */
     static func registerServiceContainer(_ serviceContainer: ServiceContainer) {
         let accountKey = "\(serviceContainer.getAccountId())_\(serviceContainer.getSdkKey())"
-        containersQueue.async(flags: .barrier) {
+        containersQueue.sync {
             accountServiceContainers[accountKey] = WeakServiceContainer(container: serviceContainer)
         }
     }
@@ -126,7 +126,7 @@ class EventDataManager {
             
             self.coreDataStack.saveContext { done, error in
                 if done {
-                    self.checkThreshold()
+                    self.checkThreshold(accountId: eventAccountId, sdkKey: eventSdkKey)
                 }
             }
         }
@@ -224,10 +224,12 @@ class EventDataManager {
      * Checks if the number of stored events has reached the threshold for uploading.
      * Uses instance-specific SyncManager if available, otherwise falls back to shared.
      */
-    private func checkThreshold() {
-        // Try to get the ServiceContainer for the current account
+    private func checkThreshold(accountId: Int64? = nil, sdkKey: String? = nil) {
+        // Resolve ServiceContainer for the event's account
         let serviceContainer: ServiceContainer?
-        if let settingsManager = SettingsManager.instance {
+        if let accountId = accountId, accountId > 0, let sdkKey = sdkKey, !sdkKey.isEmpty {
+            serviceContainer = EventDataManager.getServiceContainer(accountId: Int(accountId), sdkKey: sdkKey)
+        } else if let settingsManager = SettingsManager.instance {
             serviceContainer = EventDataManager.getServiceContainer(accountId: settingsManager.accountId, sdkKey: settingsManager.sdkKey)
         } else {
             serviceContainer = nil
@@ -244,12 +246,12 @@ class EventDataManager {
         if syncManager.minimumEventCount == 0 && !syncManager.isOnlineBatchingAllowed { return }
         
         // Count entries for this specific account if we have ServiceContainer
-        let accountId = serviceContainer?.getAccountId() ?? 0
-        let sdkKey = serviceContainer?.getSdkKey() ?? ""
+        let resolvedAccountId = accountId.map { Int($0) } ?? serviceContainer?.getAccountId() ?? 0
+        let resolvedSdkKey = (sdkKey?.isEmpty == false ? sdkKey : nil) ?? serviceContainer?.getSdkKey() ?? ""
         
-        if accountId > 0 && !sdkKey.isEmpty {
+        if resolvedAccountId > 0 && !resolvedSdkKey.isEmpty {
             // Count entries for this specific account
-            self.coreDataStack.countEntries(accountId: Int64(accountId), sdkKey: sdkKey) { count, error in
+            self.coreDataStack.countEntries(accountId: Int64(resolvedAccountId), sdkKey: resolvedSdkKey) { count, error in
                 if error == nil {
                     let eventCount = count ?? 0
                     if eventCount >= syncManager.minimumEventCount && syncManager.minimumEventCount != 0 {

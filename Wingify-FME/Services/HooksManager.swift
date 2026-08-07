@@ -23,9 +23,14 @@ public protocol IntegrationCallback {
 class HooksManager {
     private var callback: IntegrationCallback?
     private var decision: [String: Any]?
+    // Integration callback should fire only once per unique evaluation payload.
+    private var executedSignatures: Set<String> = []
+    private let triggerEveryTime: Bool
+    private let lock = NSLock()
 
-    init(callback: IntegrationCallback?) {
+    init(callback: IntegrationCallback?, triggerEveryTime: Bool = false) {
         self.callback = callback
+        self.triggerEveryTime = triggerEveryTime
     }
 
     /**
@@ -34,7 +39,21 @@ class HooksManager {
      * @param properties Properties from the callback
      */
     func execute(properties: [String: Any]?) {
-        if let callback = self.callback, let properties = properties {
+        guard let callback = self.callback, let properties = properties else {
+            return
+        }
+        if triggerEveryTime {
+            callback.execute(properties)
+            return
+        }
+        let signature = makeSignature(from: properties)
+        lock.lock()
+        let shouldExecute = !executedSignatures.contains(signature)
+        if shouldExecute {
+            executedSignatures.insert(signature)
+        }
+        lock.unlock()
+        if shouldExecute {
             callback.execute(properties)
         }
     }
@@ -57,5 +76,48 @@ class HooksManager {
      */
     func get() -> [String: Any]? {
         return self.decision
+    }
+
+    /// Builds a stable signature string for deduplicating integration callback payloads.
+    private func makeSignature(from properties: [String: Any]) -> String {
+        let normalized = normalizeForSignature(properties)
+        guard JSONSerialization.isValidJSONObject(normalized),
+              let data = try? JSONSerialization.data(withJSONObject: normalized, options: [.sortedKeys]),
+              let json = String(data: data, encoding: .utf8) else {
+            return String(describing: normalized)
+        }
+        return json
+    }
+
+    /// Recursively normalizes Any values to JSON-compatible primitives/maps/arrays.
+    private func normalizeForSignature(_ value: Any) -> Any {
+        switch value {
+        case let dict as [String: Any]:
+            var normalized: [String: Any] = [:]
+            for key in dict.keys.sorted() {
+                if let child = dict[key] {
+                    normalized[key] = normalizeForSignature(child)
+                }
+            }
+            return normalized
+        case let arr as [Any]:
+            return arr.map { normalizeForSignature($0) }
+        case let number as NSNumber:
+            return number
+        case let string as String:
+            return string
+        case let bool as Bool:
+            return bool
+        case let int as Int:
+            return int
+        case let int64 as Int64:
+            return int64
+        case let double as Double:
+            return double
+        case let float as Float:
+            return float
+        default:
+            return String(describing: value)
+        }
     }
 }

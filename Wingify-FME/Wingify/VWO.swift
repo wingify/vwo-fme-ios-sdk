@@ -38,7 +38,8 @@ public typealias VWOStorageConnector = WingifyStorageConnector
                          isUsageStatsDisabled: Bool = false,
                          vwoMeta: [String: Any] = [:],
                          storage: WingifyStorageConnector? = nil,
-                         isAliasingEnabled: Bool? = false) {
+                         isAliasingEnabled: Bool? = false,
+                         shouldTriggerIntegrationCallbackAlways: Bool = false) {
         ProductConfig.use(.vwo)
         super.init(sdkKey: sdkKey,
                    accountId: accountId,
@@ -57,7 +58,8 @@ public typealias VWOStorageConnector = WingifyStorageConnector
                    isUsageStatsDisabled: isUsageStatsDisabled,
                    vwoMeta: vwoMeta,
                    storage: storage,
-                   isAliasingEnabled: isAliasingEnabled)
+                   isAliasingEnabled: isAliasingEnabled,
+                   shouldTriggerIntegrationCallbackAlways: shouldTriggerIntegrationCallbackAlways)
     }
 }
 
@@ -67,12 +69,14 @@ public typealias VWOStorageConnector = WingifyStorageConnector
                          shouldUseDeviceIdAsUserId: Bool = false,
                          customVariables: [String: Any],
                          postSegmentationVariables: [String]? = nil,
+                         bucketingSeed: String? = nil,
                          ipAddress: String? = nil) {
         ProductConfig.use(.vwo)
         super.init(id: id,
                    shouldUseDeviceIdAsUserId: shouldUseDeviceIdAsUserId,
                    customVariables: customVariables,
                    postSegmentationVariables: postSegmentationVariables,
+                   bucketingSeed: bucketingSeed,
                    ipAddress: ipAddress)
     }
 }

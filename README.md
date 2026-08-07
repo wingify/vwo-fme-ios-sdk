@@ -261,12 +261,13 @@ The `context` object uniquely identifies users and is crucial for consistent fea
 
 The following table explains all the parameters in the `context` object:
 
-| **Parameter**     | **Description**                                                            | **Required** | **Type** | **Example**                       |
-| ----------------- | -------------------------------------------------------------------------- | ------------ | -------- | --------------------------------- |
-| `id`              | Unique identifier for the user.                                            | Yes          | String   | `"unique_user_id"`                |
-| `customVariables` | Custom attributes for targeting.                                           | No           | Dictionary   | `["key_1": 2, "key_2": 0]`    |
-| `shouldUseDeviceIdAsUserId`  | Use device ID as user ID when user ID is not provided.          | No           | Boolean  | `true`                            |
-| `ipAddress`       | Visitor IP address from your application context.                          | No           | String   | `"1.2.3.4"`                       |
+| **Parameter**              | **Description**                                                                                             | **Required** | **Type**     | **Example**                                |
+| -------------------------- | ----------------------------------------------------------------------------------------------------------- | ------------ | ------------ | ------------------------------------------ |
+| `id`                       | Unique identifier for the user.                                                                            | Yes          | String       | `"unique_user_id"`                         |
+| `customVariables`          | Custom attributes for targeting.                                                                           | No           | Dictionary   | `["key_1": 2, "key_2": 0]`                 |
+| `shouldUseDeviceIdAsUserId` | Use device ID as user ID when user ID is not provided.                                                   | No           | Boolean      | `true`                                     |
+| `bucketingSeed`            | Optional custom seed for variation bucketing. When set and non-empty, it is used **instead of** `id` for consistent variation assignment (e.g. cross-platform or alias-stable IDs). | No           | String       | `"stable-seed-123"`                        |
+
 
 #### Example
 
@@ -277,6 +278,25 @@ let userContext = VWOUserContext(
     customVariables: customVariables,
     ipAddress: "1.2.3.4"
 )
+```
+
+#### Using a Custom Bucketing Seed
+
+When you want variation assignment to be driven by a stable seed (for example, a CRM ID or a cross-platform identifier) instead of the user ID, you can pass a `bucketingSeed`:
+
+```swift
+let customVariables: [String : Any] = ["key_1": 2, "key_2": 0]
+
+// Bucketing is now based on "stable-seed-123" instead of "user_123"
+let userContext = VWOUserContext(
+    id: "user_123",
+    customVariables: customVariables,
+    bucketingSeed: "stable-seed-123"
+)
+
+// Behaviour:
+// - Same bucketingSeed across different user IDs -> same variation allocation
+// - Same user ID with different bucketingSeed values -> different variation allocations
 ```
 
 #### Device ID Configuration
@@ -440,7 +460,14 @@ class MyClass: IntegrationCallback {
 // Create an instance of your class
 let integrationClass = MyClass()
 
-let options = VWOInitOptions(sdkKey: SDK_KEY, accountId: ACCOUNT_ID, integrations: integrationClass)
+let options = VWOInitOptions(
+    sdkKey: SDK_KEY,
+    accountId: ACCOUNT_ID,
+    integrations: integrationClass,
+    // true: fire integration callback on every evaluation (including cached decisions)
+    // false/default: fire only on first-time unique evaluation payload
+    isTriggerIntegrationCallbackEverytime: true
+)
 ```
 See [Integrations](https://developers.vwo.com/v2/docs/fme-ios-integrations#usage) documentation for additional information.
 

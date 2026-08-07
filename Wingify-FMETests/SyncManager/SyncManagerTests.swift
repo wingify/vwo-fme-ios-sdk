@@ -15,7 +15,7 @@
  */
 
 import XCTest
-@testable import Wingify_FME
+@testable import VWO_FME
 
 class SyncManagerTests: XCTestCase {
 
@@ -49,6 +49,57 @@ class SyncManagerTests: XCTestCase {
     func testCheckOnlineBatchingAllowed() {
         XCTAssertTrue(syncManager.checkOnlineBatchingAllowed(batchSize: 10, batchUploadInterval: 60001))
         XCTAssertFalse(syncManager.checkOnlineBatchingAllowed(batchSize: 0, batchUploadInterval: 50000))
+        // Exactly 60000 ms is invalid; interval must be greater than 60000.
+        XCTAssertFalse(syncManager.checkOnlineBatchingAllowed(batchSize: nil, batchUploadInterval: 60000))
+        XCTAssertFalse(syncManager.checkOnlineBatchingAllowed(batchSize: 10, batchUploadInterval: 60000))
+        XCTAssertTrue(syncManager.checkOnlineBatchingAllowed(batchSize: nil, batchUploadInterval: 60001))
+    }
+    
+    /// Verifies two accounts initialized with different batch strategies keep isolated SyncManager state.
+    func testMultiInstanceBatchConfigIsolation() {
+        let settings = FlagTestDataLoader.loadTestData(jsonFileName: SettingsTestJson.RolloutAndTestingSettings.jsonFileName)!
+        
+        // Account A: time-interval batching only
+        let optionsA = WingifyInitOptions(sdkKey: "sdk-key-a", accountId: 100001, batchUploadTimeInterval: 70000)
+        let builderA = WingifyBuilder(options: optionsA)
+        builderA.setLogger().setSettingsManager()
+        let containerA1 = builderA.createServiceContainer(processedSettings: settings, options: optionsA)
+        let containerA2 = builderA.createServiceContainer(processedSettings: settings, options: optionsA)
+        
+        // Account B: minimum-batch-size batching only
+        let optionsB = WingifyInitOptions(sdkKey: "sdk-key-b", accountId: 200002, batchMinSize: 5)
+        let builderB = WingifyBuilder(options: optionsB)
+        builderB.setLogger().setSettingsManager()
+        let containerB = builderB.createServiceContainer(processedSettings: settings, options: optionsB)
+        
+        // Each builder reuses its own cached ServiceContainer
+        XCTAssertTrue(containerA1 === containerA2)
+        XCTAssertFalse(containerA1 === containerB)
+        
+        let syncA = containerA1.getSyncManager()
+        let syncB = containerB.getSyncManager()
+        XCTAssertFalse(syncA === syncB)
+        
+        // Account A: interval-based config
+        XCTAssertTrue(syncA.isOnlineBatchingAllowed)
+        XCTAssertEqual(syncA.minimumEventCount, 0)
+        XCTAssertEqual(syncA.timeInterval, 70000)
+        
+        // Account B: count-based config (default interval used as periodic fallback)
+        XCTAssertTrue(syncB.isOnlineBatchingAllowed)
+        XCTAssertEqual(syncB.minimumEventCount, 5)
+        XCTAssertEqual(syncB.timeInterval, Constants.DEFAULT_BATCH_UPLOAD_INTERVAL)
+        
+        // Registry resolves the correct container per account
+        XCTAssertTrue(EventDataManager.getServiceContainer(accountId: 100001, sdkKey: "sdk-key-a") === containerA1)
+        XCTAssertTrue(EventDataManager.getServiceContainer(accountId: 200002, sdkKey: "sdk-key-b") === containerB)
+        
+        // SyncManager registry resolves the correct instance per account
+        XCTAssertTrue(SyncManager.getInstance(accountId: 100001, sdkKey: "sdk-key-a") === syncA)
+        XCTAssertTrue(SyncManager.getInstance(accountId: 200002, sdkKey: "sdk-key-b") === syncB)
+        
+        syncA.stopSyncing()
+        syncB.stopSyncing()
     }
 }
 

@@ -23,7 +23,7 @@
  */
 
 import XCTest
-@testable import Wingify_FME
+@testable import VWO_FME
 
 final class NetworkManagerConfigRaceTests: XCTestCase {
 

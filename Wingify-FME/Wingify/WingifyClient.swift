@@ -70,7 +70,7 @@ class WingifyClient {
     
     /**
      * Creates a ServiceContainer instance with the current settings and options
-     * Following Android SDK pattern where ServiceContainer is created per API call
+     * ServiceContainer is created per API call
      * @return ServiceContainer instance
      */
     func createServiceContainer() -> ServiceContainer? {
@@ -116,6 +116,16 @@ class WingifyClient {
             
             // Create a mutable copy to update with effective user ID if generated
             var effectiveContext = userId
+
+            // Empty/whitespace bucketingSeed is invalid: log error, clear seed, continue with userId
+            if BucketingIdResolver.clearInvalidBucketingSeed(effectiveContext) {
+                serviceContainer.getLoggerService()?.errorLog(
+                    key: "INVALID_BUCKETING_SEED",
+                    data: nil,
+                    debugData: ["an": ApiEnum.getFlag.rawValue],
+                    shouldSendToVWO: false
+                )
+            }
             
             guard let featureKey = featureKey, !featureKey.isEmpty else {
                 getFlag.setIsEnabled(isEnabled: false)

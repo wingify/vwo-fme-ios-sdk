@@ -46,6 +46,8 @@ import Foundation
     var vwoMeta: [String: Any] = [:]
     var storageConnector: WingifyStorageConnector? = nil
     var isAliasingEnabled: Bool = false
+    /// Controls integration callback behavior: true = trigger on every evaluation, false = trigger only first time per unique payload.
+    var shouldTriggerIntegrationCallbackAlways: Bool = false
 
     /// `true` when a non-empty gateway base URL is supplied (`gatewayService["url"]`). Online event batching is not used in this case.
     internal var isGatewayServiceConfigured: Bool {
@@ -74,6 +76,7 @@ import Foundation
      *   - batchUploadTimeInterval: Batch upload time interval in milliseconds (ignored when `gatewayService` includes a valid `url`).
      *   - storageConnector: Connect user storage with SDK
      *   - isAliasingEnabled:Enable for setup userId alias
+     *   - shouldTriggerIntegrationCallbackAlways: When true, integration callback is fired on every evaluation. When false (default), callback is fired once per unique evaluated payload.
      */
     public init(sdkKey: String? = nil,
                 accountId: Int? = nil,
@@ -92,7 +95,8 @@ import Foundation
                 isUsageStatsDisabled: Bool = false,
                 vwoMeta: [String: Any] = [:],
                 storage: WingifyStorageConnector? = nil,
-                isAliasingEnabled: Bool? = false) {
+                isAliasingEnabled: Bool? = false,
+                shouldTriggerIntegrationCallbackAlways: Bool = false) {
         // Assigning the SDK key
         self.sdkKey = sdkKey
         
@@ -157,6 +161,8 @@ import Foundation
         if let isAliasingEnabled = isAliasingEnabled {
             self.isAliasingEnabled = isAliasingEnabled
         }
+        
+        self.shouldTriggerIntegrationCallbackAlways = shouldTriggerIntegrationCallbackAlways
         
         self.logTransport = logTransport
         self.isUsageStatsDisabled = isUsageStatsDisabled

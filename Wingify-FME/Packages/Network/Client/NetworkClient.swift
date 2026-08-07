@@ -324,7 +324,7 @@ class NetworkClient: NetworkClientInterface {
             }
         }
     }
-
+    
     func removeNullValues(_ dictionary: [String: Any?]) -> [String: Any] {
         return dictionary.compactMapValues { $0 }
     }

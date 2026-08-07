@@ -1,5 +1,5 @@
 import XCTest
-@testable import Wingify_FME
+@testable import VWO_FME
 
 final class WingifyFacadeTests: XCTestCase {
     override func setUp() {
@@ -33,14 +33,18 @@ final class WingifyFacadeTests: XCTestCase {
         XCTAssertEqual(UrlService.getBaseUrl(for: .post), "collect.wingify.net")
     }
 
-    func testRequestModelEncodesCollectionUrlQueryParameter() {
+    func testRequestModelEncodesQueryParameters() {
         _ = WingifyInitOptions(sdkKey: "sdk-key", accountId: 12345)
 
         var request = RequestModel(
             url: UrlService.getBaseUrl(for: .post),
             method: HTTPMethod.post.rawValue,
             path: UrlEnum.events.rawValue,
-            query: ["url": "https://collect.wingify.net/events/t"],
+            query: [
+                "en": "vwo_sdkDebug",
+                "a": "1258838",
+                "env": "sdk-key"
+            ],
             body: nil,
             headers: nil,
             scheme: Constants.HTTPS_PROTOCOL,
@@ -49,7 +53,9 @@ final class WingifyFacadeTests: XCTestCase {
         request.setOptions()
 
         let path = request.options["path"] as? String
-        XCTAssertTrue(path?.contains("url=https%3A%2F%2Fcollect.wingify.net%2Fevents%2Ft") == true)
+        XCTAssertTrue(path?.contains("en=vwo_sdkDebug") == true)
+        XCTAssertTrue(path?.contains("a=1258838") == true)
+        XCTAssertFalse(path?.contains("url=") == true, "Event query should not include a recursive url param")
     }
 
     func testWingifyLocalizesLogTemplatesWithoutChangingEventNames() {

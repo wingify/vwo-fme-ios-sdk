@@ -39,61 +39,140 @@ class MegUtil {
                                evaluatedFeatureMap: inout [String: Any],
                                context: WingifyUserContext,
                                storageService: StorageService,
-                               serviceContainer: ServiceContainer) -> Variation? {
-        
+                               serviceContainer: ServiceContainer,
+                               holdoutEvalState: HoldoutEvaluationState? = nil) -> Variation? {
+        let evalState = holdoutEvalState ?? HoldoutEvaluationState()
+
         // Initialize variables to track features to skip and campaign mappings
         var featureToSkip: [String] = [String]()
         var campaignMap = [String: [Campaign]]()
-        
+
         // Retrieve feature keys and group campaign IDs
         let featureKeysAndGroupCampaignIds = getFeatureKeysFromGroup(settings: settings, groupId: groupId)
         let featureKeys = featureKeysAndGroupCampaignIds["featureKeys"] as? [String] ?? []
         let groupCampaignIds = featureKeysAndGroupCampaignIds["groupCampaignIds"] as? [String] ?? []
-        
-        // Iterate over each feature key
+
+        var evaluatedMegHoldoutsIn: [Int] = []
+        var evaluatedMegHoldoutsNotIn: [Int] = []
+        let holdoutGroupService = HoldoutGroupService(serviceContainer: serviceContainer, storageService: storageService)
+
+        // Pass 1: resolve holdouts for every feature in the group before any rollout evaluation.
         for featureKey in featureKeys {
-            
-            // Check if the current feature should be evaluated
             guard let currentFeature = FunctionUtil.getFeatureFromKey(settings: settings, featureKey: featureKey),
                   !featureToSkip.contains(featureKey) else {
                 continue
             }
 
-            // Check stored holdout decision
+            var storedData: Storage = Storage()
+            var hasStoredData = false
             if let storedDataMap = storageService.getFeatureFromStorage(featureKey: featureKey, context: context) {
                 do {
                     let data = try JSONSerialization.data(withJSONObject: storedDataMap)
-                    let storedData = try JSONDecoder().decode(Storage.self, from: data)
+                    storedData = try JSONDecoder().decode(Storage.self, from: data)
+                    hasStoredData = true
+
+                    if let notInIds = storedData.notInHoldoutIds {
+                        for id in notInIds where !evaluatedMegHoldoutsNotIn.contains(id) {
+                            evaluatedMegHoldoutsNotIn.append(id)
+                        }
+                    }
+
                     let holdoutIds = storedData.holdoutIds ?? storedData.holdoutId ?? storedData.holdoutGroupId ?? []
-                    let isInHoldout = (storedData.holdout == true || storedData.isInHoldout == true || !holdoutIds.isEmpty)
-                    if isInHoldout && !holdoutIds.isEmpty {
+                    if !holdoutIds.isEmpty {
                         featureToSkip.append(featureKey)
-                        LoggerService.log(level: .debug, key: "PART_OF_HOLDOUT_IN_MEG", details: ["featureKey": featureKey, "userId": context.id ?? "", "holdoutId": "\(holdoutIds)"])
+                        LoggerService.log(level: .debug, key: "PART_OF_HOLDOUT_IN_MEG", details: [
+                            "featureKey": featureKey,
+                            "userId": context.id ?? "",
+                            "holdoutId": "\(holdoutIds)"
+                        ])
+                        for id in holdoutIds where !evaluatedMegHoldoutsIn.contains(id) {
+                            evaluatedMegHoldoutsIn.append(id)
+                        }
                         continue
                     }
-                } catch { }
+                } catch {
+                    serviceContainer.getLoggerService()?.log(level: .error, key: "ERROR_PARSING_HOLDOUT_DATA", details: [
+                        "err": error.localizedDescription,
+                        "featureKey": featureKey,
+                        "userId": context.id ?? ""
+                    ])
+                }
             }
 
-            // Evaluate holdout for this feature
-            let holdoutGroupService = HoldoutGroupService(serviceContainer: serviceContainer, storageService: storageService)
-            let (holdoutGroups, _) = holdoutGroupService.getHoldoutsFor(settings: settings, feature: currentFeature, context: context, storageService: storageService)
-            if !holdoutGroups.isEmpty {
+            let applicableHoldouts = HoldoutGroupService.getApplicableHoldouts(settings: settings, featureId: currentFeature.id)
+            let isAlreadyInHoldoutMemory = applicableHoldouts.contains { holdout in
+                guard let id = holdout.id else { return false }
+                return evaluatedMegHoldoutsIn.contains(id)
+            }
+            if isAlreadyInHoldoutMemory {
                 featureToSkip.append(featureKey)
-                var holdoutStorageMap: [String: Any] = [:]
-                holdoutStorageMap["featureKey"] = featureKey
-                holdoutStorageMap["userId"] = context.id
-                holdoutStorageMap["holdoutId"] = holdoutGroups.compactMap { $0.id }
-                holdoutStorageMap["holdout"] = true
-                storageService.setDataInStorage(data: holdoutStorageMap)
                 LoggerService.log(level: .debug, key: "PART_OF_HOLDOUT_IN_MEG", details: [
                     "featureKey": featureKey,
                     "userId": context.id ?? "",
-                    "holdoutId": holdoutGroups.compactMap { $0.id }.map { "\($0)" }.joined(separator: ",")
+                    "holdoutId": "memory_cached"
                 ])
                 continue
             }
-            
-            // Determine if the rollout rule for the feature is passed
+
+            if storedData.notInHoldoutIds == nil {
+                storedData.notInHoldoutIds = []
+            }
+            for holdout in applicableHoldouts {
+                guard let holdoutId = holdout.id else { continue }
+                if evaluatedMegHoldoutsNotIn.contains(holdoutId),
+                   !(storedData.notInHoldoutIds?.contains(holdoutId) ?? false) {
+                    storedData.notInHoldoutIds?.append(holdoutId)
+                }
+            }
+
+            let holdoutResult = holdoutGroupService.getMatchedHoldouts(
+                settings: settings,
+                feature: currentFeature,
+                context: context,
+                storedData: hasStoredData ? storedData : nil,
+                holdoutEvalState: evalState
+            )
+
+            for holdout in holdoutResult.matchedHoldoutGroups {
+                if let id = holdout.id, !evaluatedMegHoldoutsIn.contains(id) {
+                    evaluatedMegHoldoutsIn.append(id)
+                }
+            }
+            for holdout in holdoutResult.notMatchedHoldoutGroups {
+                if let id = holdout.id, !evaluatedMegHoldoutsNotIn.contains(id) {
+                    evaluatedMegHoldoutsNotIn.append(id)
+                }
+            }
+
+            if !holdoutResult.matchedHoldoutGroups.isEmpty {
+                featureToSkip.append(featureKey)
+
+                var holdoutStorageMap: [String: Any] = [:]
+                holdoutStorageMap["featureKey"] = featureKey
+                holdoutStorageMap["userId"] = context.id
+                holdoutStorageMap[Constants.Holdouts.KEY_STORAGE_HOLDOUT_IDS] = holdoutResult.matchedHoldoutGroups.compactMap { $0.id }
+                holdoutStorageMap[Constants.Holdouts.KEY_STORAGE_NOT_IN_HOLDOUT_IDS] = holdoutResult.notMatchedHoldoutGroups.compactMap { $0.id }
+                storageService.setDataInStorage(data: holdoutStorageMap)
+
+                let qualifiedHoldoutIds = holdoutResult.matchedHoldoutGroups.compactMap { $0.id }.map { "\($0)" }.joined(separator: ",")
+                LoggerService.log(level: .debug, key: "PART_OF_HOLDOUT_IN_MEG", details: [
+                    "featureKey": featureKey,
+                    "userId": context.id ?? "",
+                    "holdoutId": qualifiedHoldoutIds
+                ])
+                continue
+            }
+        }
+
+        // Pass 2: rollouts and campaign collection only for features not in holdout.
+        for featureKey in featureKeys {
+            if featureToSkip.contains(featureKey) {
+                continue
+            }
+            guard let currentFeature = FunctionUtil.getFeatureFromKey(settings: settings, featureKey: featureKey) else {
+                continue
+            }
+
             let isRolloutRulePassed = isRolloutRuleForFeaturePassed(
                 settings: settings,
                 feature: currentFeature,
@@ -101,17 +180,18 @@ class MegUtil {
                 featureToSkip: &featureToSkip,
                 context: context,
                 storageService: storageService,
-                serviceContainer: serviceContainer)
-            
-            // If rollout rule is passed, process linked campaigns
+                serviceContainer: serviceContainer,
+                holdoutEvalState: evalState
+            )
+
             if isRolloutRulePassed {
                 for feature in settings.features {
                     if let key = feature.key {
                         if key == featureKey {
                             if let rulesLinkedCampaign = feature.rulesLinkedCampaign {
-                                
+
                                 rulesLinkedCampaign.forEach({ campaign in
-                                    
+
                                     if let campaignId = campaign.id, let variations = campaign.variations, !variations.isEmpty  {
                                         let campaignIdString = "\(campaignId)"
                                         let campaignVariationId = "\(variations[0].id!)"
@@ -146,7 +226,8 @@ class MegUtil {
                                                                       eligibleCampaignsWithStorage: eligibleCampaignsWithStorage,
                                                                       groupId: groupId,
                                                                       context: context,
-                                                                      storageService: storageService)
+                                                                      storageService: storageService,
+                                                                      serviceContainer: serviceContainer)
         return winnerCampaign
     }
     
@@ -196,7 +277,8 @@ class MegUtil {
                                                       featureToSkip: inout [String],
                                                       context: WingifyUserContext,
                                                       storageService: StorageService,
-                                                      serviceContainer: ServiceContainer) -> Bool {
+                                                      serviceContainer: ServiceContainer,
+                                                      holdoutEvalState: HoldoutEvaluationState? = nil) -> Bool {
         
         // Check if the feature key is available
         guard let featureKey = feature.key else { return false }
@@ -217,7 +299,7 @@ class MegUtil {
             
             // Evaluate each rule for pre-segmentation
             for rule in rollOutRules {
-                let preSegmentationResult = RuleEvaluationUtil.evaluateRule(settings: settings, 
+                let preSegmentationResult = RuleEvaluationUtil.evaluateRule(settings: settings,
                                                                             feature: feature,
                                                                             campaign: rule,
                                                                             context: context,
@@ -225,7 +307,8 @@ class MegUtil {
                                                                             megGroupWinnerCampaigns: &megGroupWinnerCampaignsTemp,
                                                                             storageService: storageService,
                                                                             serviceContainer: serviceContainer,
-                                                                            decision: &decisionTemp)
+                                                                            decision: &decisionTemp,
+                                                                            holdoutEvalState: nil)
                 if preSegmentationResult["preSegmentationResult"] as? Bool == true {
                     ruleToTestForTraffic = rule
                     break
@@ -234,7 +317,7 @@ class MegUtil {
             
             // If a rule passes pre-segmentation, evaluate traffic
             if let ruleToTestForTraffic = ruleToTestForTraffic {
-                if let variation = DecisionUtil.evaluateTrafficAndGetVariation(settings: settings, campaign: ruleToTestForTraffic, userId: context.id, serviceContainer: serviceContainer) {
+                if let variation = DecisionUtil.evaluateTrafficAndGetVariation(settings: settings, campaign: ruleToTestForTraffic, context: context, serviceContainer: serviceContainer) {
                     var rollOutInformation: [String: Any] = [:]
                     rollOutInformation["rolloutId"] = ruleToTestForTraffic.id
                     rollOutInformation["rolloutKey"] = ruleToTestForTraffic.key
@@ -311,7 +394,7 @@ class MegUtil {
                 }
                 
                 // Evaluate pre-segmentation and user participation
-                if CampaignDecisionService().getPreSegmentationDecision(campaign: campaign, context: context, serviceContainer: serviceContainer) && CampaignDecisionService().isUserPartOfCampaign(userId: context.id, campaign: campaign) {
+                if CampaignDecisionService().getPreSegmentationDecision(campaign: campaign, context: context, serviceContainer: serviceContainer) && CampaignDecisionService().isUserPartOfCampaign(userId: context.id, campaign: campaign, context: context, serviceContainer: serviceContainer) {
                     LoggerService.log(level: .info,
                                       key: "MEG_CAMPAIGN_ELIGIBLE",
                                       details: ["campaignKey": campaign.type == CampaignTypeEnum.ab.rawValue ? "\(campaign.key ?? "--")" : "\(campaign.name ?? "--")_\(campaign.ruleKey ?? "--")",
@@ -344,8 +427,8 @@ class MegUtil {
      *   - storageService: The service used for storage operations.
      * - Returns: The winning variation if found, otherwise nil.
      */
-    private static func findWinnerCampaignAmongEligibleCampaigns(settings: Settings, featureKey: String?, eligibleCampaigns: [Campaign]?, eligibleCampaignsWithStorage: [Campaign]?, groupId: Int, context: WingifyUserContext, storageService: StorageService) -> Variation? {
-        
+
+    private static func findWinnerCampaignAmongEligibleCampaigns(settings: Settings, featureKey: String?, eligibleCampaigns: [Campaign]?, eligibleCampaignsWithStorage: [Campaign]?, groupId: Int, context: WingifyUserContext, storageService: StorageService, serviceContainer: ServiceContainer) -> Variation? {        
         // Get campaign IDs from the feature key
         let campaignIds = CampaignUtil.getCampaignIdsFromFeatureKey(settings: settings, featureKey: featureKey)
         var winnerCampaign: Variation?
@@ -365,9 +448,9 @@ class MegUtil {
                                                 "groupId": "\(groupId)",
                                                 "userId": context.id ?? ""])
                 } else if eligibleCampaignsWithStorage?.count ?? 0 > 1 && megAlgoNumber == Constants.RANDOM_ALGO {
-                    winnerCampaign = normalizeWeightsAndFindWinningCampaign(shortlistedCampaigns: eligibleCampaignsWithStorage, context: context, calledCampaignIds: campaignIds, groupId: groupId, storageService: storageService)
+                    winnerCampaign = normalizeWeightsAndFindWinningCampaign(shortlistedCampaigns: eligibleCampaignsWithStorage, context: context, calledCampaignIds: campaignIds, groupId: groupId, storageService: storageService, serviceContainer: serviceContainer)
                 } else if eligibleCampaignsWithStorage?.count ?? 0 > 1 {
-                    winnerCampaign = getCampaignUsingAdvancedAlgo(settings: settings, shortlistedCampaigns: eligibleCampaignsWithStorage!, context: context, calledCampaignIds: campaignIds, groupId: groupId, storageService: storageService)
+                    winnerCampaign = getCampaignUsingAdvancedAlgo(settings: settings, shortlistedCampaigns: eligibleCampaignsWithStorage!, context: context, calledCampaignIds: campaignIds, groupId: groupId, storageService: storageService, serviceContainer: serviceContainer)
                 }
                 
                 // Determine winner from eligible campaigns without storage
@@ -383,10 +466,10 @@ class MegUtil {
                                                     "userId": context.id ?? "",
                                                     "algo": ""])
                     } else if eligibleCampaigns?.count ?? 0 > 1 && megAlgoNumber == Constants.RANDOM_ALGO {
-                        winnerCampaign = normalizeWeightsAndFindWinningCampaign(shortlistedCampaigns: eligibleCampaigns, context: context, calledCampaignIds: campaignIds, groupId: groupId, storageService: storageService)
+                        winnerCampaign = normalizeWeightsAndFindWinningCampaign(shortlistedCampaigns: eligibleCampaigns, context: context, calledCampaignIds: campaignIds, groupId: groupId, storageService: storageService, serviceContainer: serviceContainer)
                     } else if eligibleCampaigns?.count ?? 0 > 1 {
                         
-                        winnerCampaign = self.getCampaignUsingAdvancedAlgo(settings: settings, shortlistedCampaigns: eligibleCampaigns!, context: context, calledCampaignIds: campaignIds, groupId: groupId, storageService: storageService)
+                        winnerCampaign = self.getCampaignUsingAdvancedAlgo(settings: settings, shortlistedCampaigns: eligibleCampaigns!, context: context, calledCampaignIds: campaignIds, groupId: groupId, storageService: storageService, serviceContainer: serviceContainer)
                     }
                 }
             }
@@ -410,7 +493,8 @@ class MegUtil {
      *   - storageService: The service used for storage operations.
      * - Returns: The winning variation if found, otherwise nil.
      */
-    static func normalizeWeightsAndFindWinningCampaign(shortlistedCampaigns: [Campaign]?, context: WingifyUserContext, calledCampaignIds: [Int]?, groupId: Int, storageService: StorageService) -> Variation? {
+
+    static func normalizeWeightsAndFindWinningCampaign(shortlistedCampaigns: [Campaign]?, context: WingifyUserContext, calledCampaignIds: [Int]?, groupId: Int, storageService: StorageService, serviceContainer: ServiceContainer) -> Variation? {
         do {
             // Use a for loop to modify the weights
             if var campaigns = shortlistedCampaigns {
@@ -426,7 +510,8 @@ class MegUtil {
                 
                 // Set campaign allocation and calculate bucket value
                 CampaignUtil.setCampaignAllocation(&variations)
-                let bucketValue = DecisionMaker.calculateBucketValue(str: CampaignUtil.getBucketingSeed(userId: context.id, campaign: nil, groupId: groupId))
+                let bucketingId = BucketingIdResolver.resolve(userId: context.id, context: context) ?? context.id
+                let bucketValue = DecisionMaker.calculateBucketValue(str: CampaignUtil.getBucketingSeed(userId: bucketingId, campaign: nil, groupId: groupId))
                 
                 // Get the winning variation
                 let winnerVariation = CampaignDecisionService.getVariation(variations: variations, bucketValue: bucketValue)
@@ -485,7 +570,8 @@ class MegUtil {
      *   - storageService: The service used for storage operations.
      * - Returns: The winning variation if found, otherwise nil.
      */
-    private static func getCampaignUsingAdvancedAlgo(settings: Settings, shortlistedCampaigns: [Campaign], context: WingifyUserContext, calledCampaignIds: [Int]?, groupId: Int, storageService: StorageService) -> Variation? {
+
+    private static func getCampaignUsingAdvancedAlgo(settings: Settings, shortlistedCampaigns: [Campaign], context: WingifyUserContext, calledCampaignIds: [Int]?, groupId: Int, storageService: StorageService, serviceContainer: ServiceContainer) -> Variation? {
         var winnerCampaign: Variation?
         var found = false
         
@@ -542,7 +628,8 @@ class MegUtil {
                     
                     // Set campaign allocation and calculate bucket value
                     CampaignUtil.setCampaignAllocation(&variations)
-                    winnerCampaign = CampaignDecisionService.getVariation(variations: variations, bucketValue: DecisionMaker.calculateBucketValue(str: CampaignUtil.getBucketingSeed(userId: context.id, campaign: nil, groupId: groupId)))
+                    let bucketingId = BucketingIdResolver.resolve(userId: context.id, context: context) ?? context.id
+                    winnerCampaign = CampaignDecisionService.getVariation(variations: variations, bucketValue: DecisionMaker.calculateBucketValue(str: CampaignUtil.getBucketingSeed(userId: bucketingId, campaign: nil, groupId: groupId)))
                 }
                 
                 // Log the winning campaign

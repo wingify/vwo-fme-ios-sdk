@@ -15,7 +15,7 @@
  */
 
 import XCTest
-@testable import Wingify_FME
+@testable import VWO_FME
 
 final class GetFlagTests: XCTestCase {
     
@@ -192,6 +192,7 @@ final class GetFlagTests: XCTestCase {
         let featureKey = "non_existent_feature"
         let expectation = XCTestExpectation(description: "Get flag with non-existent feature")
         storageService.emptyLocalStorageSuite()
+
         let mockSettings = FlagTestDataLoader.loadTestData(jsonFileName: SettingsTestJson.RolloutAndTestingSettings.jsonFileName)
         let mockOptions: WingifyInitOptions = WingifyInitOptions(sdkKey: "sdk-key", accountId: 123456)
         let mockClient = WingifyClient(options: mockOptions, settingObj: mockSettings)
@@ -207,7 +208,7 @@ final class GetFlagTests: XCTestCase {
         }
         wait(for: [expectation], timeout: 1.0)
     }
-    
+
     func testGetFlagWithMEGRandomAlgo() {
         
         let expectation = XCTestExpectation(description: "Get flag with MEG random algo")

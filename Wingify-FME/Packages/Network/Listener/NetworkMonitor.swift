@@ -48,7 +48,7 @@ class NetworkMonitor {
             self.debounceQueue.async {
                 self.debounceWorkItem?.cancel()
                 let workItem = DispatchWorkItem {
-                    SyncManager.shared.syncSavedEvents(ignoreThreshold: true)
+                    SyncManager.syncAllRegisteredInstances(ignoreThreshold: true)
                 }
                 self.debounceWorkItem = workItem
                 self.debounceQueue.asyncAfter(deadline: .now() + 3.0, execute: workItem)

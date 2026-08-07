@@ -23,6 +23,76 @@ struct HoldoutImpression {
     let featureId: Int
 }
 
+/// Result of evaluating applicable holdouts for a feature.
+struct HoldoutMatchResult {
+    let matchedHoldoutGroups: [HoldoutGroup]
+    let notMatchedHoldoutGroups: [HoldoutGroup]
+    let impressions: [HoldoutImpression]
+    let alreadyEvaluatedHoldoutIds: [Int]
+}
+
+/// Tracks holdout IDs already evaluated for the current request (and merged from storage).
+class HoldoutEvaluationState {
+    private var outcomeById: [Int: Bool] = [:]
+
+    init() {}
+
+    static func fromStorage(_ stored: Storage?) -> HoldoutEvaluationState {
+        let state = HoldoutEvaluationState()
+        state.mergeFromStorage(stored)
+        return state
+    }
+
+    static func fromStorageMap(_ storedDataMap: [String: Any]?) -> HoldoutEvaluationState {
+        guard let storedDataMap = storedDataMap else { return HoldoutEvaluationState() }
+        do {
+            let normalizedStorageMap = FunctionUtil.normalizeStorageMapForDecoding(storedDataMap)
+            let storageMapAsString = try JSONSerialization.data(withJSONObject: normalizedStorageMap, options: [])
+            let stored = try JSONDecoder().decode(Storage.self, from: storageMapAsString)
+            return fromStorage(stored)
+        } catch {
+            return HoldoutEvaluationState()
+        }
+    }
+
+    /// Adds outcomes from `stored` without overwriting keys already present (caller / earlier eval wins).
+    func mergeFromStorage(_ stored: Storage?) {
+        guard let stored = stored else { return }
+        let inIds = stored.holdoutIds ?? stored.holdoutId ?? stored.holdoutGroupId ?? []
+        for id in inIds where !outcomeById.keys.contains(id) {
+            outcomeById[id] = true
+        }
+        let notInIds = stored.notInHoldoutIds ?? []
+        for id in notInIds where !outcomeById.keys.contains(id) {
+            outcomeById[id] = false
+        }
+    }
+
+    func recordIn(_ holdoutId: Int) {
+        outcomeById[holdoutId] = true
+    }
+
+    func recordNotIn(_ holdoutId: Int) {
+        outcomeById[holdoutId] = false
+    }
+
+    func isEvaluated(_ holdoutId: Int) -> Bool {
+        outcomeById.keys.contains(holdoutId)
+    }
+
+    func isInHoldout(_ holdoutId: Int) -> Bool {
+        outcomeById[holdoutId] == true
+    }
+
+    func isNotInHoldout(_ holdoutId: Int) -> Bool {
+        outcomeById[holdoutId] == false
+    }
+
+    func getAlreadyEvaluatedHoldoutIds() -> [Int] {
+        Array(outcomeById.keys)
+    }
+}
+
 /// Service for evaluating holdout group targeting and bucketing logic.
 ///
 /// Handles the core business logic for determining if a user should be
@@ -35,7 +105,7 @@ class HoldoutGroupService {
 
     private let serviceContainer: ServiceContainer?
     private let storageService: StorageService
-    
+
     /// Creates a `HoldoutGroupService`.
     ///
     /// - Parameters:
@@ -70,46 +140,52 @@ class HoldoutGroupService {
         return (holdoutGroup.featureIds?.contains(featureId) ?? false)
     }
 
-    /// Checks if a user should be excluded from a specific feature due to holdout group membership.
-    /// Aligned with Android: takes feature + storageService, reads storage via storageService, iterates all settings.holdoutGroups.
-    ///
-    /// - Parameters:
-    ///   - settings: The settings containing holdout groups configuration.
-    ///   - feature: The feature being evaluated.
-    ///   - context: The user context containing user information.
-    ///   - storageService: Storage service to read feature storage (holdoutIds, notInHoldoutIds).
-    /// - Returns: Tuple containing:
-    ///   - holdoutGroups: Qualified holdout groups for which the user should be excluded.
-    ///   - impressions: Holdout impressions to emit (including featureId and variationId).
-    func getHoldoutsFor(settings: Settings, feature: Feature, context: WingifyUserContext, storageService: StorageService) -> (holdoutGroups: [HoldoutGroup], impressions: [HoldoutImpression]) {
-        let storedData = storageService.getFeatureFromStorage(featureKey: feature.key ?? "", context: context)
-        let alreadyEvaluatedHoldoutIds: [String] = Self.getAlreadyEvaluatedHoldoutIds(from: storedData)
-        let holdoutGroups = settings.holdoutGroups ?? []
+    /// Evaluates all applicable holdouts for a feature, reusing per-request and stored outcomes.
+    func getMatchedHoldouts(
+        settings: Settings,
+        feature: Feature,
+        context: WingifyUserContext,
+        storedData: Storage?,
+        holdoutEvalState: HoldoutEvaluationState?
+    ) -> HoldoutMatchResult {
+        var evalState = holdoutEvalState ?? HoldoutEvaluationState()
+        evalState.mergeFromStorage(storedData)
 
-        if holdoutGroups.isEmpty {
-            return ([], [])
+        let applicableHoldouts = Self.getApplicableHoldouts(settings: settings, featureId: feature.id)
+        if applicableHoldouts.isEmpty {
+            return HoldoutMatchResult(
+                matchedHoldoutGroups: [],
+                notMatchedHoldoutGroups: [],
+                impressions: [],
+                alreadyEvaluatedHoldoutIds: evalState.getAlreadyEvaluatedHoldoutIds()
+            )
         }
 
         if feature.id == nil {
             serviceContainer?.getLoggerService()?.log(level: .error, key: "HOLDOUT_FEATURE_ID_NULL", details: nil)
         }
 
-        var qualifiedHoldoutGroups: [HoldoutGroup] = []
+        var matchedHoldoutGroups: [HoldoutGroup] = []
+        var notMatchedHoldoutGroups: [HoldoutGroup] = []
         var impressions: [HoldoutImpression] = []
 
-        for holdoutGroup in holdoutGroups {
-            if !Self.doesHoldoutApplyToFeature(holdoutGroup, featureId: feature.id) {
-                continue
-            }
-            if alreadyEvaluatedHoldoutIds.contains("\(holdoutGroup.id ?? 0)") {
+        for holdoutGroup in applicableHoldouts {
+            guard let holdoutId = holdoutGroup.id else { continue }
+
+            if evalState.isEvaluated(holdoutId) {
                 serviceContainer?.getLoggerService()?.log(
                     level: .debug,
                     key: "HOLDOUT_SKIP_EVALUATION",
                     details: [
                         "holdoutName": holdoutGroup.name ?? "",
-                        "reason": "user \(context.id ?? "") was already evaluated for feature with id: \(feature.id ?? 0); skip decision making altogether."
+                        "reason": "user \(context.id ?? "") was already evaluated for feature with id: \(feature.id ?? 0); SKIP decision making altogether."
                     ]
                 )
+                if evalState.isInHoldout(holdoutId) {
+                    matchedHoldoutGroups.append(holdoutGroup)
+                } else {
+                    notMatchedHoldoutGroups.append(holdoutGroup)
+                }
                 continue
             }
 
@@ -118,26 +194,27 @@ class HoldoutGroupService {
                 serviceContainer?.getLoggerService()?.log(
                     level: .info,
                     key: "SEGMENTATION_FAILED_HOLDOUT",
-                    details: ["userId": context.id ?? "", "holdoutId": "\(holdoutGroup.id ?? 0)"]
+                    details: ["userId": context.id ?? "", "holdoutId": "\(holdoutId)"]
                 )
                 serviceContainer?.getLoggerService()?.log(
                     level: .debug,
                     key: "HOLDOUT_SEGMENTATION_FAIL",
                     details: ["userId": context.id ?? "", "holdoutGroupName": holdoutGroup.name ?? ""]
                 )
-                if let holdoutId = holdoutGroup.id {
-                    impressions.append(HoldoutImpression(
-                        campaignId: holdoutId,
-                        variationId: Self.variationNotPartOfHoldout,
-                        featureId: feature.id ?? Constants.IMPRESSION_NO_FEATURE_ID
-                    ))
-                }
+                notMatchedHoldoutGroups.append(holdoutGroup)
+                evalState.recordNotIn(holdoutId)
+                impressions.append(HoldoutImpression(
+                    campaignId: holdoutId,
+                    variationId: Self.variationNotPartOfHoldout,
+                    featureId: feature.id ?? Constants.IMPRESSION_NO_FEATURE_ID
+                ))
                 continue
             }
+
             serviceContainer?.getLoggerService()?.log(
                 level: .info,
                 key: "SEGMENTATION_PASSED_HOLDOUT",
-                details: ["userId": context.id ?? "", "holdoutId": "\(holdoutGroup.id ?? 0)"]
+                details: ["userId": context.id ?? "", "holdoutId": "\(holdoutId)"]
             )
 
             let shouldExcludeUser = shouldExcludeUserFromFeature(
@@ -167,59 +244,112 @@ class HoldoutGroupService {
                         "featureKey": feature.key ?? ""
                     ]
                 )
-                qualifiedHoldoutGroups.append(holdoutGroup)
-                if let holdoutId = holdoutGroup.id {
-                    impressions.append(HoldoutImpression(
-                        campaignId: holdoutId,
-                        variationId: Self.variationIsPartOfHoldout,
-                        featureId: feature.id ?? Constants.IMPRESSION_NO_FEATURE_ID
-                    ))
-                }
+                matchedHoldoutGroups.append(holdoutGroup)
+                evalState.recordIn(holdoutId)
+                impressions.append(HoldoutImpression(
+                    campaignId: holdoutId,
+                    variationId: Self.variationIsPartOfHoldout,
+                    featureId: feature.id ?? Constants.IMPRESSION_NO_FEATURE_ID
+                ))
             } else {
-                if let holdoutId = holdoutGroup.id {
-                    impressions.append(HoldoutImpression(
-                        campaignId: holdoutId,
-                        variationId: Self.variationNotPartOfHoldout,
-                        featureId: feature.id ?? Constants.IMPRESSION_NO_FEATURE_ID
-                    ))
-                }
+                notMatchedHoldoutGroups.append(holdoutGroup)
+                evalState.recordNotIn(holdoutId)
+                impressions.append(HoldoutImpression(
+                    campaignId: holdoutId,
+                    variationId: Self.variationNotPartOfHoldout,
+                    featureId: feature.id ?? Constants.IMPRESSION_NO_FEATURE_ID
+                ))
             }
         }
 
-        return (qualifiedHoldoutGroups, impressions)
+        return HoldoutMatchResult(
+            matchedHoldoutGroups: matchedHoldoutGroups,
+            notMatchedHoldoutGroups: notMatchedHoldoutGroups,
+            impressions: impressions,
+            alreadyEvaluatedHoldoutIds: evalState.getAlreadyEvaluatedHoldoutIds()
+        )
     }
 
-    /// Builds already-evaluated holdout IDs from feature storage (holdoutIds + notInHoldoutIds).
+    /// Checks if a user should be excluded from a specific feature due to holdout group membership.
     ///
     /// - Parameters:
-    ///   - storedData: Feature storage data that can contain previously evaluated holdout IDs.
-    /// - Returns: Array of holdout IDs represented as `String`.
-    private static func getAlreadyEvaluatedHoldoutIds(from storedData: [String: Any]?) -> [String] {
-        guard let stored = storedData else { return [] }
-        let inIds = Self.intsFromStorage(stored[Constants.Holdouts.KEY_STORAGE_HOLDOUT_IDS])
-        let notInIds = Self.intsFromStorage(stored[Constants.Holdouts.KEY_STORAGE_NOT_IN_HOLDOUT_IDS])
-        return (inIds + notInIds).map { "\($0)" }
+    ///   - settings: The settings containing holdout groups configuration.
+    ///   - feature: The feature being evaluated.
+    ///   - context: The user context containing user information.
+    ///   - storageService: Storage service to read feature storage (holdoutIds, notInHoldoutIds).
+    /// - Returns: Tuple containing qualified holdout groups and impressions to emit.
+    func getHoldoutsFor(
+        settings: Settings,
+        feature: Feature,
+        context: WingifyUserContext,
+        storageService: StorageService
+    ) -> (holdoutGroups: [HoldoutGroup], impressions: [HoldoutImpression]) {
+        let storedDataMap = storageService.getFeatureFromStorage(featureKey: feature.key ?? "", context: context)
+        let storedData = Self.decodeStorage(from: storedDataMap)
+        let result = getMatchedHoldouts(
+            settings: settings,
+            feature: feature,
+            context: context,
+            storedData: storedData,
+            holdoutEvalState: nil
+        )
+        return (result.matchedHoldoutGroups, result.impressions)
     }
 
-    /// Converts a stored value into an array of integers.
-    ///
-    /// - Parameters:
-    ///   - value: Storage value that may be `[Int]`, `[NSNumber]`, or `[Double]`.
-    /// - Returns: Array of integers extracted from the provided value.
-    private static func intsFromStorage(_ value: Any?) -> [Int] {
-        guard let value = value else { return [] }
-        if let arr = value as? [Int] { return arr }
-        if let arr = value as? [NSNumber] { return arr.map { $0.intValue } }
-        if let arr = value as? [Double] { return arr.map { Int($0) } }
-        return []
+    /// Sends impressions and updates storage for newly added holdouts not yet tracked locally.
+    static func sendNetworkCallsForNotInHoldouts(
+        settings: Settings,
+        feature: Feature,
+        context: WingifyUserContext,
+        storedData: Storage?,
+        storageService: StorageService,
+        serviceContainer: ServiceContainer
+    ) -> [Int] {
+        let applicableHoldouts = getApplicableHoldouts(settings: settings, featureId: feature.id)
+        var updatedNotInHoldoutIds = storedData?.notInHoldoutIds ?? []
+        let isInHoldoutIds = storedData?.holdoutIds ?? storedData?.holdoutId ?? storedData?.holdoutGroupId ?? []
+        let originalSize = updatedNotInHoldoutIds.count
+
+        for holdout in applicableHoldouts {
+            guard let holdoutId = holdout.id else { continue }
+            if !updatedNotInHoldoutIds.contains(holdoutId) && !isInHoldoutIds.contains(holdoutId) {
+                updatedNotInHoldoutIds.append(holdoutId)
+                ImpressionUtil.createAndSendImpressionForVariationShown(
+                    settings: settings,
+                    campaignId: holdoutId,
+                    variationId: Constants.Holdouts.VARIATION_NOT_PART_OF_HOLDOUT,
+                    context: context,
+                    serviceContainer: serviceContainer
+                )
+            }
+        }
+
+        if updatedNotInHoldoutIds.count > originalSize {
+            var mergedStoredData: [String: Any] = storageService.getFeatureFromStorage(
+                featureKey: feature.key ?? "",
+                context: context
+            ) ?? [:]
+            mergedStoredData["featureKey"] = feature.key
+            mergedStoredData["userId"] = context.id
+            mergedStoredData[Constants.Holdouts.KEY_STORAGE_NOT_IN_HOLDOUT_IDS] = updatedNotInHoldoutIds
+            storageService.setDataInStorage(data: mergedStoredData)
+        }
+
+        return updatedNotInHoldoutIds
+    }
+
+    private static func decodeStorage(from storedDataMap: [String: Any]?) -> Storage? {
+        guard let storedDataMap = storedDataMap else { return nil }
+        do {
+            let normalizedStorageMap = FunctionUtil.normalizeStorageMapForDecoding(storedDataMap)
+            let storageMapAsString = try JSONSerialization.data(withJSONObject: normalizedStorageMap, options: [])
+            return try JSONDecoder().decode(Storage.self, from: storageMapAsString)
+        } catch {
+            return nil
+        }
     }
 
     /// Evaluates segmentation rules for a given holdout group.
-    ///
-    /// - Parameters:
-    ///   - holdoutGroup: Holdout group containing segmentation DSL.
-    ///   - context: User context with custom variables used as segmentation properties.
-    /// - Returns: `true` if the user passes segmentation rules (or there are no segments), otherwise `false`.
     private func evaluateHoldoutSegmentation(holdoutGroup: HoldoutGroup, context: WingifyUserContext) -> Bool {
         guard let segments = holdoutGroup.segments, !segments.isEmpty else {
             serviceContainer?.getLoggerService()?.log(
@@ -233,21 +363,13 @@ class HoldoutGroupService {
     }
 
     /// Determines whether the user should be excluded from a feature based on holdout bucketing.
-    ///
-    /// - Parameters:
-    ///   - holdoutGroup: Holdout group definition (contains `id` and `trafficPercent`).
-    ///   - userId: User id used to compute the bucket value.
-    ///   - accountId: Account id used to namespace the bucket.
-    ///   - featureId: Feature id used only for logging.
-    /// - Returns: `true` if the user falls within the holdout traffic allocation; otherwise `false`.
     private func shouldExcludeUserFromFeature(holdoutGroup: HoldoutGroup, userId: String?, accountId: Int?, featureId: Int?) -> Bool {
         guard let userId = userId, let holdoutId = holdoutGroup.id, let trafficPercent = holdoutGroup.trafficPercent, let accountId = accountId else {
             return false
         }
         let bucketKey = "\(accountId)_\(holdoutId)_\(userId)"
         let bucketValue = DecisionMaker.getBucketValueForUser(userId: bucketKey)
-        let trafficAllocation = trafficPercent
-        let isInHoldout = bucketValue != 0 && bucketValue <= trafficAllocation
+        let isInHoldout = bucketValue != 0 && bucketValue <= trafficPercent
 
         if isInHoldout {
             serviceContainer?.getLoggerService()?.log(
@@ -258,7 +380,7 @@ class HoldoutGroupService {
                     "bucketValue": "\(bucketValue)",
                     "holdoutGroupName": holdoutGroup.name ?? "",
                     "featureId": "\(featureId ?? 0)",
-                    "percentTraffic": "\(trafficAllocation)",
+                    "percentTraffic": "\(trafficPercent)",
                     "isInHoldout": "\(isInHoldout)"
                 ]
             )

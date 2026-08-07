@@ -29,7 +29,6 @@ class ServiceContainer {
     
     private let hooksManager: HooksManager
     
-    // iOS equivalents for Android managers
     // Instance-based SegmentationManager for isolation
     private let segmentationManager: SegmentationManager
     private let syncManager: SyncManager
@@ -47,7 +46,10 @@ class ServiceContainer {
         self.options = options
         self.settings = settings
         self.loggerService = loggerService
-        self.hooksManager = HooksManager(callback: options.integrations)
+        self.hooksManager = HooksManager(
+            callback: options.integrations,
+            triggerEveryTime: options.shouldTriggerIntegrationCallbackAlways
+        )
         self.segmentationManager = SegmentationManager()
         
         // Initialize syncManager with a temporary instance first (all stored properties must be initialized before using self)

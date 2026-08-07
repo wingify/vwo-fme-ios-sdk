@@ -22,13 +22,16 @@ class CampaignDecisionService {
      * This method is used to check if the user is part of the campaign.
      * @param userId  User ID for which the check is to be performed.
      * @param campaign CampaignModel object containing the campaign settings.
+     * @param context Optional VWOUserContext used for custom bucketing seed.
      * @param serviceContainer  Optional ServiceContainer for instance-specific logging.
      * @return  boolean value indicating if the user is part of the campaign.
      */
-    func isUserPartOfCampaign(userId: String?, campaign: Campaign?, serviceContainer: ServiceContainer? = nil) -> Bool {
+    func isUserPartOfCampaign(userId: String?, campaign: Campaign?, context: WingifyUserContext? = nil, serviceContainer: ServiceContainer? = nil) -> Bool {
         guard let campaign = campaign, let campaignId = campaign.id , let userId = userId else {
             return false
         }
+
+        let bucketingId = BucketingIdResolver.resolve(userId: userId, context: context) ?? userId
         
         // Check if the campaign is of type ROLLOUT or PERSONALIZE
         let isRolloutOrPersonalize = campaign.type == CampaignTypeEnum.rollout.rawValue || campaign.type == CampaignTypeEnum.personalize.rawValue
@@ -40,13 +43,15 @@ class CampaignDecisionService {
         let trafficAllocation = isRolloutOrPersonalize ? campaign.variations?.first?.weight ?? 0.0 : Double(campaign.percentTraffic ?? 0)
         
         // Generate bucket key using salt if available, otherwise use campaign ID
-        let bucketKey = !salt.isEmpty ? "\(salt)_\(userId)" : "\(campaignId)_\(userId)"
+        let bucketKey = !salt.isEmpty ? "\(salt)_\(bucketingId)" : "\(campaignId)_\(bucketingId)"
         
         // Get the bucket value assigned to the user
         let valueAssignedToUser = DecisionMaker.getBucketValueForUser(userId: "\(bucketKey)")
         
         // Check if user is part of campaign
         let isUserPart = valueAssignedToUser != 0 && valueAssignedToUser <= Int(trafficAllocation)
+
+        let userIdForLog = BucketingIdResolver.formatUserIdForLogging(userId: userId, bucketingId: bucketingId)
         
         // Use instance-specific logger if available, otherwise static logger
         if let logger = serviceContainer?.getLoggerService() {
@@ -54,7 +59,7 @@ class CampaignDecisionService {
                 level: .info,
                 key: "USER_PART_OF_CAMPAIGN",
                 details: [
-                    "userId": userId,
+                    "userId": userIdForLog,
                     "campaignKey": campaign.type == CampaignTypeEnum.ab.rawValue ? "\(campaign.key ?? "--")" : "\(campaign.name ?? "--")_\(campaign.ruleKey ?? "--")",
                     "notPart": isUserPart ? "" : "not"
                 ]
@@ -64,7 +69,7 @@ class CampaignDecisionService {
                 level: .info,
                 key: "USER_PART_OF_CAMPAIGN",
                 details: [
-                    "userId": userId,
+                    "userId": userIdForLog,
                     "campaignKey": campaign.type == CampaignTypeEnum.ab.rawValue ? "\(campaign.key ?? "--")" : "\(campaign.name ?? "--")_\(campaign.ruleKey ?? "--")",
                     "notPart": isUserPart ? "" : "not"
                 ]
@@ -106,13 +111,16 @@ class CampaignDecisionService {
      * @param userId  User ID for which the bucketing is to be performed.
      * @param accountId  Account ID for which the bucketing is to be performed.
      * @param campaign  CampaignModel object containing the campaign settings.
+     * @param context  Optional VWOUserContext used for custom bucketing seed.
      * @param serviceContainer  Optional ServiceContainer for instance-specific logging.
      * @return  VariationModel object containing the variation allotted to the user.
      */
-    func bucketUserToVariation(userId: String?, accountId: String, campaign: Campaign?, serviceContainer: ServiceContainer? = nil) -> Variation? {
+    func bucketUserToVariation(userId: String?, accountId: String, campaign: Campaign?, context: WingifyUserContext? = nil, serviceContainer: ServiceContainer? = nil) -> Variation? {
         guard let campaign = campaign, let campaignId = campaign.id, let userId = userId else {
             return nil
         }
+
+        let bucketingId = BucketingIdResolver.resolve(userId: userId, context: context) ?? userId
         
         let multiplier = campaign.percentTraffic != 0 ? 1 : 0
         let percentTraffic = campaign.percentTraffic
@@ -121,10 +129,12 @@ class CampaignDecisionService {
         let salt = campaign.salt ?? ""
         
         // Generate bucket key using salt if available, otherwise use campaign ID
-        let bucketKey = !salt.isEmpty ? "\(salt)_\(accountId)_\(userId)" : "\(campaignId)_\(accountId)_\(userId)"
+        let bucketKey = !salt.isEmpty ? "\(salt)_\(accountId)_\(bucketingId)" : "\(campaignId)_\(accountId)_\(bucketingId)"
         
         let hashValue = DecisionMaker.generateHashValue(hashKey: bucketKey)
         let bucketValue = DecisionMaker.generateBucketValue(hashValue: hashValue, maxValue: Constants.MAX_TRAFFIC_VALUE, multiplier: multiplier)
+        
+        let userIdForLog = BucketingIdResolver.formatUserIdForLogging(userId: userId, bucketingId: bucketingId)
         
         // Use instance-specific logger if available, otherwise static logger
         if let logger = serviceContainer?.getLoggerService() {
@@ -132,7 +142,7 @@ class CampaignDecisionService {
                 level: .debug,
                 key: "USER_BUCKET_TO_VARIATION",
                 details: [
-                    "userId": userId,
+                    "userId": userIdForLog,
                     "campaignKey": campaign.ruleKey ?? "",
                     "percentTraffic": "\(percentTraffic ?? 0)",
                     "bucketValue": "\(bucketValue)",
@@ -144,7 +154,7 @@ class CampaignDecisionService {
                 level: .debug,
                 key: "USER_BUCKET_TO_VARIATION",
                 details: [
-                    "userId": userId,
+                    "userId": userIdForLog,
                     "campaignKey": campaign.ruleKey ?? "",
                     "percentTraffic": "\(percentTraffic ?? 0)",
                     "bucketValue": "\(bucketValue)",
@@ -208,14 +218,15 @@ class CampaignDecisionService {
      * @param userId  User ID for which the variation is to be allotted.
      * @param accountId  Account ID for which the variation is to be allotted.
      * @param campaign  CampaignModel object containing the campaign settings.
+     * @param context Optional VWOUserContext used for custom bucketing seed.
      * @return  VariationModel object containing the variation allotted to the user.
      */
-    func getVariationAllotted(userId: String?, accountId: String, campaign: Campaign, serviceContainer: ServiceContainer? = nil) -> Variation? {
-        let isUserPart = isUserPartOfCampaign(userId: userId, campaign: campaign, serviceContainer: serviceContainer)
+    func getVariationAllotted(userId: String?, accountId: String, campaign: Campaign, context: WingifyUserContext? = nil, serviceContainer: ServiceContainer? = nil) -> Variation? {
+        let isUserPart = isUserPartOfCampaign(userId: userId, campaign: campaign, context: context, serviceContainer: serviceContainer)
         if campaign.type == CampaignTypeEnum.rollout.rawValue || campaign.type == CampaignTypeEnum.personalize.rawValue {
             return isUserPart ? campaign.variations?[0] : nil
         } else {
-            return isUserPart ? bucketUserToVariation(userId: userId, accountId: accountId, campaign: campaign, serviceContainer: serviceContainer) : nil
+            return isUserPart ? bucketUserToVariation(userId: userId, accountId: accountId, campaign: campaign, context: context, serviceContainer: serviceContainer) : nil
         }
     }
 }

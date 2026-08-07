@@ -37,7 +37,7 @@ import CoreData
 class SyncManager {
     // Static registry for backward compatibility (similar to AliasIdentifierManager pattern)
     private static var _instances: [String: SyncManager] = [:]
-    private static let instanceQueue = DispatchQueue(label: "com.wingify.fme.syncmanager.instances", attributes: .concurrent)
+    private static let instanceQueue = DispatchQueue(label: "com.wingify.fme.syncmanager.instances")
     
     /**
      * Legacy singleton for backward compatibility.
@@ -77,8 +77,19 @@ class SyncManager {
      */
     static func removeInstance(accountId: Int, sdkKey: String) {
         let accountKey = "\(accountId)_\(sdkKey)"
-        instanceQueue.async(flags: .barrier) {
+        instanceQueue.sync {
             _instances.removeValue(forKey: accountKey)
+        }
+    }
+    
+    /**
+     * Triggers sync for every registered SyncManager instance.
+     * Used when network connectivity is restored so each account's batched events are uploaded.
+     */
+    static func syncAllRegisteredInstances(ignoreThreshold: Bool = false) {
+        let managers = instanceQueue.sync { Array(_instances.values) }
+        for syncManager in managers {
+            syncManager.syncSavedEvents(ignoreThreshold: ignoreThreshold)
         }
     }
     
@@ -104,8 +115,8 @@ class SyncManager {
     private let backgroundQueue: DispatchQueue
     private let coreDataStack = CoreDataStack.shared
     private let eventManager = EventDataManager.shared
-    // Concurrent queue for initialization (better performance than locks)
-    private let initQueue = DispatchQueue(label: "com.wingify.fme.syncmanager.init", attributes: .concurrent)
+    // Serial queue for initialization
+    private let initQueue = DispatchQueue(label: "com.wingify.fme.syncmanager.init")
     
     var isOngoing: Bool = false
 
@@ -126,7 +137,7 @@ class SyncManager {
         
         // Register this instance for static lookup
         let accountKey = "\(accountId)_\(sdkKey)"
-        SyncManager.instanceQueue.async(flags: .barrier) {
+        SyncManager.instanceQueue.sync {
             SyncManager._instances[accountKey] = self
         }
     }
@@ -139,7 +150,7 @@ class SyncManager {
      *   - timeInterval: Time interval for periodic syncs in milliseconds.
      */
     func initialize(minBatchSize: Int?, timeInterval: Int64?) {
-        initQueue.sync(flags: .barrier) { [weak self] in
+        initQueue.sync { [weak self] in
             guard let self = self else { return }
             self.isOnlineBatchingAllowed = self.checkOnlineBatchingAllowed(batchSize: minBatchSize, batchUploadInterval: timeInterval)
             self.minimumEventCount = minBatchSize ?? 0
@@ -322,7 +333,8 @@ class SyncManager {
             return false
         }
         
-        let minimumInterval = 1*60*1000 // 1 min in milliseconds
+        // Interval must be strictly greater than 1 minute (60000 ms).
+        let minimumInterval: Int64 = 60 * 1000
         
         switch (batchSize, batchUploadInterval) {
         case let (size?, interval?) where size > 0 && interval > minimumInterval:
@@ -333,12 +345,10 @@ class SyncManager {
             return true
         case let (0, interval?) where interval > minimumInterval:
             return true
-        case let (size?, 0) where size > 0: // New condition added here
+        case let (size?, 0) where size > 0:
             return true
         default:
-            if let interval = batchUploadInterval, interval < minimumInterval {
-                LoggerService.errorLog(key: "INIT_OPTIONS_INVALID",data:["key": "batchUploadInterval", "correctType": "number", "value": "60000, batchUploadInterval value in milliseconds "],debugData: ["an":ApiEnum.Init.rawValue] )
-            }
+            // Invalid batchUploadTimeInterval is logged once during init in WingifyBuilder.
             if let size = batchSize, size <= 0 {
                 LoggerService.errorLog(key: "INIT_OPTIONS_INVALID",data:["key": "batchMinSize", "correctType": "number", "value": "1"],debugData: ["an":ApiEnum.Init.rawValue] )
             }

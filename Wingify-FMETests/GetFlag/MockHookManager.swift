@@ -15,7 +15,7 @@
  */
 
 import Foundation
-@testable import Wingify_FME
+@testable import VWO_FME
 
 class MockHooksManager: HooksManager {
     

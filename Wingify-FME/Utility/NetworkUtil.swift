@@ -34,18 +34,6 @@ class NetworkUtil {
         return UUID().uuidString
     }
     
-    // Generates the URL for the event
-    private static func generateEventUrl(serviceContainer: ServiceContainer? = nil) -> String {
-        let baseUrl: String
-        if let container = serviceContainer {
-            baseUrl = container.getBaseUrl(for: .post)
-        } else {
-            // Fallback to static UrlService for backward compatibility
-            baseUrl = UrlService.getBaseUrl(for: .post)
-        }
-        return "\(Constants.HTTPS_PROTOCOL)://\(baseUrl)\(UrlEnum.events.rawValue)"
-    }
-    
     // Generates a message ID for the event
     private static func generateMsgId(uuid: String) -> String {
         return uuid + "-" + "\(Date().currentTimeMillis())"
@@ -106,14 +94,14 @@ class NetworkUtil {
         }
         
         if let visitorUserAgent = visitorUserAgent {
-            var requestQueryParams = RequestQueryParams(en: eventName, a: accountIdString, env: sdkKey, visitorUa: visitorUserAgent, visitorIp: ipAddress ?? "", url: generateEventUrl(serviceContainer: serviceContainer))
+            var requestQueryParams = RequestQueryParams(en: eventName, a: accountIdString, env: sdkKey, visitorUa: visitorUserAgent, visitorIp: ipAddress ?? "")
             if (isUsageStatsEvent ?? false) {
                 requestQueryParams.env = nil
                 requestQueryParams.a = "\(usageStatsAccountId ?? 0)"
             }
             return requestQueryParams.queryParams
         }else{
-            let requestQueryParams = RequestQueryParams(en: eventName, a: accountIdString, env: sdkKey, visitorUa: "", visitorIp: ipAddress ?? "", url: generateEventUrl(serviceContainer: serviceContainer))
+            let requestQueryParams = RequestQueryParams(en: eventName, a: accountIdString, env: sdkKey, visitorUa: "", visitorIp: ipAddress ?? "")
             if (isUsageStatsEvent ?? false) {
                 requestQueryParams.env = nil
                 if let usageStatsAccountId = usageStatsAccountId {
@@ -559,7 +547,7 @@ class NetworkUtil {
         request.accountId = accountId
         request.sdkKey = sdkKey
         
-        NetworkManager.postAsync(request) { result in
+        NetworkManager.postAsync(request, serviceContainer: serviceContainer) { result in
             
             if let error = result.errorMessage {
                 LoggerService.log(level: .debug, key: "NETWORK_CALL_FAILED", details: ["method": "POST", "err": "\(error)"])
@@ -598,7 +586,7 @@ class NetworkUtil {
         // Set account info in request for multi-instance support
         request.accountId = accountId
         request.sdkKey = sdkKey
-        NetworkManager.postAsync(request) { result in
+        NetworkManager.postAsync(request, serviceContainer: serviceContainer) { result in
             
             if let error = result.errorMessage {
                 LoggerService.log(level: .error, key: "NETWORK_CALL_FAILED", details: ["method": "POST", "err": "\(error)"])
@@ -637,7 +625,7 @@ class NetworkUtil {
         request.accountId = accountId
         request.sdkKey = sdkKey
         
-        NetworkManager.postAsync(request) { result in
+        NetworkManager.postAsync(request, serviceContainer: serviceContainer) { result in
                         
             if result.errorMessage != nil {
                 LoggerService.log(level: .debug, key: "NETWORK_CALL_FAILED", details: ["method": "POST", "err": "\(result.errorMessage ?? "")"])
@@ -734,7 +722,7 @@ class NetworkUtil {
         vwoMeta["a"] = accountId
         vwoMeta["product"] = Constants.PRODUCT_NAME
         vwoMeta["sn"] = SDKMetaUtil.name
-        vwoMeta["sv"] = SDKMetaUtil.sdkVersion
+        vwoMeta["sv"] = SDKMetaUtil.version
         vwoMeta["eventId"] = UUIDUtils.getRandomUUID(sdkKey: sdkKey)
 
         properties.d?.event?.props?.vwoMeta = vwoMeta

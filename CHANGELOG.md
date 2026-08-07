@@ -5,6 +5,31 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.57.0] - 2026-08-07
+### Fixed
+
+- Integration callback is now invoked on every API evaluation call, including when variation/decision is served from local storage.
+
+### Improved
+
+- Optimized event batching so `batchMinSize` and `batchUploadTimeInterval` are applied reliably during SDK initialization, including in multi-instance setups.
+
+### Added
+
+-  Added support for custom bucketing to ensure the same decision is returned consistently for the same user context across evaluations.
+```swift
+let customVariables: [String : Any] = ["key_1": 2, "key_2": 0]
+let userContext = VWOUserContext(
+    id: "user_123",
+    customVariables: customVariables,
+    bucketingSeed: "stable-seed-123"
+)
+```
+
+## Changed
+
+Updated gateway user details request context handling to include ipAddress only when gateway configuration is present in WingifyInitOptions.
+
 ## [1.56.0] - 2026-07-15
 
 ### Improved
@@ -98,7 +123,6 @@ Updated gateway user details request context handling to include ipAddress only 
 ### Added
 
 Fetch settings parallelly even when cache is not expired
-
 
 ## [1.17.0] - 2026-04-28
 

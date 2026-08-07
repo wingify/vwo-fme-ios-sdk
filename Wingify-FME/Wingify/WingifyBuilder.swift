@@ -30,6 +30,9 @@ class WingifyBuilder {
     private var loggerService: LoggerService?
     internal var storage: StorageService = StorageService()
     
+    // Cached ServiceContainer for this builder instance (one account per WingifyBuilder)
+    private var cachedServiceContainer: ServiceContainer?
+    
     // Track if polling is active for this instance
     private var isPollingActive: Bool = false
 
@@ -72,18 +75,34 @@ class WingifyBuilder {
     
     /**
      * Creates a ServiceContainer instance with the current settings and options
-     * Following Android SDK pattern where ServiceContainer is created per API call
+     * ServiceContainer is created per API call
      * @param processedSettings Processed settings object
      * @param options VWO initialization options
      * @return ServiceContainer instance
      */
     func createServiceContainer(processedSettings: Settings?, options: WingifyInitOptions) -> ServiceContainer {
-        return ServiceContainer(
+        if let existing = cachedServiceContainer {
+            updateServiceContainerIfNeeded(existing, processedSettings: processedSettings)
+            return existing
+        }
+        
+        let serviceContainer = ServiceContainer(
             settingsManager: settingFileManager,
             options: options,
             settings: processedSettings,
             loggerService: loggerService
         )
+        cachedServiceContainer = serviceContainer
+        return serviceContainer
+    }
+    
+    /**
+     * Updates an existing ServiceContainer with newly available settings.
+     */
+    private func updateServiceContainerIfNeeded(_ serviceContainer: ServiceContainer, processedSettings: Settings?) {
+        if let settings = processedSettings {
+            serviceContainer.setSettings(settings)
+        }
     }
 
     /**
@@ -192,11 +211,74 @@ class WingifyBuilder {
             
             // Use instance-specific logger to ensure correct prefix (logger is now created)
             self.loggerService?.log(level: .debug, key: "SERVICE_INITIALIZED", details: ["service": "Logger"])
+            
+            self.validateIntegrationCallbackConfiguration()
+            self.validateBatchUploadConfiguration()
         } catch {
             let message = "Error occurred while initializing Logger : \(error.localizedDescription)"
             print(message)
         }
         return self
+    }
+
+    /**
+     * Logs an error when `shouldTriggerIntegrationCallbackAlways` is enabled without an `integrations` callback.
+     * Initialization continues so the SDK remains usable; the callback simply will not fire.
+     */
+    private func validateIntegrationCallbackConfiguration() {
+        guard options?.shouldTriggerIntegrationCallbackAlways == true,
+              options?.integrations == nil else {
+            return
+        }
+        if let loggerService = self.loggerService {
+            loggerService.errorLog(
+                key: "INTEGRATION_CALLBACK_REQUIRED",
+                data: nil,
+                debugData: ["an": ApiEnum.Init.rawValue],
+                shouldSendToVWO: false
+            )
+        } else {
+            LoggerService.errorLog(
+                key: "INTEGRATION_CALLBACK_REQUIRED",
+                data: nil,
+                debugData: ["an": ApiEnum.Init.rawValue],
+                shouldSendToVWO: false
+            )
+        }
+    }
+
+    /**
+     * Logs an error when `batchUploadTimeInterval` is provided but is not greater than 60000 ms.
+     * Initialization continues; online batching stays disabled for invalid intervals.
+     */
+    private func validateBatchUploadConfiguration() {
+        guard let interval = options?.batchUploadTimeInterval else {
+            return
+        }
+        let minimumInterval: Int64 = 60 * 1000
+        guard interval <= minimumInterval else {
+            return
+        }
+        let data: [String: Any] = [
+            "key": "batchUploadTimeInterval",
+            "correctType": "number",
+            "value": "60000"
+        ]
+        if let loggerService = self.loggerService {
+            loggerService.errorLog(
+                key: "INIT_OPTIONS_INVALID",
+                data: data,
+                debugData: ["an": ApiEnum.Init.rawValue],
+                shouldSendToVWO: false
+            )
+        } else {
+            LoggerService.errorLog(
+                key: "INIT_OPTIONS_INVALID",
+                data: data,
+                debugData: ["an": ApiEnum.Init.rawValue],
+                shouldSendToVWO: false
+            )
+        }
     }
 
     /**

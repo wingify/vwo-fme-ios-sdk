@@ -39,6 +39,7 @@ struct RuleEvaluationUtil {
      *   - decision: Integration decision object, updated in place.
      *   - variationShownTracker: Optional tracker used by `getFlag` to record `variationShown`
      *     impressions (e.g. whitelist hits) for user-tracking billing decisions.
+     *   - holdoutEvalState: Optional holdout evaluation state for pre-segmentation checks.
      * - Returns: Dictionary with `preSegmentationResult`, optional `whitelistedObject`, and `updatedDecision`.
      */
     static func evaluateRule(
@@ -51,7 +52,8 @@ struct RuleEvaluationUtil {
         storageService: StorageService,
         serviceContainer: ServiceContainer,
         decision: inout [String: Any],
-        variationShownTracker: VariationShownTracker? = nil
+        variationShownTracker: VariationShownTracker? = nil,
+        holdoutEvalState: HoldoutEvaluationState? = nil
     ) -> [String: Any] {
         // Check if the campaign satisfies the whitelisting and pre-segmentation
         let checkResult = DecisionUtil.checkWhitelistingAndPreSeg(
@@ -63,7 +65,8 @@ struct RuleEvaluationUtil {
             megGroupWinnerCampaigns: &megGroupWinnerCampaigns,
             storageService: storageService,
             serviceContainer: serviceContainer,
-            decision: &decision
+            decision: &decision,
+            holdoutEvalState: holdoutEvalState
         )
         
         // Extract the results of the evaluation

@@ -16,7 +16,7 @@
 
 
 import XCTest
-@testable import Wingify_FME
+@testable import VWO_FME
 
 class DataTypeUtilTests: XCTestCase {
     

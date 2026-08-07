@@ -15,7 +15,7 @@
  */
 
 import XCTest
-@testable import Wingify_FME
+@testable import VWO_FME
 
 // Mock LogTransport for testing
 class MockLogTransport: LogTransport {

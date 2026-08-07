@@ -26,6 +26,31 @@ class DecisionUtil {
         decisionCustomVariables["_vwoUserId"] = userId
         return decisionCustomVariables
     }
+
+    /**
+     * Adds `customVariables` and `variationTargetingVariables` to the integration decision payload.
+     * Fresh evaluation gets these via `checkWhitelistingAndPreSeg`; storage early-return paths call this
+     * so the integration callback receives the same context fields.
+     */
+    static func applyContextVariablesToIntegrationDecision(
+        settings: Settings,
+        context: WingifyUserContext,
+        decision: inout [String: Any],
+        campaignKey: String? = nil
+    ) {
+        let resolvedCampaignKey = campaignKey
+            ?? (decision["experimentKey"] as? String)
+            ?? (decision["rolloutKey"] as? String)
+        let campaign = settings.campaigns?.first(where: { $0.key == resolvedCampaignKey })
+
+        let stringAccountId = "\(settings.accountId ?? 0)"
+        let vwoUserId = UUIDUtils.getUUID(userId: context.id, accountId: stringAccountId)
+        let idForVars = campaign?.isUserListEnabled == true ? vwoUserId : (context.id ?? "")
+
+        context.variationTargetingVariables["_vwoUserId"] = idForVars
+        decision["variationTargetingVariables"] = context.variationTargetingVariables
+        decision["customVariables"] = makeDecisionCustomVariables(context: context, userId: idForVars)
+    }
     
     /**
      * Checks whitelisting and pre-segmentation for a given campaign.
@@ -50,7 +75,8 @@ class DecisionUtil {
         megGroupWinnerCampaigns: inout [Int: String]?,
         storageService: StorageService,
         serviceContainer: ServiceContainer,
-        decision: inout [String: Any]
+        decision: inout [String: Any],
+        holdoutEvalState: HoldoutEvaluationState? = nil
     ) -> [String: Any] {
         
         // Generate a unique user ID for the campaign
@@ -210,7 +236,16 @@ class DecisionUtil {
         
         if let groupId = groupId, !groupId.isEmpty, isPreSegmentationPassed {
             
-            let variationModelEvaluated = MegUtil.evaluateGroups(settings: settings, feature: feature, groupId: Int(groupId) ?? 0, evaluatedFeatureMap: &evaluatedFeatureMap, context: context, storageService: storageService, serviceContainer: serviceContainer)
+            let variationModelEvaluated = MegUtil.evaluateGroups(
+                settings: settings,
+                feature: feature,
+                groupId: Int(groupId) ?? 0,
+                evaluatedFeatureMap: &evaluatedFeatureMap,
+                context: context,
+                storageService: storageService,
+                serviceContainer: serviceContainer,
+                holdoutEvalState: holdoutEvalState
+            )
             
             if let variationModel = variationModelEvaluated, let variationId = variationModel.id, variationId == campaignId {
                 
@@ -266,16 +301,21 @@ class DecisionUtil {
      *   - settings: The settings object containing account information.
      *   - campaign: The campaign to be evaluated.
      *   - userId: The user ID for which the variation is to be determined.
+     *   - context: Optional VWOUserContext used for custom bucketing seed.
      * - Returns: The variation assigned to the user, if any.
      */
     static func evaluateTrafficAndGetVariation(
         settings: Settings,
         campaign: Campaign,
-        userId: String?,
+        context: WingifyUserContext? = nil,
         serviceContainer: ServiceContainer? = nil
     ) -> Variation? {
         let stringAccountId = "\(settings.accountId ?? 0)"
-        let variation = CampaignDecisionService().getVariationAllotted(userId: userId, accountId: stringAccountId, campaign: campaign, serviceContainer: serviceContainer)
+        let userId = context?.id
+        let variation = CampaignDecisionService().getVariationAllotted(userId: userId, accountId: stringAccountId, campaign: campaign, context: context, serviceContainer: serviceContainer)
+
+        let bucketingId = BucketingIdResolver.resolve(userId: userId, context: context) ?? userId
+        let userIdForLog = BucketingIdResolver.formatUserIdForLogging(userId: userId, bucketingId: bucketingId)
         
         // Use instance-specific logger if available, otherwise static logger
         let logger = serviceContainer?.getLoggerService()
@@ -284,13 +324,13 @@ class DecisionUtil {
             if let logger = logger {
                 logger.log(level: .info,
                           key: "USER_CAMPAIGN_BUCKET_INFO",
-                          details: ["userId": userId ?? "",
+                          details: ["userId": userIdForLog,
                                     "campaignKey": campaign.type == CampaignTypeEnum.ab.rawValue ? "\(campaign.key ?? "--")" : "\(campaign.name ?? "--")_\(campaign.ruleKey ?? "--")",
                                     "status": "did not get any variation"])
             } else {
                 LoggerService.log(level: .info,
                                   key: "USER_CAMPAIGN_BUCKET_INFO",
-                                  details: ["userId": userId ?? "",
+                                  details: ["userId": userIdForLog,
                                             "campaignKey": campaign.type == CampaignTypeEnum.ab.rawValue ? "\(campaign.key ?? "--")" : "\(campaign.name ?? "--")_\(campaign.ruleKey ?? "--")",
                                             "status": "did not get any variation"])
             }
@@ -300,13 +340,13 @@ class DecisionUtil {
         if let logger = logger {
             logger.log(level: .info,
                       key: "USER_CAMPAIGN_BUCKET_INFO",
-                      details: ["userId": userId ?? "",
+                      details: ["userId": userIdForLog,
                                 "campaignKey": campaign.type == CampaignTypeEnum.ab.rawValue ? "\(campaign.key ?? "--")" : "\(campaign.name ?? "--")_\(campaign.ruleKey ?? "--")",
                                 "status": "got variation: \(variation?.name ?? "--")"])
         } else {
             LoggerService.log(level: .info,
                               key: "USER_CAMPAIGN_BUCKET_INFO",
-                              details: ["userId": userId ?? "",
+                              details: ["userId": userIdForLog,
                                         "campaignKey": campaign.type == CampaignTypeEnum.ab.rawValue ? "\(campaign.key ?? "--")" : "\(campaign.name ?? "--")_\(campaign.ruleKey ?? "--")",
                                         "status": "got variation: \(variation?.name ?? "--")"])
         }
@@ -376,7 +416,8 @@ class DecisionUtil {
                 currentAllocation += stepFactor
                 targetedVariations[i] = variation
             }
-            whitelistedVariation = CampaignDecisionService.getVariation(variations: targetedVariations, bucketValue: DecisionMaker.calculateBucketValue(str: CampaignUtil.getBucketingSeed(userId: context.id, campaign: campaign, groupId: nil)))
+            let bucketingId = BucketingIdResolver.resolve(userId: context.id, context: context) ?? context.id
+            whitelistedVariation = CampaignDecisionService.getVariation(variations: targetedVariations, bucketValue: DecisionMaker.calculateBucketValue(str: CampaignUtil.getBucketingSeed(userId: bucketingId, campaign: campaign, groupId: nil)))
         } else if targetedVariations.count == 1 {
             whitelistedVariation = targetedVariations[0]
         }

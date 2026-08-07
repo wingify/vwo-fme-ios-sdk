@@ -15,7 +15,7 @@
  */
 
 import XCTest
-@testable import Wingify_FME
+@testable import VWO_FME
 
 final class DecisionUtilTests: XCTestCase {
     
@@ -39,5 +39,31 @@ final class DecisionUtilTests: XCTestCase {
         XCTAssertNil(context.customVariables["_vwoUserId"])
         XCTAssertEqual(context.customVariables["plan"] as? String, "pro")
         XCTAssertTrue(context.customVariables["createdAt"] is Date)
+    }
+
+    func testApplyContextVariablesToIntegrationDecisionAddsExpectedKeys() {
+        let context = WingifyUserContext(
+            id: "user-123",
+            customVariables: ["plan": "pro"]
+        )
+        var decision: [String: Any] = [
+            "featureKey": "feature-1",
+            "experimentKey": "feature-1_ab"
+        ]
+        let settings = Settings()
+
+        DecisionUtil.applyContextVariablesToIntegrationDecision(
+            settings: settings,
+            context: context,
+            decision: &decision,
+            campaignKey: "feature-1_ab"
+        )
+
+        let customVariables = decision["customVariables"] as? [String: Any]
+        let targetingVariables = decision["variationTargetingVariables"] as? [String: Any]
+
+        XCTAssertEqual(customVariables?["_vwoUserId"] as? String, "user-123")
+        XCTAssertEqual(customVariables?["plan"] as? String, "pro")
+        XCTAssertEqual(targetingVariables?["_vwoUserId"] as? String, "user-123")
     }
 }

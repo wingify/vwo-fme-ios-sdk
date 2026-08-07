@@ -533,13 +533,25 @@ class StorageService {
             return
         }
 
+        // Read existing record and merge so partial writes (e.g. holdout-only fields) never
+        // overwrite previously stored rollout/experiment decision fields.
+        var dataToStore = data
+        let mergeContext = WingifyUserContext(id: userId, customVariables: [:])
+        if let existingData = getDataInStorage(featureKey: featureKey, context: mergeContext), !existingData.isEmpty {
+            var merged = existingData
+            for (key, value) in data {
+                merged[key] = value
+            }
+            dataToStore = merged
+        }
+
         // Holdout-only data: allow storing without rollout/experiment validation
-        let isHoldoutData = (data["holdout"] as? Bool) == true
+        let isHoldoutData = (dataToStore["holdout"] as? Bool) == true
         if !isHoldoutData {
-            let rolloutKey = data["rolloutKey"] as? String
-            let experimentKey = data["experimentKey"] as? String
-            let rolloutVariationId = data["rolloutVariationId"] as? Int
-            let experimentVariationId = data["experimentVariationId"] as? Int
+            let rolloutKey = dataToStore["rolloutKey"] as? String
+            let experimentKey = dataToStore["experimentKey"] as? String
+            let rolloutVariationId = dataToStore["rolloutVariationId"] as? Int ?? (dataToStore["rolloutVariationId"] as? NSNumber)?.intValue
+            let experimentVariationId = dataToStore["experimentVariationId"] as? Int ?? (dataToStore["experimentVariationId"] as? NSNumber)?.intValue
 
             if let rolloutKey = rolloutKey, !rolloutKey.isEmpty, experimentKey == nil, rolloutVariationId == nil {
                 LoggerService.errorLog(key: "ERROR_STORING_DATA_IN_STORAGE",data:["key": "Variation:(rolloutKey, experimentKey or rolloutVariationId)"] ,debugData: ["an":ApiEnum.getFlag.rawValue])
@@ -557,9 +569,9 @@ class StorageService {
         let storageKey = getAccountKey(baseStorageKey)
         
         if let connector = StorageConnectorProvider.shared.getStorageConnector() {
-            connector.set(data, forKey: storageKey)
+            connector.set(dataToStore, forKey: storageKey)
         } else {
-            userDefaults.set(data, forKey: storageKey)
+            userDefaults.set(dataToStore, forKey: storageKey)
         }
     }
 
