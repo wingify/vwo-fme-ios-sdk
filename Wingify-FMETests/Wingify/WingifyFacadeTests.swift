@@ -1,5 +1,9 @@
 import XCTest
+#if SWIFT_PACKAGE
+@testable import Wingify_FME
+#else
 @testable import VWO_FME
+#endif
 
 final class WingifyFacadeTests: XCTestCase {
     override func setUp() {

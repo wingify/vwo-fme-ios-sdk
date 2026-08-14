@@ -183,6 +183,10 @@
 		BAFC4B882FC861390087E01B /* Visitor.swift in Sources */ = {isa = PBXBuildFile; fileRef = BAFC4A422FC861390087E01B /* Visitor.swift */; };
 		BAFC4B892FC861390087E01B /* StorageConnectorProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = BAFC4A702FC861390087E01B /* StorageConnectorProvider.swift */; };
 		BAFC4C012FC861390087E01B /* UserTrackingUsageUtil.swift in Sources */ = {isa = PBXBuildFile; fileRef = BAFC4C002FC861390087E01B /* UserTrackingUsageUtil.swift */; };
+		BAFC4C132FC861390087E01B /* InternalEventSamplingSettings.swift in Sources */ = {isa = PBXBuildFile; fileRef = BAFC4C102FC861390087E01B /* InternalEventSamplingSettings.swift */; };
+		BAFC4C142FC861390087E01B /* InternalEventSamplingUtil.swift in Sources */ = {isa = PBXBuildFile; fileRef = BAFC4C112FC861390087E01B /* InternalEventSamplingUtil.swift */; };
+		BAFC4C152FC861390087E01B /* InternalEventSamplingUtilTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = BAFC4C122FC861390087E01B /* InternalEventSamplingUtilTests.swift */; };
+		BAFC4C182FC861390087E01B /* ErrorLogSamplingCategory.swift in Sources */ = {isa = PBXBuildFile; fileRef = BAFC4C082FC861390087E01B /* ErrorLogSamplingCategory.swift */; };
 		BAFC4DB32FD6AA510087E01B /* VWOExports.swift in Sources */ = {isa = PBXBuildFile; fileRef = BAFC4DB12FD6AA510087E01B /* VWOExports.swift */; };
 		BAFC4DBE2FD6EB240087E01B /* BucketingIdResolverTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = BAFC4DBD2FD6EB240087E01B /* BucketingIdResolverTests.swift */; };
 		BAFC4DC02FD6EB740087E01B /* BucketingIdResolver.swift in Sources */ = {isa = PBXBuildFile; fileRef = BAFC4DBF2FD6EB740087E01B /* BucketingIdResolver.swift */; };
@@ -363,6 +367,10 @@
 		BAFC4AE42FC861390087E01B /* VWO_FMETests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VWO_FMETests.swift; sourceTree = "<group>"; };
 		BAFC4AE62FC861390087E01B /* OffineEventData.xcdatamodel */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcdatamodel; path = OffineEventData.xcdatamodel; sourceTree = "<group>"; };
 		BAFC4C002FC861390087E01B /* UserTrackingUsageUtil.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UserTrackingUsageUtil.swift; sourceTree = "<group>"; };
+		BAFC4C082FC861390087E01B /* ErrorLogSamplingCategory.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ErrorLogSamplingCategory.swift; sourceTree = "<group>"; };
+		BAFC4C102FC861390087E01B /* InternalEventSamplingSettings.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InternalEventSamplingSettings.swift; sourceTree = "<group>"; };
+		BAFC4C112FC861390087E01B /* InternalEventSamplingUtil.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InternalEventSamplingUtil.swift; sourceTree = "<group>"; };
+		BAFC4C122FC861390087E01B /* InternalEventSamplingUtilTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InternalEventSamplingUtilTests.swift; sourceTree = "<group>"; };
 		BAFC4DB12FD6AA510087E01B /* VWOExports.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VWOExports.swift; sourceTree = "<group>"; };
 		BAFC4DBD2FD6EB240087E01B /* BucketingIdResolverTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BucketingIdResolverTests.swift; sourceTree = "<group>"; };
 		BAFC4DBF2FD6EB740087E01B /* BucketingIdResolver.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BucketingIdResolver.swift; sourceTree = "<group>"; };
@@ -518,6 +526,8 @@
 				BAFC4A492FC861390087E01B /* Metric.swift */,
 				BAFC4A4A2FC861390087E01B /* Rule.swift */,
 				BAFC4A4B2FC861390087E01B /* SdkMetaInfo.swift */,
+				BAFC4C102FC861390087E01B /* InternalEventSamplingSettings.swift */,
+				BAFC4C082FC861390087E01B /* ErrorLogSamplingCategory.swift */,
 				BAFC4A4C2FC861390087E01B /* SegmentDslModel.swift */,
 				BAFC4A4D2FC861390087E01B /* Setting.swift */,
 				BAFC4A4E2FC861390087E01B /* Storage.swift */,
@@ -714,6 +724,7 @@
 				BAFC4A932FC861390087E01B /* SDKMetaUtil.swift */,
 				BAFC4A942FC861390087E01B /* SettingUtil.swift */,
 				BAFC4A952FC861390087E01B /* UsageStatsUtil.swift */,
+				BAFC4C112FC861390087E01B /* InternalEventSamplingUtil.swift */,
 				BAFC4A962FC861390087E01B /* UserIdUtil.swift */,
 				BAFC4C002FC861390087E01B /* UserTrackingUsageUtil.swift */,
 				BAFC4A972FC861390087E01B /* UUIDUtils.swift */,
@@ -916,6 +927,7 @@
 				BAFC4AD72FC861390087E01B /* CampaignUtilTests.swift */,
 				BAFC4AD82FC861390087E01B /* DataTypeUtilTests.swift */,
 				BAFC4AD92FC861390087E01B /* DecisionUtilTests.swift */,
+				BAFC4C122FC861390087E01B /* InternalEventSamplingUtilTests.swift */,
 				BAFC4ADA2FC861390087E01B /* DeviceIDUtilTests.swift */,
 				BAFC4ADB2FC861390087E01B /* DeviceUtilTests.swift */,
 				BAFC4ADC2FC861390087E01B /* FunctionUtilTests.swift */,
@@ -976,7 +988,6 @@
 				BAFC4A9F2FC861390087E01B /* Wingify-FME */,
 				BAFC4AE52FC861390087E01B /* Wingify-FMETests */,
 				EB06C7812C90229B00A25E07 /* Products */,
-				EB06C8BF2C9028D200A25E07 /* Frameworks */,
 			);
 			sourceTree = "<group>";
 		};
@@ -987,13 +998,6 @@
 				EB373E672D9D2B51005713D1 /* VWO-FMETests.xctest */,
 			);
 			name = Products;
-			sourceTree = "<group>";
-		};
-		EB06C8BF2C9028D200A25E07 /* Frameworks */ = {
-			isa = PBXGroup;
-			children = (
-			);
-			name = Frameworks;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -1244,6 +1248,9 @@
 				BAFC4B762FC861390087E01B /* NetworkUtil.swift in Sources */,
 				BAFC4B772FC861390087E01B /* ImpressionUtil.swift in Sources */,
 				BAFC4C012FC861390087E01B /* UserTrackingUsageUtil.swift in Sources */,
+				BAFC4C132FC861390087E01B /* InternalEventSamplingSettings.swift in Sources */,
+				BAFC4C142FC861390087E01B /* InternalEventSamplingUtil.swift in Sources */,
+				BAFC4C182FC861390087E01B /* ErrorLogSamplingCategory.swift in Sources */,
 				BAFC4B782FC861390087E01B /* SetUserAliasAPI.swift in Sources */,
 				BAFC4B792FC861390087E01B /* EventData+CoreDataClass.swift in Sources */,
 				BAFC4B7A2FC861390087E01B /* EventsUtils.swift in Sources */,
@@ -1270,6 +1277,7 @@
 				BAFC4B062FC861390087E01B /* LogManagerTests.swift in Sources */,
 				BAFC4B082FC861390087E01B /* FmeConfigTests.swift in Sources */,
 				BAFC4B092FC861390087E01B /* DecisionUtilTests.swift in Sources */,
+				BAFC4C152FC861390087E01B /* InternalEventSamplingUtilTests.swift in Sources */,
 				BAFC4B0D2FC861390087E01B /* DecisionMakerTests.swift in Sources */,
 				BAFC4B102FC861390087E01B /* SegmentOperandEvaluatorTests.swift in Sources */,
 				BAFC4B162FC861390087E01B /* SettingUtilTests.swift in Sources */,

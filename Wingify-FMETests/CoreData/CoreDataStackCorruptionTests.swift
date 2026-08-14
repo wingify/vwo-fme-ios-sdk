@@ -14,7 +14,11 @@
 
 import XCTest
 import CoreData
+#if SWIFT_PACKAGE
+@testable import Wingify_FME
+#else
 @testable import VWO_FME
+#endif
 
 /// Tests that Core Data stack recovers from a corrupted store (delete + retry + in-memory fallback) without crashing.
 final class CoreDataStackCorruptionTests: XCTestCase {

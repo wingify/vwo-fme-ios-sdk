@@ -321,18 +321,21 @@ enum SDKState {
     }
     
     /**
-     * Sends SDK usage statistics.
+     * Sends SDK usage statistics (`vwo_sdkUsageStats`).
      *
-     * This function retrieves the usage statistics account ID from settings.
-     * If the account ID is found, it triggers an event to send SDK usage statistics.
-     * This helps in understanding how the SDK is being utilized.
-     * If the `usageStatsAccountId` is not available in the settings, the function will return early
-     * and no event will be sent.
+     * Sends only when `usageStatsAccountId` is present in settings and the event
+     * passes the usage-stats check. When `alwaysApplySampling.client` is true,
+     * sampling uses `sampling.usage.client` (defaults to 1% when missing);
+     * otherwise the event is always sent.
      *
      * @param client The WingifyClient instance to use
+     * @param serviceContainer ServiceContainer for event delivery context
      */
     private static func sendUsageStats(client: WingifyClient, serviceContainer: ServiceContainer?) {
         guard let usageStatsAccountId = client.processedSettings?.usageStatsAccountId else {
+            return
+        }
+        guard InternalEventSamplingUtil.isUsageStatsEventQualified(settings: client.processedSettings) else {
             return
         }
         EventsUtils().sendSDKUsageStatsEvent(usageStatsAccountId: usageStatsAccountId, serviceContainer: serviceContainer)

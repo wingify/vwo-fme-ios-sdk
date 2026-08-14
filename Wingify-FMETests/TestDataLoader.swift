@@ -15,7 +15,11 @@
  */
 
 import Foundation
+#if SWIFT_PACKAGE
+@testable import Wingify_FME
+#else
 @testable import VWO_FME
+#endif
 
 struct TestCase: Codable {
     let dsl: [String: CodableValue]?

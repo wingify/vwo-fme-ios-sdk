@@ -2,14 +2,11 @@
   "INIT_OPTIONS_ERROR": "[ERROR]: VWO-SDK {date} Options should be of type object",
   "INIT_OPTIONS_SDK_KEY_ERROR": "[ERROR]: VWO-SDK {date} Please provide the sdkKey in the options and should be a of type string",
   "INIT_OPTIONS_ACCOUNT_ID_ERROR": "[ERROR]: VWO-SDK {date} Please provide VWO account ID in the options and should be a of type string|number",
-
   "INIT_OPTIONS_INVALID": "Invalid {key} passed in options. Should be of type: {correctType} and greater than equal to {value}",
   "INVALID_POLLING_CONFIGURATION":"Invalid {key} passed in options. Should be of type: {correctType} and greater than equal to {value}",
   "ERROR_FETCHING_SETTINGS": "Settings could not be fetched. Error: {err}",
   "INVALID_SETTINGS_SCHEMA": "Settings are not valid. Failed schema validation",
-
   "POLLING_FETCH_SETTINGS_FAILED": "Error while fetching VWO settings with polling",
-
   "API_THROW_ERROR": "API - {apiName} failed to execute. Trace - {err}",
   "INVALID_PARAM": "{key} passed to {apiName} API is not of valid type. Got type: {type}, should be: {correctType}",
   "API_SETTING_INVALID": "Settings are not valid. Contact VWO Support",
@@ -17,14 +14,10 @@
   "USER_ID_NULL": "UserId: No user ID was provided, and using the device ID as a fallback is currently disabled. Operations requiring a user ID may not function as expected.",
   "FEATURE_NOT_FOUND": "Feature not found for the key: {featureKey}",
   "EVENT_NOT_FOUND": "Event: {eventName} not found in any of the features metrics",
-
   "STORED_DATA_ERROR": "Error in getting data from storage. Error: {err}",
-
   "INVALID_GATEWAY_URL": "Please provide a valid URL for VWO Gateway Service",
-
   "NETWORK_CALL_FAILED": "Error occurred while sending {method} request. Error: {err}",
   "BATCH_UPLOAD_ERROR": "Event batch could not be uploaded. Error: {err}",
-  
   "DATABASE_ERROR": "Error while performing database operation. Error: {err}",
   "ATTRIBUTES_NOT_FOUND": "{key} passed to the {apiName} API is empty. Please provide {expectedFormat}.",
   "ERROR_SETTING_SEGMENTATION_CONTEXT": "Error in setting contextual data for segmentation. Got error: {err}",
@@ -32,7 +25,6 @@
   "USER_AGENT_VALIDATION_ERROR": "Failed to validate User Agent. Error: {err}",
   "USER_AGENT_PRE_SEGMENT_ERROR": "To evaluate user agent related segments, please pass userAgent in context object",
   "SETTINGS_FETCH_FAILED": "Failed to fetch settings and hence VWO client instance couldn't be updated when API: {apiName} got called having isViaWebhook param as {isViaWebhook}. Error: {err}",
-  
   "LOCATION_PRE_SEGMENT_ERROR": "To evaluate location pre Segment, please pass ipAddress in context object",
   "INVALID_ATTRIBUTE_LIST_FORMAT": "Invalid inList operand format",
   "GATEWAY_DATA_FETCH_ERROR": "Error while fetching data from gateway. Error: {err}",
@@ -46,9 +38,9 @@
   "NETWORK_CALL_FAILED_AFTER_MAX_RETRIES": "Max retries reached. Request failed for {endPoint}, Error: {err}",
   "ATTEMPTING_RETRY_FOR_FAILED_NETWORK_CALL": "Request failed for {endPoint}, Error: {err}. Retrying in {delay} seconds, attempt {attempt} of {maxRetries}",
   "ERROR_STORING_DATA_IN_STORAGE": "Error in to store data into storage. Error: {err}",
-  "NETWORK_CALL_FAILURE_AFTER_MAX_RETRIES_FOR_GET_FLAG" :"Network call for {extraData} failed after {attempts} retry attempt(s). Got Error: {err}",
+  "NETWORK_CALL_FAILURE_AFTER_MAX_RETRIES_FOR_GET_FLAG": "Network call for {extraData} failed after {attempts} retry attempt(s). Got Error: {err}",
   "NETWORK_CALL_FAILURE_AFTER_MAX_RETRIES": "Network call for {extraData} failed after {attempts} retry attempt(s). Got Error: {err}",
-  "INVALID_USER_AGENT_IN_CONTEXT_FOR_PRE_SEGMENTATION":"To Evaluate UserAgent segmentation, please provide userAgent in context",
+  "INVALID_USER_AGENT_IN_CONTEXT_FOR_PRE_SEGMENTATION": "To Evaluate UserAgent segmentation, please provide userAgent in context",
   "SETTINGS_MANAGER_NOT_INITIALIZED": "Settings Manager was not initialized while calling {api}",
   "ALIAS_SET_API_ERROR": "Failed to set alias. Error: {error}",
   "GET_ALIAS_FAILED": "Failed to retrieve alias. Error: {error}",
@@ -64,5 +56,4 @@
   "ERROR_FETCHING_SETTINGS_WITH_POLLING": "Settings could not be fetched with polling. Error:{err}",
   "INVALID_CREDENTIALS": "Invalid Account ID, SDK Key, or both provided during initialization.",
   "HOLDOUT_FEATURE_ID_NULL": "While evaluating holdouts, featureId = null, only checking global holdouts."
-
 }

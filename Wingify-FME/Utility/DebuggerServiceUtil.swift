@@ -45,12 +45,25 @@ class DebuggerServiceUtil {
         return extractedKeys
     }
     
-    /// Sends a debug event to Wingify.
+    /// Sends a `vwo_sdkDebug` event to the server.
+    ///
+    /// For debug events whose `msg_t` is in `ErrorLogSamplingKeys.sampled`, the event is only
+    /// subject to sampling when `alwaysApplySampling.client` is true (`sampling.debug.client` from
+    /// DaCDN settings). When that flag is false or missing, sampled keys are always sent.
+    /// Keys not listed in `ErrorLogSamplingKeys.sampled` are sent without sampling.
+    ///
     /// - Parameters:
-    ///   - eventProps: The properties for the event.
-    ///   - serviceContainer: Optional ServiceContainer to use for account-specific context (for multi-instance support).
+    ///   - eventProps: The properties for the debug event (must include `msg_t` for error keys).
+    ///   - serviceContainer: Optional `ServiceContainer` for account-specific settings and context.
     static func sendDebugEventToWingify(eventProps: [String: Any] = [:], serviceContainer: ServiceContainer? = nil) {
-        
+        let errorKey = eventProps["msg_t"] as? String
+        if ErrorLogSamplingKeys.isSampled(forKey: errorKey) {
+            let settings = resolveSettings(serviceContainer: serviceContainer)
+            guard InternalEventSamplingUtil.isSampledDebugEventQualified(settings: settings) else {
+                return
+            }
+        }
+
         // Create query parameters
         let properties = NetworkUtil.getEventsBaseProperties(eventName: EventEnum.VWO_DEBUGGER_EVENT.rawValue, visitorUserAgent: nil, ipAddress: nil, serviceContainer: serviceContainer)
         
@@ -60,5 +73,21 @@ class DebuggerServiceUtil {
         // Send event
         NetworkUtil.sendGatewayEvent(queryParams: properties, payload: payload, eventName: EventEnum.VWO_DEBUGGER_EVENT.rawValue, serviceContainer: serviceContainer)
         
+    }
+
+    /**
+     * Resolves account settings for sampling decisions.
+     *
+     * Prefers settings from `ServiceContainer` (multi-instance). Falls back to cached
+     * settings in `SettingsManager` when the container is unavailable.
+     *
+     * - Parameter serviceContainer: The active service container, if any.
+     * - Returns: Account settings used to read sampling rates; `nil` if unavailable.
+     */
+    private static func resolveSettings(serviceContainer: ServiceContainer?) -> Settings? {
+        if let settings = serviceContainer?.getSettings() {
+            return settings
+        }
+        return SettingsManager.instance?.getSettingFromUserDefaults()
     }
 }

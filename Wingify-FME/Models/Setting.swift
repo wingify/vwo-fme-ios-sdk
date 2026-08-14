@@ -43,6 +43,19 @@ public struct Settings: Codable, Equatable {
      * impression. When absent, `false`, or `null`, the SDK uses the standard per-impression flow.
      */
     var isMAU: Bool?
+    /**
+     * Internal event sampling configuration from DaCDN settings.
+     *
+     * Contains per-platform sampling rates for usage stats and debug events.
+     * Example: `{ usage: { client: 20 }, debug: { client: 20 } }`
+     */
+    var sampling: EventCategorySamplingRates?
+    /**
+     * Flags indicating whether sampling should always be applied per platform.
+     *
+     * Example: `{ server: false, client: false, serverless: false }`
+     */
+    var alwaysApplySampling: AlwaysApplySampling?
 
     enum CodingKeys: String, CodingKey {
         case features
@@ -59,6 +72,8 @@ public struct Settings: Codable, Equatable {
         case usageStatsAccountId
         case holdoutGroups = "holdouts"
         case isMAU
+        case sampling
+        case alwaysApplySampling
     }
     
     public init(from decoder: Decoder) throws {
@@ -84,6 +99,8 @@ public struct Settings: Codable, Equatable {
         sdkMetaInfo = try container.decodeIfPresent(SdkMetaInfo.self, forKey: .sdkMetaInfo)
         usageStatsAccountId = try container.decodeIfPresent(Int.self, forKey: .usageStatsAccountId)
         isMAU = try container.decodeIfPresent(Bool.self, forKey: .isMAU)
+        sampling = try container.decodeIfPresent(EventCategorySamplingRates.self, forKey: .sampling)
+        alwaysApplySampling = try container.decodeIfPresent(AlwaysApplySampling.self, forKey: .alwaysApplySampling)
 
         // Holdouts can come as an array, an object map, or an empty object ({}).
         // Be lenient here so decoding doesn't fail when there are no holdouts.
