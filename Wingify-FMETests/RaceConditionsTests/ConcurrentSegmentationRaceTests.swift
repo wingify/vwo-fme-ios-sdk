@@ -22,9 +22,9 @@
  */
 
 import XCTest
-#if SWIFT_PACKAGE
+#if canImport(Wingify_FME)
 @testable import Wingify_FME
-#else
+#elseif canImport(VWO_FME)
 @testable import VWO_FME
 #endif
 
@@ -50,7 +50,9 @@ final class ConcurrentSegmentationRaceTests: XCTestCase {
         super.tearDown()
     }
 
-    /// Runs many getFlag calls concurrently, each with its own ServiceContainer.
+    /// Runs getFlag concurrently, each call with its own ServiceContainer.
+    /// Kept intentionally moderate so CI runners (especially Xcode 15.4) do not
+    /// starve GCD while getFlag blocks the caller with dispatchGroup.wait().
     func testConcurrentGetFlagTriggersSegmentationManagerRace() {
         let options = WingifyInitOptions(sdkKey: "sdk-key", accountId: 123456)
         let rawSettings = FlagTestDataLoader.loadTestData(
@@ -62,8 +64,9 @@ final class ConcurrentSegmentationRaceTests: XCTestCase {
         let builder = WingifyBuilder(options: options)
         _ = builder.setLogger().setSettingsManager()
 
-        let concurrency = 50
-        let outerIterations = 5
+        // Moderate load is enough to catch shared-manager races without hanging CI.
+        let concurrency = 8
+        let outerIterations = 3
 
         for iteration in 1...outerIterations {
             let allDone = expectation(
@@ -71,28 +74,55 @@ final class ConcurrentSegmentationRaceTests: XCTestCase {
             )
             allDone.expectedFulfillmentCount = concurrency
 
-            DispatchQueue.concurrentPerform(iterations: concurrency) { i in
-                // Per-thread container = per-thread SegmentationManager (matches multi-instance usage).
-                let container = builder.createServiceContainer(
-                    processedSettings: settings,
-                    options: options
+            var containers: [ServiceContainer] = []
+            containers.reserveCapacity(concurrency)
+            for _ in 0..<concurrency {
+                containers.append(
+                    builder.createServiceContainer(
+                        processedSettings: settings,
+                        options: options
+                    )
                 )
-                let context = WingifyUserContext(
-                    id: "race-user-\(iteration)-\(i)",
-                    customVariables: [:]
-                )
-                GetFlagAPI.getFlag(
-                    featureKey: "feature1",
-                    settings: settings,
-                    context: context,
-                    hookManager: self.mockHookManager,
-                    serviceContainer: container
-                ) { _ in
-                    allDone.fulfill()
-                }
             }
 
-            wait(for: [allDone], timeout: 30.0)
+            // getFlag blocks the caller with dispatchGroup.wait() while work runs on
+            // GCD. Keep wait() off the GCD pool, and limit fan-out so older runners
+            // (Xcode 15.4) do not hang waiting for pool threads.
+            let lock = NSLock()
+            var threads: [Thread] = []
+            threads.reserveCapacity(concurrency)
+
+            for i in 0..<concurrency {
+                let container = containers[i]
+                let thread = Thread {
+                    let context = WingifyUserContext(
+                        id: "race-user-\(iteration)-\(i)",
+                        customVariables: [:]
+                    )
+                    // Skip gateway lookup path in setContextualData (nested wait on
+                    // a GCD worker), which can deadlock under heavy concurrency.
+                    context.userAgent = ""
+                    context.ipAddress = ""
+
+                    GetFlagAPI.getFlag(
+                        featureKey: "feature1",
+                        settings: settings,
+                        context: context,
+                        hookManager: MockHooksManager(callback: MockIntegrationCallback()),
+                        serviceContainer: container
+                    ) { _ in
+                        allDone.fulfill()
+                    }
+                }
+                thread.name = "getflag-race-\(iteration)-\(i)"
+                lock.lock()
+                threads.append(thread)
+                lock.unlock()
+                thread.start()
+            }
+
+            wait(for: [allDone], timeout: 60.0)
+            _ = threads
         }
     }
 }

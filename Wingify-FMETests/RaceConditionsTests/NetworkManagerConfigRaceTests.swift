@@ -23,9 +23,9 @@
  */
 
 import XCTest
-#if SWIFT_PACKAGE
+#if canImport(Wingify_FME)
 @testable import Wingify_FME
-#else
+#elseif canImport(VWO_FME)
 @testable import VWO_FME
 #endif
 
@@ -35,8 +35,7 @@ final class NetworkManagerConfigRaceTests: XCTestCase {
 
     override func setUp() {
         super.setUp()
-        // attachClient is one-shot in the process; install the stub before any test in this class runs.
-        NetworkManager.attachClient(client: stubClient)
+        NetworkManager.replaceClientForTesting(stubClient)
         NetworkManager.config = nil
         // Other test classes may leave online batching enabled; postAsync skips completion when it is on.
         SyncManager.shared.stopSyncing()
@@ -103,6 +102,7 @@ final class NetworkManagerConfigRaceTests: XCTestCase {
         let concurrency = 100
         let expectation = XCTestExpectation(description: "background post completions")
         expectation.expectedFulfillmentCount = concurrency
+        let postQueue = DispatchQueue(label: "com.wingify.fme.test.network.post", attributes: .concurrent)
 
         for i in 0..<concurrency {
             var request = RequestModel(port: 443)
@@ -110,8 +110,9 @@ final class NetworkManagerConfigRaceTests: XCTestCase {
             request.path = "/server-side/track-user"
             request.query = ["a": "\(i)"]
 
-            // Same queue semantics as NetworkManager.postAsync (background), without batching branch.
-            DispatchQueue.global(qos: .background).async {
+            // Concurrent posts while config is replaced. Avoid .background QoS — macOS 15
+            // throttles it heavily under xcodebuild, which times out this expectation.
+            postQueue.async {
                 NetworkManager.post(request) { _ in
                     expectation.fulfill()
                 }

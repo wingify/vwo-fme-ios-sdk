@@ -43,6 +43,13 @@ class NetworkManager {
             _config = GlobalRequestModel() // Initialize with default config
         }
     }
+
+    /// Tests may run after another case already attached a real client (`attachClient` is one-shot).
+    static func replaceClientForTesting(_ client: NetworkClientInterface) {
+        configQueue.sync {
+            _client = client
+        }
+    }
     
     private static func createRequest(_ request: RequestModel) -> RequestModel? {
         let handler = RequestHandler()
@@ -70,21 +77,23 @@ class NetworkManager {
     }
     
     static func get(_ request: RequestModel, completion: @escaping (ResponseModel) -> Void) {
-        guard let networkOptions = createRequest(request) else {
+        guard let networkOptions = createRequest(request), let client = client else {
+            completion(ResponseModel())
             return
         }
-        
-        client?.GET(request: networkOptions, completion: { result in
+
+        client.GET(request: networkOptions, completion: { result in
             completion(result)
         })
     }
     
     static func post(_ request: RequestModel, completion: @escaping (ResponseModel) -> Void) {
-        guard let networkOptions = createRequest(request) else {
+        guard let networkOptions = createRequest(request), let client = client else {
+            completion(ResponseModel())
             return
         }
-        
-        client?.POST(request: networkOptions, completion: { result in
+
+        client.POST(request: networkOptions, completion: { result in
             completion(result)
         })
     }

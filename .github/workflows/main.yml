@@ -11,6 +11,7 @@ jobs:
     if: "!contains(github.event.head_commit.message, '[skip-ci]')"
     name: Run test on ${{ matrix.os }} with Xcode ${{ matrix.xcode-version }}
     runs-on: ${{ matrix.os }}
+    timeout-minutes: 20
     strategy:
       fail-fast: false
       matrix:
@@ -31,36 +32,25 @@ jobs:
     steps:
     - uses: actions/checkout@v4
 
-    - name: Set up Swift
-      uses: swift-actions/setup-swift@v1
-
     - name: Select Xcode Version
       run: sudo xcode-select -s /Applications/Xcode_${{ matrix.xcode-version }}.app
 
     - name: List available simulators
       run: xcrun simctl list
 
-    - name: Build
-      run: |
-        xcodebuild build-for-testing \
-          -scheme VWO-FME \
-          -sdk iphonesimulator \
-          -configuration Debug
-
-    - name: Test with Coverage
+    - name: Build and Test with Coverage
       run: |
         xcodebuild test \
-          -scheme VWO-FMETests \
+          -scheme VWO-FME \
           -destination '${{ matrix.destination }}' \
           -sdk iphonesimulator \
           -configuration Debug \
           -enableCodeCoverage YES \
-          -resultBundlePath ./TestResults.xcresult \
-          -verbose
+          -resultBundlePath ./TestResults.xcresult
 
     - name: Generate Coverage Report
       run: |
-        xcrun xccov view --report --files-for-target VWO-FME ./TestResults.xcresult
+        xcrun xccov view --report --files-for-target Wingify_FME ./TestResults.xcresult
 
     - name: Notification
       if: always()

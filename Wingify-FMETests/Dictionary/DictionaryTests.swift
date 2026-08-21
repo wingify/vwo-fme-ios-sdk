@@ -15,9 +15,9 @@
  */
 
 import XCTest
-#if SWIFT_PACKAGE
+#if canImport(Wingify_FME)
 @testable import Wingify_FME
-#else
+#elseif canImport(VWO_FME)
 @testable import VWO_FME
 #endif
 
@@ -35,6 +35,7 @@ final class DictionaryTests: XCTestCase {
         props.id = 123
         props.isFirst = 1
         props.isMII = true
+        props.fId = 42
         props.isCustomEvent = true
         props.product = "TestProduct"
         props.additionalProperties = ["extraKey": "extraValue"]
@@ -52,6 +53,7 @@ final class DictionaryTests: XCTestCase {
         XCTAssertEqual(dict["id"] as? Int, 123)
         XCTAssertEqual(dict["isFirst"] as? Int, 1)
         XCTAssertEqual(dict["isMII"] as? Bool, true)
+        XCTAssertEqual(dict["fId"] as? Int, 42)
         XCTAssertEqual(dict["isCustomEvent"] as? Bool, true)
         XCTAssertEqual(dict["product"] as? String, "TestProduct")
         XCTAssertEqual(dict["extraKey"] as? String, "extraValue")

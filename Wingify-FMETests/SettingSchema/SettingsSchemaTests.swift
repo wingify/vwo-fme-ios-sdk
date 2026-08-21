@@ -15,9 +15,9 @@
  */
 
 import XCTest
-#if SWIFT_PACKAGE
+#if canImport(Wingify_FME)
 @testable import Wingify_FME
-#else
+#elseif canImport(VWO_FME)
 @testable import VWO_FME
 #endif
 
@@ -64,9 +64,10 @@ class SettingsSchemaTests: XCTestCase {
     }
 
     // MARK: - Holdout (`SettingsSchema.isValidHoldoutGroup`)
-    // Covered: missing id / percentTraffic / isGlobal; segments nil or empty; metrics nil, empty, or any metric
-    // missing id, type, identifier, or empty identifier; non-global with nil or empty featureIds; global with nil/empty
-    // featureIds allowed; mixed list invalid; no holdouts (nil or empty array).
+    // Covered: missing id / percentTraffic / isGlobal; metrics nil, empty, or any metric missing id, type,
+    // identifier, or empty identifier; non-global with nil or empty featureIds; global with nil/empty
+    // featureIds allowed; segments are not schema-validated (nil/empty still allowed); mixed list invalid;
+    // no holdouts (nil or empty array).
 
     func testValidSettingsWithHoldoutGroup() throws {
         var settings = try loadBaseSettings()
@@ -92,16 +93,18 @@ class SettingsSchemaTests: XCTestCase {
         XCTAssertFalse(SettingsSchema().isSettingsValid(settings), "Holdout without isGlobal should invalidate settings")
     }
 
-    func testInvalidSettingsHoldoutMissingSegments() throws {
+    func testValidSettingsHoldoutMissingSegments() throws {
         var settings = try loadBaseSettings()
         settings.holdoutGroups = [makeSchemaValidHoldout(segments: nil)]
-        XCTAssertFalse(SettingsSchema().isSettingsValid(settings), "Holdout without segments should invalidate settings")
+        // SettingsSchema does not require holdout segments; segmentation skip is handled at evaluation time.
+        XCTAssertTrue(SettingsSchema().isSettingsValid(settings), "Holdout without segments remains schema-valid")
     }
 
-    func testInvalidSettingsHoldoutEmptySegments() throws {
+    func testValidSettingsHoldoutEmptySegments() throws {
         var settings = try loadBaseSettings()
         settings.holdoutGroups = [makeSchemaValidHoldout(segments: [:])]
-        XCTAssertFalse(SettingsSchema().isSettingsValid(settings), "Holdout with empty segments object should invalidate settings")
+        // SettingsSchema does not require holdout segments; empty segments remain schema-valid.
+        XCTAssertTrue(SettingsSchema().isSettingsValid(settings), "Holdout with empty segments remains schema-valid")
     }
 
     func testInvalidSettingsHoldoutMissingMetrics() throws {

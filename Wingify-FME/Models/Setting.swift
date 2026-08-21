@@ -75,6 +75,8 @@ public struct Settings: Codable, Equatable {
         case sampling
         case alwaysApplySampling
     }
+
+    public init() {}
     
     public init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)

@@ -14,9 +14,9 @@
 
 import XCTest
 import CoreData
-#if SWIFT_PACKAGE
+#if canImport(Wingify_FME)
 @testable import Wingify_FME
-#else
+#elseif canImport(VWO_FME)
 @testable import VWO_FME
 #endif
 

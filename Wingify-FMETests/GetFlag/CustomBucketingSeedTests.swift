@@ -15,7 +15,11 @@
  */
 
 import XCTest
+#if canImport(Wingify_FME)
+@testable import Wingify_FME
+#elseif canImport(VWO_FME)
 @testable import VWO_FME
+#endif
 
 /// E2E-style tests for custom bucketing seed on iOS.
 final class CustomBucketingSeedTests: XCTestCase {

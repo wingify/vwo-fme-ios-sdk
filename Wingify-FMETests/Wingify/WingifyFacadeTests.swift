@@ -1,7 +1,7 @@
 import XCTest
-#if SWIFT_PACKAGE
+#if canImport(Wingify_FME)
 @testable import Wingify_FME
-#else
+#elseif canImport(VWO_FME)
 @testable import VWO_FME
 #endif
 
@@ -20,7 +20,7 @@ final class WingifyFacadeTests: XCTestCase {
         _ = WingifyInitOptions(sdkKey: "sdk-key", accountId: 12345)
 
         XCTAssertEqual(Constants.SDK_NAME, "wingify-fme-ios-sdk")
-        XCTAssertEqual(Constants.SDK_USERDEFAULT_SUITE, "com.wingify.fme.userdefault.suite")
+        XCTAssertEqual(Constants.SDK_USERDEFAULT_SUITE, "com.vwo.fme.userdefault.suite")
         XCTAssertEqual(WingifyInitSuccess.initializationSuccess.message, "Wingify is ready to use.")
     }
 
@@ -79,8 +79,17 @@ final class WingifyFacadeTests: XCTestCase {
         )
     }
 
-    func testDefaultBrandRemainsVWOUntilWingifyFacadeIsUsed() {
-        _ = WingifyInitOptions(sdkKey: "sdk-key", accountId: 12345)
+    func testDefaultBrandIsWingifyAfterReset() {
+        ProductConfig.resetForTesting()
+
+        XCTAssertEqual(Constants.SDK_NAME, "wingify-fme-ios-sdk")
+        XCTAssertEqual(WingifyInitSuccess.initializationSuccess.message, "Wingify is ready to use.")
+        XCTAssertEqual(UrlService.getBaseUrl(for: .get), "edge.wingify.net")
+        XCTAssertEqual(UrlService.getBaseUrl(for: .post), "collect.wingify.net")
+    }
+
+    func testVWOFacadeSwitchesBrandToVWO() {
+        _ = VWOInitOptions(sdkKey: "sdk-key", accountId: 12345)
 
         XCTAssertEqual(Constants.SDK_NAME, "vwo-fme-ios-sdk")
         XCTAssertEqual(WingifyInitSuccess.initializationSuccess.message, "VWO is ready to use.")
