@@ -20,7 +20,7 @@ struct Constants {
     static let defaultString: String = ""
     static let PLATFORM: String = "ios"
 
-    static let SDK_VERSION: String = "1.62.0"
+    static let SDK_VERSION: String = "1.65.0"
 
     static let MAX_TRAFFIC_PERCENT: Int = 100
     static let MAX_TRAFFIC_VALUE: Int = 10000
@@ -92,7 +92,7 @@ struct Constants {
     static let REGEX_REQUIRES_GATEWAY_SERVICE = "\\b(country|region|city|os|device_type|browser_string|ua)\\b"
     static let REGEX_SEGMENTATION_FULL = "$REGEX_REQUIRES_GATEWAY_SERVICE|\"custom_variable\"\\s*:\\s*\\{\\s*\"name\"\\s*:\\s*\"inlist\\([^)]*\\)\""
     
-    // Holdout feature (aligned with Android Constants.Holdouts)
+    // Holdout feature 
     enum Holdouts {
         static let VARIATION_IS_PART_OF_HOLDOUT = 1
         static let VARIATION_NOT_PART_OF_HOLDOUT = 2

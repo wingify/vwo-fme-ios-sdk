@@ -106,7 +106,7 @@ class NetworkManager {
             let accountId = request.accountId
             let sdkKey = request.sdkKey ?? request.headers?["Authorization"] ?? ""
             
-            // Prefer the ServiceContainer passed by the caller (Android parity); fall back to registry lookup.
+            // Prefer the ServiceContainer passed by the caller . fall back to registry lookup.
             var resolvedServiceContainer = serviceContainer
             if resolvedServiceContainer == nil,
                let accountId = accountId,

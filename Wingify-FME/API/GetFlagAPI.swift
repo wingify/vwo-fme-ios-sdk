@@ -121,7 +121,7 @@ class GetFlagAPI {
                         ])
                     }
                     if !isExpired {
-                    // Check for holdout decision (aligned with Android: use holdoutIds, partition with server, cleanup obsolete)
+                    // Check for holdout decision ( use holdoutIds, partition with server, cleanup obsolete)
                     let savedHoldoutIds = storedData.holdoutIds ?? storedData.holdoutId ?? storedData.holdoutGroupId ?? []
                     let savedNotInHoldoutIds = storedData.notInHoldoutIds ?? []
 

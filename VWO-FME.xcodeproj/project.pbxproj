@@ -186,6 +186,7 @@
 		BAFC4C132FC861390087E01B /* InternalEventSamplingSettings.swift in Sources */ = {isa = PBXBuildFile; fileRef = BAFC4C102FC861390087E01B /* InternalEventSamplingSettings.swift */; };
 		BAFC4C142FC861390087E01B /* InternalEventSamplingUtil.swift in Sources */ = {isa = PBXBuildFile; fileRef = BAFC4C112FC861390087E01B /* InternalEventSamplingUtil.swift */; };
 		BAFC4C152FC861390087E01B /* InternalEventSamplingUtilTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = BAFC4C122FC861390087E01B /* InternalEventSamplingUtilTests.swift */; };
+		BAFC4DC22FD6EC010087E01B /* SdkInitAndUsageStatsPayloadTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = BAFC4DC12FD6EC010087E01B /* SdkInitAndUsageStatsPayloadTests.swift */; };
 		BAFC4C182FC861390087E01B /* ErrorLogSamplingCategory.swift in Sources */ = {isa = PBXBuildFile; fileRef = BAFC4C082FC861390087E01B /* ErrorLogSamplingCategory.swift */; };
 		BAFC4DB32FD6AA510087E01B /* VWOExports.swift in Sources */ = {isa = PBXBuildFile; fileRef = BAFC4DB12FD6AA510087E01B /* VWOExports.swift */; };
 		BAFC4DBE2FD6EB240087E01B /* BucketingIdResolverTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = BAFC4DBD2FD6EB240087E01B /* BucketingIdResolverTests.swift */; };
@@ -371,6 +372,7 @@
 		BAFC4C102FC861390087E01B /* InternalEventSamplingSettings.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InternalEventSamplingSettings.swift; sourceTree = "<group>"; };
 		BAFC4C112FC861390087E01B /* InternalEventSamplingUtil.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InternalEventSamplingUtil.swift; sourceTree = "<group>"; };
 		BAFC4C122FC861390087E01B /* InternalEventSamplingUtilTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InternalEventSamplingUtilTests.swift; sourceTree = "<group>"; };
+		BAFC4DC12FD6EC010087E01B /* SdkInitAndUsageStatsPayloadTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SdkInitAndUsageStatsPayloadTests.swift; sourceTree = "<group>"; };
 		BAFC4DB12FD6AA510087E01B /* VWOExports.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VWOExports.swift; sourceTree = "<group>"; };
 		BAFC4DBD2FD6EB240087E01B /* BucketingIdResolverTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BucketingIdResolverTests.swift; sourceTree = "<group>"; };
 		BAFC4DBF2FD6EB740087E01B /* BucketingIdResolver.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BucketingIdResolver.swift; sourceTree = "<group>"; };
@@ -928,6 +930,7 @@
 				BAFC4AD82FC861390087E01B /* DataTypeUtilTests.swift */,
 				BAFC4AD92FC861390087E01B /* DecisionUtilTests.swift */,
 				BAFC4C122FC861390087E01B /* InternalEventSamplingUtilTests.swift */,
+				BAFC4DC12FD6EC010087E01B /* SdkInitAndUsageStatsPayloadTests.swift */,
 				BAFC4ADA2FC861390087E01B /* DeviceIDUtilTests.swift */,
 				BAFC4ADB2FC861390087E01B /* DeviceUtilTests.swift */,
 				BAFC4ADC2FC861390087E01B /* FunctionUtilTests.swift */,
@@ -1278,6 +1281,7 @@
 				BAFC4B082FC861390087E01B /* FmeConfigTests.swift in Sources */,
 				BAFC4B092FC861390087E01B /* DecisionUtilTests.swift in Sources */,
 				BAFC4C152FC861390087E01B /* InternalEventSamplingUtilTests.swift in Sources */,
+				BAFC4DC22FD6EC010087E01B /* SdkInitAndUsageStatsPayloadTests.swift in Sources */,
 				BAFC4B0D2FC861390087E01B /* DecisionMakerTests.swift in Sources */,
 				BAFC4B102FC861390087E01B /* SegmentOperandEvaluatorTests.swift in Sources */,
 				BAFC4B162FC861390087E01B /* SettingUtilTests.swift in Sources */,

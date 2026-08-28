@@ -23,7 +23,7 @@ import XCTest
 
 final class HoldoutGroupServiceTests: XCTestCase {
 
-    // Basic helper to create a rollout feature + campaign (similar to Android tests)
+    // Basic helper to create a rollout feature + campaign
     private func makeSettingsWithRolloutFeature(holdoutGroups: [HoldoutGroup]? = nil) -> (Settings, Feature) {
         // Variable
         let variable = Variable(value: .string("test_value"), type: "string", key: "test_key", id: 1)

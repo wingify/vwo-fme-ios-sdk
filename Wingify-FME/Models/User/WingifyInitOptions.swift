@@ -168,4 +168,45 @@ import Foundation
         self.isUsageStatsDisabled = isUsageStatsDisabled
         self.vwoMeta = vwoMeta
     }
+
+    /**
+     * Serializes init options into a JSON-safe dictionary for `initConfig`
+     * on SDK init / usage-stats event payloads .
+     */
+    func toInitConfigDictionary() -> [String: Any] {
+        var config: [String: Any] = [:]
+        if let accountId = accountId {
+            config["accountId"] = accountId
+        }
+        if let sdkKey = sdkKey {
+            config["sdkKey"] = sdkKey
+        }
+        config["logger"] = logger
+        if let pollInterval = pollInterval {
+            config["pollInterval"] = pollInterval
+        }
+        if !gatewayService.isEmpty {
+            config["gatewayService"] = gatewayService
+        }
+        config["cachedSettingsExpiryTime"] = cachedSettingsExpiryTime
+        config["cachedDecisionExpiryTime"] = cachedDecisionExpiryTime
+        if let batchMinSize = batchMinSize {
+            config["batchMinSize"] = batchMinSize
+        }
+        if let batchUploadTimeInterval = batchUploadTimeInterval {
+            config["batchUploadTimeInterval"] = batchUploadTimeInterval
+        }
+        config["sdkName"] = sdkName
+        config["sdkVersion"] = sdkVersion
+        config["isUsageStatsDisabled"] = isUsageStatsDisabled
+        config["isAliasingEnabled"] = isAliasingEnabled
+        config["shouldTriggerIntegrationCallbackAlways"] = shouldTriggerIntegrationCallbackAlways
+        if !vwoMeta.isEmpty {
+            config["vwoMeta"] = vwoMeta
+        }
+        config["integrations"] = integrations != nil
+        config["storage"] = storageConnector != nil
+        config["logTransport"] = logTransport != nil
+        return config
+    }
 }

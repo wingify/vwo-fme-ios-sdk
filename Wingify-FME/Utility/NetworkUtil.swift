@@ -474,7 +474,43 @@ class NetworkUtil {
     }
     
 
-    static func getSDKInitEventPayload(eventName: String, settingsFetchTime: Int64? = nil, sdkInitTime: Int64? = nil, serviceContainer: ServiceContainer? = nil) -> [String: Any] {
+    /**
+     * Builds `props.data` for the SDK init event.
+     * Only includes `isSDKInitialized` (timings and `initConfig` go on usage stats).
+     */
+    static func getSDKInitEventData() -> [String: Any] {
+        ["isSDKInitialized": true]
+    }
+
+    /**
+     * Builds `props.data` for the usage-stats event: timings and `initConfig`.
+     *
+     * - Parameters:
+     *   - settingsFetchTime: Time taken to fetch settings in milliseconds.
+     *   - sdkInitTime: Time taken to initialize the SDK in milliseconds.
+     *   - serviceContainer: ServiceContainer used to read init options for `initConfig`.
+     * - Returns: A dictionary for `props.data` containing optional timings and `initConfig`.
+     */
+    static func getSDKUsageStatsEventData(
+        settingsFetchTime: Int64? = nil,
+        sdkInitTime: Int64? = nil,
+        serviceContainer: ServiceContainer? = nil
+    ) -> [String: Any] {
+        var data: [String: Any] = [:]
+        if let settingsFetchTime = settingsFetchTime {
+            data["settingsFetchTime"] = settingsFetchTime
+        }
+        if let sdkInitTime = sdkInitTime {
+            data["sdkInitTime"] = sdkInitTime
+        }
+
+        var initConfig = serviceContainer?.getWingifyInitOptions().toInitConfigDictionary() ?? [:]
+        data["initConfig"] = initConfig
+
+        return data
+    }
+
+    static func getSDKInitEventPayload(eventName: String, serviceContainer: ServiceContainer? = nil) -> [String: Any] {
         // Use ServiceContainer if provided, otherwise fallback to SettingsManager
         let accountId: Int
         let sdkKey: String
@@ -496,16 +532,7 @@ class NetworkUtil {
         properties.d?.event?.props?.additionalProperties = [Constants.VWO_FS_ENVIRONMENT: sdkKey]
         properties.d?.event?.props?.product = Constants.PRODUCT_NAME
         
-        
-        var data: [String: Any] = ["isSDKInitialized": true]
-        if let settingsFetchTime = settingsFetchTime {
-            data["settingsFetchTime"] = settingsFetchTime
-        }
-        if let sdkInitTime = sdkInitTime {
-            data["sdkInitTime"] = sdkInitTime
-        }
-        
-        properties.d?.event?.props?.data = data
+        properties.d?.event?.props?.data = getSDKInitEventData()
         
         // Convert properties to dictionary, removing null values
         let payloadDict = properties.toDictionary()
@@ -640,26 +667,59 @@ class NetworkUtil {
     /// This function generates a dictionary representing the data payload that will be sent
     /// to track SDK usage. It incorporates essential information such as the
     /// event type, account identifiers, and collected usage statistics.
+    /// `props.data` includes timings and `initConfig` (not `isSDKInitialized`).
     ///
     /// - Parameters:
     ///   - event: The type of SDK usage event being tracked (enum `EventEnum`).
     ///   - usageStatsAccountId: The account ID specifically designated for tracking usage statistics.
     ///                          This might be different from the main VWO account ID.
+    ///   - settingsFetchTime: Time taken to fetch settings in milliseconds.
+    ///   - sdkInitTime: Time taken to initialize the SDK in milliseconds.
+    ///   - serviceContainer: ServiceContainer for account context and init options.
     /// - Returns: A dictionary containing the non-nil key-value pairs representing the payload
     ///            for the SDK usage statistics event. This dictionary is ready to be serialized
     ///            (e.g., to JSON) and sent to the server.
-    static func getSDKUsageStatsEventPayload(event: EventEnum, usageStatsAccountId: Int) -> [String: Any] {
-        let settingsManager = SettingsManager.instance
-        guard let accountId = settingsManager?.accountId, let sdkKey = settingsManager?.sdkKey else {
-            return [:] // Return an empty dictionary if either accountId or sdkKey is nil
+    static func getSDKUsageStatsEventPayload(
+        event: EventEnum,
+        usageStatsAccountId: Int,
+        settingsFetchTime: Int64? = nil,
+        sdkInitTime: Int64? = nil,
+        serviceContainer: ServiceContainer? = nil
+    ) -> [String: Any] {
+        let accountId: Int
+        let sdkKey: String
+        if let container = serviceContainer {
+            accountId = container.getAccountId()
+            sdkKey = container.getSdkKey()
+        } else if let settingsManager = SettingsManager.instance {
+            accountId = settingsManager.accountId
+            sdkKey = settingsManager.sdkKey
+        } else {
+            return [:]
         }
        
         let userId = "\(accountId)_\(sdkKey)"
         
-        var properties = NetworkUtil.getEventBasePayload(userId: userId, eventName: event.rawValue, visitorUserAgent: nil, ipAddress: nil,isUsageStatsEvent: true,usageStatsAccountId: usageStatsAccountId)
+        var properties = NetworkUtil.getEventBasePayload(
+            userId: userId,
+            eventName: event.rawValue,
+            visitorUserAgent: nil,
+            ipAddress: nil,
+            isUsageStatsEvent: true,
+            usageStatsAccountId: usageStatsAccountId,
+            serviceContainer: serviceContainer
+        )
         
         properties.d?.event?.props?.product = Constants.PRODUCT_NAME
-        
+
+        let data = getSDKUsageStatsEventData(
+            settingsFetchTime: settingsFetchTime,
+            sdkInitTime: sdkInitTime,
+            serviceContainer: serviceContainer
+        )
+        if !data.isEmpty {
+            properties.d?.event?.props?.data = data
+        }
        
         let stats = UsageStatsUtil.shared.getUsageStatsDict()
         let cleanedStats = UsageStatsUtil.shared.removeFalseValues(dict: stats)

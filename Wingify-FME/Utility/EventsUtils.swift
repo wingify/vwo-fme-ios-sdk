@@ -19,13 +19,11 @@ import Foundation
 /**
     * Sends an init event to Wingify.
     * This event is triggered when the init function is called.
-    * @param settingsFetchTime Time taken to fetch settings in milliseconds.
-    * @param sdkInitTime Time taken to initialize the SDK in milliseconds.
     * @param serviceContainer ServiceContainer instance for service access.
     */
 class EventsUtils {
     
-    func sendSdkInitEvent(settingsFetchTime: Int64? = nil, sdkInitTime: Int64? = nil, serviceContainer: ServiceContainer? = nil) {
+    func sendSdkInitEvent(serviceContainer: ServiceContainer? = nil) {
         // Create the query parameters
         let queryParams = NetworkUtil.getEventsBaseProperties(
             eventName: EventEnum.VWO_INIT_CALLED.rawValue,
@@ -34,8 +32,11 @@ class EventsUtils {
             serviceContainer: serviceContainer
         )
 
-        // Create the payload with required fields
-        let payload = NetworkUtil.getSDKInitEventPayload(eventName: EventEnum.VWO_INIT_CALLED.rawValue, settingsFetchTime: settingsFetchTime, sdkInitTime: sdkInitTime, serviceContainer: serviceContainer)
+        // Create the payload with required fields (`props.data` is only isSDKInitialized)
+        let payload = NetworkUtil.getSDKInitEventPayload(
+            eventName: EventEnum.VWO_INIT_CALLED.rawValue,
+            serviceContainer: serviceContainer
+        )
 
         // Send the constructed payload via POST request
         NetworkUtil.sendGatewayEvent(queryParams: queryParams, payload: payload, eventName: EventEnum.VWO_INIT_CALLED.rawValue, serviceContainer: serviceContainer)
@@ -46,8 +47,15 @@ class EventsUtils {
     ///
     /// - Parameter usageStatsAccountId: The account ID specifically designated for tracking usage statistics.
     ///                                  This might be different from the main VWO account ID.
+    /// - Parameter settingsFetchTime: Time taken to fetch settings in milliseconds.
+    /// - Parameter sdkInitTime: Time taken to initialize the SDK in milliseconds.
     /// - Parameter serviceContainer: ServiceContainer instance for service access.
-    func sendSDKUsageStatsEvent(usageStatsAccountId: Int, serviceContainer: ServiceContainer? = nil) {
+    func sendSDKUsageStatsEvent(
+        usageStatsAccountId: Int,
+        settingsFetchTime: Int64? = nil,
+        sdkInitTime: Int64? = nil,
+        serviceContainer: ServiceContainer? = nil
+    ) {
         // Create the query parameters
         let queryParams = NetworkUtil.getEventsBaseProperties(
             eventName: EventEnum.VWO_USAGE_STATS.rawValue,
@@ -58,10 +66,13 @@ class EventsUtils {
             serviceContainer: serviceContainer
         )
         
-        // Create the payload with required fields
+        // Create the payload (props.data holds timings + initConfig)
         let payload = NetworkUtil.getSDKUsageStatsEventPayload(
             event: EventEnum.VWO_USAGE_STATS,
-            usageStatsAccountId: usageStatsAccountId
+            usageStatsAccountId: usageStatsAccountId,
+            settingsFetchTime: settingsFetchTime,
+            sdkInitTime: sdkInitTime,
+            serviceContainer: serviceContainer
         )
         
         // Send the payload as a POST request

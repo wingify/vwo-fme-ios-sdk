@@ -5,6 +5,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.65.0] - 2026-08-24
+
+### Added
+
+- Added support for sending initConfig to app dashboard via the usageStats event.
+
 ## [1.62.0] - 2026-08-10
 
 ### Added

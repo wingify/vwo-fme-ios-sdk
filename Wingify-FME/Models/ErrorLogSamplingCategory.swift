@@ -32,7 +32,7 @@ enum ErrorLogSamplingCategory {
 /**
  * Manually maintained error log keys for `vwo_sdkDebug` sampling.
  *
- * Only `sampled` keys are listed explicitly (aligned with Node
+ * Only `sampled` keys are listed explicitly 
  * `SAMPLED_DEBUG_ERROR_TEMPLATE_KEYS`). Any other key is treated as always-send.
  */
 enum ErrorLogSamplingKeys {

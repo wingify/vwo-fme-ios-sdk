@@ -99,7 +99,7 @@ class HoldoutEvaluationState {
 /// excluded from features due to holdout group membership. Evaluates segmentation
 /// rules and traffic percentage bucketing to determine holdout status.
 class HoldoutGroupService {
-    /// Aligned with Android Constants.Holdouts.VARIATION_IS_PART_OF_HOLDOUT / VARIATION_NOT_PART_OF_HOLDOUT
+    /// Constants.Holdouts.VARIATION_IS_PART_OF_HOLDOUT / VARIATION_NOT_PART_OF_HOLDOUT
     private static let variationIsPartOfHoldout = Constants.Holdouts.VARIATION_IS_PART_OF_HOLDOUT
     private static let variationNotPartOfHoldout = Constants.Holdouts.VARIATION_NOT_PART_OF_HOLDOUT
 
@@ -117,7 +117,7 @@ class HoldoutGroupService {
         self.storageService = storageService
     }
 
-    /// Gets the applicable holdout groups for a given feature ID (same as Android `doesHoldoutApplyToFeature` filter).
+    /// Gets the applicable holdout groups for a given feature ID ( `doesHoldoutApplyToFeature` filter).
     ///
     /// - Parameters:
     ///   - settings: Settings containing configured holdout groups.
@@ -128,7 +128,7 @@ class HoldoutGroupService {
         return holdouts.filter { doesHoldoutApplyToFeature($0, featureId: featureId) }
     }
 
-    /// Determines if a holdout group applies to the given feature (aligned with Android `doesHoldoutApplyToFeature`).
+    /// Determines if a holdout group applies to the given feature ( `doesHoldoutApplyToFeature`).
     ///
     /// - Parameters:
     ///   - holdoutGroup: Holdout group definition.

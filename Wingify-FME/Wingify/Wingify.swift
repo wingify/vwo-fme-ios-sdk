@@ -236,9 +236,9 @@ enum SDKState {
                     let serviceContainer = client.createServiceContainer()
                     
                     if options.sdkName == Constants.SDK_NAME {  // Don't call sendSdkInitEvent for hybrid SDKs
-                        sendSdkInitEvent(sdkInitTime: sdkInitTime, client: client, serviceContainer: serviceContainer)
+                        sendSdkInitEvent(client: client, serviceContainer: serviceContainer)
                     }
-                    sendUsageStats(client: client, serviceContainer: serviceContainer)
+                    sendUsageStats(sdkInitTime: sdkInitTime, client: client, serviceContainer: serviceContainer)
                     
                     DispatchQueue.main.async {
                         completion(.success(WingifyInitSuccess.initializationSuccess.message))
@@ -303,20 +303,17 @@ enum SDKState {
      * This function checks if the Wingify instance is valid, if its settings have been processed,
      * and critically, if the SDK has not been marked as initialized previously in the current
      * session or from cached settings. If all conditions are true, it proceeds to send
-     * an "SDK initialized" tracking event, including the time it took for settings to be fetched
-     * and the time it took for the SDK to complete its initialization process.
+     * an "SDK initialized" tracking event (`props.data` includes only `isSDKInitialized`).
      *
-     * This helps in tracking the initial setup performance and ensuring that the
-     * initialization event is sent only once per effective SDK start.
+     * This helps in ensuring that the initialization event is sent only once per effective SDK start.
      *
-     * @param sdkInitTime The timestamp (in milliseconds) marking the completion of the SDK's initialization process.
      * @param client The WingifyClient instance to use
      */
     
-    private static func sendSdkInitEvent(sdkInitTime: Int64, client: WingifyClient, serviceContainer: ServiceContainer?) {
+    private static func sendSdkInitEvent(client: WingifyClient, serviceContainer: ServiceContainer?) {
         let wasInitializedEarlier = client.processedSettings?.sdkMetaInfo?.wasInitializedEarlier
         if client.isSettingsValid && (wasInitializedEarlier == false || wasInitializedEarlier == nil) {
-            EventsUtils().sendSdkInitEvent(settingsFetchTime: client.settingsFetchTime, sdkInitTime: sdkInitTime, serviceContainer: serviceContainer)
+            EventsUtils().sendSdkInitEvent(serviceContainer: serviceContainer)
         }
     }
     
@@ -327,18 +324,25 @@ enum SDKState {
      * passes the usage-stats check. When `alwaysApplySampling.client` is true,
      * sampling uses `sampling.usage.client` (defaults to 1% when missing);
      * otherwise the event is always sent.
+     * `props.data` includes timings and `initConfig`.
      *
+     * @param sdkInitTime Time taken to initialize the SDK in milliseconds
      * @param client The WingifyClient instance to use
      * @param serviceContainer ServiceContainer for event delivery context
      */
-    private static func sendUsageStats(client: WingifyClient, serviceContainer: ServiceContainer?) {
+    private static func sendUsageStats(sdkInitTime: Int64, client: WingifyClient, serviceContainer: ServiceContainer?) {
         guard let usageStatsAccountId = client.processedSettings?.usageStatsAccountId else {
             return
         }
         guard InternalEventSamplingUtil.isUsageStatsEventQualified(settings: client.processedSettings) else {
             return
         }
-        EventsUtils().sendSDKUsageStatsEvent(usageStatsAccountId: usageStatsAccountId, serviceContainer: serviceContainer)
+        EventsUtils().sendSDKUsageStatsEvent(
+            usageStatsAccountId: usageStatsAccountId,
+            settingsFetchTime: client.settingsFetchTime,
+            sdkInitTime: sdkInitTime,
+            serviceContainer: serviceContainer
+        )
     }
     
     /**
@@ -444,13 +448,15 @@ enum SDKState {
          * Public helper for hybrid SDKs (e.g. Flutter) to send the SDK init event.
          *
          * Looks up the default instance, builds a service container and delegates to the
-         * internal sendSdkInitEvent(sdkInitTime:client:serviceContainer:) helper.
+         * internal sendSdkInitEvent(client:serviceContainer:) helper.
+         * `sdkInitTime` is retained for API compatibility; timings are sent via usage stats.
          *
          * - Parameter sdkInitTime: The duration (in ms) it took to initialize the SDK.
          */
         public func sendSdkInitEvent(sdkInitTime: Int64) {
+            _ = sdkInitTime // Retained for hybrid API compatibility; timings go on usage stats
             guard let client = wingifyClient else { return }
             let serviceContainer = client.createServiceContainer()
-            WingifyFme.sendSdkInitEvent(sdkInitTime: sdkInitTime, client: client, serviceContainer: serviceContainer)
+            WingifyFme.sendSdkInitEvent(client: client, serviceContainer: serviceContainer)
         }
 }
