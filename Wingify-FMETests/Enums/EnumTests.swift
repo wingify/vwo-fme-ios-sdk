@@ -124,4 +124,23 @@ class CodableValueTests: XCTestCase {
             XCTFail("JSON compatible conversion failed")
         }
     }
+
+    func testNullEncodingDecoding() throws {
+        let original = CodableValue.null
+        let data = try JSONEncoder().encode(original)
+        let decoded = try JSONDecoder().decode(CodableValue.self, from: data)
+        XCTAssertEqual(decoded, .null)
+        XCTAssertTrue(decoded.toJSONCompatible() is NSNull)
+    }
+
+    func testNestedNullInDictionaryDecoding() throws {
+        let json = #"{"mode":"none","recommendations":null,"variation":"control"}"#.data(using: .utf8)!
+        let decoded = try JSONDecoder().decode(CodableValue.self, from: json)
+        guard case .dictionary(let dict) = decoded else {
+            return XCTFail("Expected dictionary")
+        }
+        XCTAssertEqual(dict["mode"], .string("none"))
+        XCTAssertEqual(dict["recommendations"], .null)
+        XCTAssertEqual(dict["variation"], .string("control"))
+    }
 }

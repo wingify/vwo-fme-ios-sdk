@@ -91,11 +91,16 @@ enum CodableValue: Codable, Equatable {
     case bool(Bool)
     case array([CodableValue])
     case dictionary([String: CodableValue])
+    case null
     
     init(from decoder: Decoder) throws {
         let container = try decoder.singleValueContainer()
         
-        if let value = try? container.decode(String.self) {
+        // Nested JSON null must be handled explicitly; Dictionary/Array decode
+        // does not treat null as "absent" the way decodeIfPresent does.
+        if container.decodeNil() {
+            self = .null
+        } else if let value = try? container.decode(String.self) {
             self = .string(value)
         } else if let value = try? container.decode(Int.self) {
             self = .int(value)
@@ -132,6 +137,8 @@ enum CodableValue: Codable, Equatable {
             try container.encode(value)
         case .float(let value):
             try container.encode(value)
+        case .null:
+            try container.encodeNil()
         }
     }
     
@@ -151,6 +158,8 @@ enum CodableValue: Codable, Equatable {
             return value.mapValues { $0.toJSONCompatible() }
         case .float(let value):
             return value
+        case .null:
+            return NSNull()
         }
     }
     

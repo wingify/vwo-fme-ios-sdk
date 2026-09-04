@@ -238,4 +238,70 @@ class SettingsSchemaTests: XCTestCase {
         let hasDifferences = wingifyBuilder.findDifference(localSettings: processedMockSetting1, apiSettings: processedMockSetting1)
         XCTAssertFalse(hasDifferences, "Expected differences not found")
     }
+
+    // MARK: - Settings decode resilience
+
+    func testSettingsKeepsCampaignsWhenNestedNullPresentInVariable() throws {
+        let json = """
+        {
+          "features": [{"id": 1, "key": "flag_a"}],
+          "campaigns": [
+            {
+              "id": 1,
+              "key": "good_campaign",
+              "variations": [{"id": 1, "variables": [{"key": "ok", "value": "hello"}]}]
+            },
+            {
+              "id": 2,
+              "key": "json_with_null",
+              "variations": [{
+                "id": 1,
+                "variables": [{
+                  "key": "recommendation_config",
+                  "type": "json",
+                  "value": {"mode": "none", "recommendations": null, "variation": "control"}
+                }]
+              }]
+            },
+            {
+              "id": 3,
+              "key": "another_good_campaign",
+              "variations": [{"id": 1, "variables": [{"key": "ok2", "value": 123}]}]
+            }
+          ]
+        }
+        """.data(using: .utf8)!
+
+        let settings = try JSONDecoder().decode(Settings.self, from: json)
+        XCTAssertEqual(settings.features.count, 1)
+        XCTAssertEqual(settings.campaigns?.count, 3)
+        XCTAssertEqual(settings.campaigns?[1].key, "json_with_null")
+        XCTAssertEqual(
+            settings.campaigns?[1].variations?.first?.variables.first?.value,
+            .dictionary([
+                "mode": .string("none"),
+                "recommendations": .null,
+                "variation": .string("control")
+            ])
+        )
+    }
+
+    func testSettingsSkipsOnlyMalformedCampaign() throws {
+        let json = """
+        {
+          "features": [{"id": 1, "key": "flag_a"}, {"id": "bad", "key": "flag_b"}, {"id": 3, "key": "flag_c"}],
+          "campaigns": [
+            {"id": 1, "key": "good_1"},
+            {"id": "bad-id", "key": "bad_campaign"},
+            {"id": 3, "key": "good_3"}
+          ]
+        }
+        """.data(using: .utf8)!
+
+        let settings = try JSONDecoder().decode(Settings.self, from: json)
+        XCTAssertEqual(settings.campaigns?.count, 2)
+        XCTAssertEqual(settings.campaigns?.map { $0.key }, ["good_1", "good_3"])
+        XCTAssertEqual(settings.features.count, 2)
+        XCTAssertEqual(settings.features.map { $0.key }, ["flag_a", "flag_c"])
+    }
 }

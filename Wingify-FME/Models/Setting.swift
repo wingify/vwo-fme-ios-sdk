@@ -80,20 +80,15 @@ public struct Settings: Codable, Equatable {
     
     public init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
-        if let featuresArray = try? container.decodeIfPresent([Feature].self, forKey: .features) {
-            features = featuresArray
-        } else {
-            features = []
-        }
+        // Decode element-wise so one malformed feature/campaign cannot discard the rest.
+        features = (try? container.decodeIfPresent([FailableDecodable<Feature>].self, forKey: .features))?
+            .compactMap { $0.value } ?? []
         accountId = try container.decodeIfPresent(Int.self, forKey: .accountId)
         groups = try container.decodeIfPresent([String: Groups].self, forKey: .groups)
         campaignGroups = try container.decodeIfPresent([String: Int].self, forKey: .campaignGroups)
         isNBv2 = try container.decodeIfPresent(Bool.self, forKey: .isNBv2) ?? false
-        if let campaignsArray = try? container.decodeIfPresent([Campaign].self, forKey: .campaigns) {
-            campaigns = campaignsArray
-        } else {
-            campaigns = []
-        }
+        campaigns = (try? container.decodeIfPresent([FailableDecodable<Campaign>].self, forKey: .campaigns))?
+            .compactMap { $0.value } ?? []
         isNB = try container.decodeIfPresent(Bool.self, forKey: .isNB) ?? false
         sdkKey = try container.decodeIfPresent(String.self, forKey: .sdkKey)
         version = try container.decodeIfPresent(Int.self, forKey: .version)
@@ -113,5 +108,14 @@ public struct Settings: Codable, Equatable {
         } else {
             holdoutGroups = nil
         }
+    }
+}
+
+/// Decodes `T` if possible; otherwise keeps the array position advancing and drops the element.
+private struct FailableDecodable<T: Decodable>: Decodable {
+    let value: T?
+
+    init(from decoder: Decoder) throws {
+        value = try? T(from: decoder)
     }
 }

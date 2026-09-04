@@ -5,6 +5,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.65.1] - 2026-09-04
+
+### Fixed
+
+- The SDK now reads settings more safely: valid campaigns and features continue to work even if one item in the settings has unexpected data (for example, a missing/empty JSON value).
+
 ## [1.65.0] - 2026-08-24
 
 ### Added
