@@ -1,0 +1,100 @@
+name: CocoaPods Release
+
+# Manual only — nothing publishes until you click "Run workflow" in GitHub Actions.
+on:
+  workflow_dispatch:
+    inputs:
+      sdk:
+        description: 'Which SDK(s) to lint / release'
+        type: choice
+        required: true
+        default: 'Both'
+        options:
+          - Both
+          - VWO SDK
+          - Wingify SDK
+      dry_run:
+        description: 'Lint only (do not publish to CocoaPods Trunk)'
+        type: boolean
+        default: true
+      confirm_publish:
+        description: 'Type PUBLISH to allow a real release when dry_run is false'
+        required: false
+        default: ''
+
+jobs:
+  release:
+    name: Lint and optionally publish
+    runs-on: macos-15
+    timeout-minutes: 15
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Select Xcode
+        run: sudo xcode-select -s /Applications/Xcode_16.4.app
+
+      - name: Install CocoaPods
+        run: gem install cocoapods --no-document
+
+      - name: Show versions being released
+        run: |
+          echo "sdk=${{ inputs.sdk }}"
+          echo "dry_run=${{ inputs.dry_run }}"
+          if [ "${{ inputs.sdk }}" = "Both" ] || [ "${{ inputs.sdk }}" = "VWO SDK" ]; then
+            echo "VWO-FME.podspec:"
+            grep -E 'spec\.version' VWO-FME.podspec
+          fi
+          if [ "${{ inputs.sdk }}" = "Both" ] || [ "${{ inputs.sdk }}" = "Wingify SDK" ]; then
+            echo "Wingify-FME.podspec:"
+            grep -E 'spec\.version' Wingify-FME.podspec
+            echo "Constants.SDK_VERSION:"
+            grep -E 'SDK_VERSION' Wingify-FME/Constants/Constants.swift | head -1
+          fi
+
+      - name: Lint VWO-FME
+        if: ${{ inputs.sdk == 'Both' || inputs.sdk == 'VWO SDK' }}
+        run: pod lib lint VWO-FME.podspec --allow-warnings --platforms=ios --verbose
+
+      - name: Lint Wingify-FME
+        if: ${{ inputs.sdk == 'Both' || inputs.sdk == 'Wingify SDK' }}
+        run: pod lib lint Wingify-FME.podspec --allow-warnings --platforms=ios --verbose
+
+      - name: Guard real publish
+        if: ${{ inputs.dry_run == false }}
+        run: |
+          if [ "${{ inputs.confirm_publish }}" != "PUBLISH" ]; then
+            echo "::error::Real publish blocked. Set dry_run=false AND confirm_publish=PUBLISH."
+            exit 1
+          fi
+
+      - name: Verify CocoaPods Trunk auth
+        if: ${{ inputs.dry_run == false }}
+        env:
+          COCOAPODS_TRUNK_TOKEN: ${{ secrets.COCOAPODS_TRUNK_TOKEN }}
+        run: pod trunk me
+
+      - name: Push VWO-FME to Trunk
+        if: ${{ inputs.dry_run == false && (inputs.sdk == 'Both' || inputs.sdk == 'VWO SDK') }}
+        env:
+          COCOAPODS_TRUNK_TOKEN: ${{ secrets.COCOAPODS_TRUNK_TOKEN }}
+        run: pod trunk push VWO-FME.podspec --allow-warnings --verbose
+
+      - name: Push Wingify-FME to Trunk
+        if: ${{ inputs.dry_run == false && (inputs.sdk == 'Both' || inputs.sdk == 'Wingify SDK') }}
+        env:
+          COCOAPODS_TRUNK_TOKEN: ${{ secrets.COCOAPODS_TRUNK_TOKEN }}
+        run: pod trunk push Wingify-FME.podspec --allow-warnings --verbose
+
+      - name: Summary
+        if: always()
+        run: |
+          echo "sdk=${{ inputs.sdk }}"
+          if [ "${{ inputs.dry_run }}" = "true" ]; then
+            echo "Dry run completed — selected pod(s) were linted only, nothing was published."
+          else
+            echo "Publish path ran for ${{ inputs.sdk }} — check CocoaPods Trunk / job logs for push results."
+          fi
