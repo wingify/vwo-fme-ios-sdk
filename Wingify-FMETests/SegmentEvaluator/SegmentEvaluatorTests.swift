@@ -601,4 +601,100 @@ class SegmentEvaluatorTests: XCTestCase {
             }
         }
     }
+
+    // MARK: - Local OS / Device Type Pre-segmentation
+
+    func testOperatingSystemMatchesLocalPlatform() {
+        let dsl = dslFromJSON("{ \"or\": [ { \"os\": \"wildcard(*ios*)\" } ] }")
+        XCTAssertTrue(segmentEvaluator.isSegmentationValid(dsl: dsl, properties: [:]))
+    }
+
+    func testOperatingSystemDoesNotMatchWrongPlatform() {
+        let dsl = dslFromJSON("{ \"or\": [ { \"os\": \"wildcard(*android*)\" } ] }")
+        XCTAssertFalse(segmentEvaluator.isSegmentationValid(dsl: dsl, properties: [:]))
+    }
+
+    func testMobileWildcardMatchesLocalDeviceType() {
+        let deviceType = DeviceUtil().getDeviceType()
+        let dsl = dslFromJSON("{ \"or\": [ { \"device_type\": \"wildcard(*\(deviceType)*)\" } ] }")
+        XCTAssertTrue(segmentEvaluator.isSegmentationValid(dsl: dsl, properties: [:]))
+    }
+
+    func testDesktopWildcardDoesNotMatchNonDesktopDeviceType() {
+        let deviceType = DeviceUtil().getDeviceType()
+        guard deviceType != "desktop" else {
+            return
+        }
+        let dsl = dslFromJSON("{ \"or\": [ { \"device_type\": \"wildcard(*desktop*)\" } ] }")
+        XCTAssertFalse(segmentEvaluator.isSegmentationValid(dsl: dsl, properties: [:]))
+    }
+
+    func testMixedOrUsesUaParserWhenLocalDeviceTypeMisses() {
+        stubGatewayUserAgent(["browser_string": "Chrome"])
+        let dsl = dslFromJSON("{ \"or\": [ { \"device_type\": \"wildcard(*desktop*)\" }, { \"browser_string\": \"wildcard(*Chrome*)\" } ] }")
+        XCTAssertTrue(segmentEvaluator.isSegmentationValid(dsl: dsl, properties: [:]))
+    }
+
+    func testMixedOrUsesUaParserWhenLocalOsMisses() {
+        stubGatewayUserAgent(["browser_string": "Chrome"])
+        let dsl = dslFromJSON("{ \"or\": [ { \"os\": \"wildcard(*android*)\" }, { \"browser_string\": \"wildcard(*Chrome*)\" } ] }")
+        XCTAssertTrue(segmentEvaluator.isSegmentationValid(dsl: dsl, properties: [:]))
+    }
+
+    func testMixedOrIsFalseWhenLocalAndUaParserBothMiss() {
+        stubGatewayUserAgent(["browser_string": "Safari"])
+        let dsl = dslFromJSON("{ \"or\": [ { \"os\": \"wildcard(*android*)\" }, { \"browser_string\": \"wildcard(*Chrome*)\" } ] }")
+        XCTAssertFalse(segmentEvaluator.isSegmentationValid(dsl: dsl, properties: [:]))
+    }
+
+    func testEvaluateUaParserMapIsFalseWhenEmpty() {
+        XCTAssertFalse(segmentEvaluator.evaluateUaParserMap(uaParserMap: [:]))
+    }
+
+    func testEvaluateUaParserMapIsTrueWhenBrowserStringMatches() {
+        stubGatewayUserAgent(["browser_string": "Chrome"])
+        XCTAssertTrue(
+            segmentEvaluator.evaluateUaParserMap(
+                uaParserMap: ["browser_string": ["wildcard(*Chrome*)"]]
+            )
+        )
+    }
+
+    func testEvaluateUaParserMapIsFalseWhenBrowserStringMisses() {
+        stubGatewayUserAgent(["browser_string": "Safari"])
+        XCTAssertFalse(
+            segmentEvaluator.evaluateUaParserMap(
+                uaParserMap: ["browser_string": ["wildcard(*Chrome*)"]]
+            )
+        )
+    }
+
+    func testEvaluateUaParserMapIsTrueWhenDeviceMatches() {
+        stubGatewayUserAgent(["device": "iPhone"])
+        XCTAssertTrue(
+            segmentEvaluator.evaluateUaParserMap(
+                uaParserMap: ["device": ["wildcard(*iPhone*)"]]
+            )
+        )
+    }
+
+    func testEvaluateUaParserMapIsFalseWhenPatternDoesNotMatch() {
+        stubGatewayUserAgent(["browser_string": "Chrome"])
+        XCTAssertFalse(
+            segmentEvaluator.evaluateUaParserMap(
+                uaParserMap: ["browser_string": ["wildcard(*[*)"]]
+            )
+        )
+    }
+
+    private func stubGatewayUserAgent(_ parsed: [String: String]) {
+        mockContext.userAgent = "test-agent"
+        mockContext.vwo = GatewayService(location: nil, userAgent: parsed)
+        segmentEvaluator.context = mockContext
+    }
+
+    private func dslFromJSON(_ json: String) -> [String: CodableValue] {
+        let data = json.data(using: .utf8)!
+        return try! JSONDecoder().decode([String: CodableValue].self, from: data)
+    }
 }

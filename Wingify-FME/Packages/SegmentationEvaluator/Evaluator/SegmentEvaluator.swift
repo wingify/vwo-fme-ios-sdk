@@ -57,12 +57,18 @@ class SegmentEvaluator {
 
         case .ua:
             return SegmentOperandEvaluator.evaluateUserAgentDSL(subDsl.stringValue ?? "", context)
+
+        case .deviceType:
+            return SegmentOperandEvaluator.evaluateStringOperandDSL(dslOperandValue: subDsl.stringValue ?? "", value: DeviceUtil().getDeviceType())
             
         case .device_model:
             return SegmentOperandEvaluator.evaluateStringOperandDSL(dslOperandValue: subDsl.stringValue ?? "", value: DeviceUtil().getDeviceModel())
             
         case .locale:
             return SegmentOperandEvaluator.evaluateStringOperandDSL(dslOperandValue: subDsl.stringValue ?? "", value: DeviceUtil().getLocale())
+
+        case .operatingSystem:
+            return SegmentOperandEvaluator.evaluateStringOperandDSL(dslOperandValue: subDsl.stringValue ?? "", value: Constants.PLATFORM)
         
         case .app_version:
             return SegmentOperandEvaluator.evaluateStringOperandDSL(dslOperandValue: subDsl.stringValue ?? "", value: DeviceUtil().getApplicationVersion())
@@ -72,6 +78,9 @@ class SegmentEvaluator {
             
         case .manufacturer:
             return SegmentOperandEvaluator.evaluateStringOperandDSL(dslOperandValue: subDsl.stringValue ?? "", value: DeviceUtil().getManufacturer())
+
+        case .device:
+            return SegmentOperandEvaluator.evaluateStringOperandDSL(dslOperandValue: subDsl.stringValue ?? "", value: DeviceUtil().getDevice())
             
         default:
             return false
@@ -86,25 +95,20 @@ class SegmentEvaluator {
      */
     func some(dslNodes: [CodableValue], customVariables: [String: Any]) -> Bool {
         var uaParserMap = [String: [String]]()
-        var keyCount = 0 // Initialize count of keys encountered
-        var isUaParser = false
 
         for dsl in dslNodes {
             guard let dslDict = dsl.dictionaryValue else { continue }
             for (key, value) in dslDict {
-                // Check for user agent related keys
                 guard let keyEnum = SegmentOperatorValueEnum(rawValue: key) else {
                     continue
                 }
-                
-                if keyEnum == .operatingSystem || keyEnum == .browserAgent || keyEnum == .deviceType || keyEnum == .device {
-                    isUaParser = true
 
+                // Collect leftover browser_string/device keys for gateway UA parser fallback
+                if keyEnum == .browserAgent || keyEnum == .device {
                     if uaParserMap[key] == nil {
                         uaParserMap[key] = [String]()
                     }
 
-                    // Ensure value is treated as an array of strings
                     if let arrayValue = value.arrayValue {
                         for val in arrayValue {
                             if let text = val.stringValue {
@@ -114,8 +118,6 @@ class SegmentEvaluator {
                     } else if let text = value.stringValue {
                         uaParserMap[key]?.append(text)
                     }
-
-                    keyCount += 1 // Increment count of keys encountered
                 }
 
                 // Check for feature toggle based on feature ID
@@ -150,19 +152,25 @@ class SegmentEvaluator {
                 }
             }
 
-            
-            // Check if the count of keys encountered is equal to dslNodes.count
-            if isUaParser && keyCount == dslNodes.count {
-                let uaParserResult = checkUserAgentParser(uaParserMap: uaParserMap)
-                return uaParserResult
-            }
-
             // Recursively check each DSL node
             if isSegmentationValid(dsl: dsl.dictionaryValue ?? [:], properties: customVariables) {
                 return true
             }
         }
-        return false
+
+        return evaluateUaParserMap(uaParserMap: uaParserMap)
+    }
+
+    /**
+     * Evaluates leftover browser_string/device keys after local OR operands miss.
+     * @param uaParserMap Map of expected user agent values collected from the OR nodes.
+     * @return A boolean indicating if the leftover user agent criteria match.
+     */
+    func evaluateUaParserMap(uaParserMap: [String: [String]]) -> Bool {
+        if uaParserMap.isEmpty {
+            return false
+        }
+        return checkUserAgentParser(uaParserMap: uaParserMap)
     }
 
     /**

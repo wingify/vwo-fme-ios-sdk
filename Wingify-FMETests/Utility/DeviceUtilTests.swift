@@ -15,6 +15,9 @@
  */
 
 import XCTest
+#if os(iOS) || os(tvOS)
+import UIKit
+#endif
 #if canImport(Wingify_FME)
 @testable import Wingify_FME
 #elseif canImport(VWO_FME)
@@ -106,6 +109,29 @@ class DeviceUtilTests: XCTestCase {
         XCTAssertTrue(isValidModel || deviceModel.contains("Simulator"), 
                      "Device model should be a valid Apple device or simulator")
     }
+
+    // MARK: - Device Type Tests
+
+    func testGetDeviceType_ReturnsKnownValue() {
+        let deviceType = deviceUtil.getDeviceType()
+        let knownTypes: Set<String> = ["mobile", "tablet", "tv", "desktop", "watch"]
+        XCTAssertTrue(knownTypes.contains(deviceType), "Device type should be mobile, tablet, tv, or desktop")
+    }
+
+    #if os(iOS)
+    func testGetDeviceType_MatchesUserInterfaceIdiom() {
+        switch UIDevice.current.userInterfaceIdiom {
+        case .pad:
+            XCTAssertEqual(deviceUtil.getDeviceType(), "tablet")
+        case .tv:
+            XCTAssertEqual(deviceUtil.getDeviceType(), "tv")
+        case .phone:
+            XCTAssertEqual(deviceUtil.getDeviceType(), "mobile")
+        default:
+            XCTAssertEqual(deviceUtil.getDeviceType(), "mobile")
+        }
+    }
+    #endif
     
     // MARK: - Locale Tests
     

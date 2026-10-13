@@ -75,6 +75,50 @@ struct DeviceUtil {
         #endif
     }
 
+    /// Pre-segmentation device type based on `UIUserInterfaceIdiom`.
+    func getDeviceType() -> String {
+        #if os(watchOS)
+        return "watch"
+        #elseif os(iOS) || os(tvOS)
+        switch UIDevice.current.userInterfaceIdiom {
+        case .pad:
+            return "tablet"
+        case .tv:
+            return "tv"
+        case .phone:
+            return "mobile"
+        default:
+            return "mobile"
+        }
+        #elseif os(macOS)
+        return "desktop"
+        #else
+        return "mobile"
+        #endif
+    }
+
+    /// Pre-segmentation device type based on `UIUserInterfaceIdiom`.
+    func getDevice() -> String {
+        #if os(watchOS)
+        return "watch"
+        #elseif os(iOS) || os(tvOS)
+        switch UIDevice.current.userInterfaceIdiom {
+        case .pad:
+            return "ipad"
+        case .tv:
+            return "tv"
+        case .phone:
+            return "iphone"
+        default:
+            return "iphone"
+        }
+        #elseif os(macOS)
+        return "desktop"
+        #else
+        return "iphone"
+        #endif
+    }
+
     /// Gets the current locale. e.g., "en-US"
     func getLocale() -> String {
         let identifier = Locale.current.identifier

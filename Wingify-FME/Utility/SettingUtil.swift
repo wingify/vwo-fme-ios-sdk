@@ -86,7 +86,7 @@ class SettingsUtil {
     private static func addIsGatewayServiceRequiredFlag(_ settings: inout Settings) {
         
         // Define regex pattern to match specific segments or custom variables
-        let patternString = "\\b(country|region|city|os|device_type|browser_string|ua)\\b|\"custom_variable\"\\s*:\\s*\\{\\s*\"name\"\\s*:\\s*\"inlist\\([^)]*\\)\""
+        let patternString = "\(Constants.REGEX_REQUIRES_GATEWAY_SERVICE)|\"custom_variable\"\\s*:\\s*\\{\\s*\"name\"\\s*:\\s*\"inlist\\([^)]*\\)\""
         
         guard let regex = try? NSRegularExpression(pattern: patternString, options: []) else {
             LoggerService.log(level: .error, message: "Invalid regex pattern")
@@ -117,7 +117,7 @@ class SettingsUtil {
                         for match in matches {
                             let matchString = (jsonString as NSString).substring(with: match.range)
                             // Check if match is within a custom variable
-                            if matchString.range(of: "\\b(country|region|city|os|device_type|browser_string|ua)\\b", options: .regularExpression) != nil {
+                            if matchString.range(of: Constants.REGEX_REQUIRES_GATEWAY_SERVICE, options: .regularExpression) != nil {
                                 if !isWithinCustomVariable(startIndex: match.range.location, input: jsonString) {
                                     feature.isGatewayServiceRequired = true
                                     break
@@ -156,7 +156,7 @@ class SettingsUtil {
                         for match in matches {
                             let matchString = (jsonString as NSString).substring(with: match.range)
                             // Check if match is within a custom variable
-                            if matchString.range(of: "\\b(country|region|city|os|device_type|browser_string|ua)\\b", options: .regularExpression) != nil {
+                            if matchString.range(of: Constants.REGEX_REQUIRES_GATEWAY_SERVICE, options: .regularExpression) != nil {
                                 if !isWithinCustomVariable(startIndex: match.range.location, input: jsonString) {
                                     holdout.isGatewayServiceRequired = true
                                     break
