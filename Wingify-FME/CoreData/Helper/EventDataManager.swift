@@ -307,6 +307,11 @@ class EventDataManager {
             return sanitized
         } else if let array = object as? [Any] {
             return array.map { sanitizeForJSON($0) }
+        } else if let string = object as? String {
+            // Keep text as text. People.framework can make String conform to Error.
+            return string
+        } else if object is NSNumber || object is NSNull {
+            return object
         } else if let error = object as? Error {
             return error.localizedDescription // Or "\(error)"
         } else if JSONSerialization.isValidJSONObject([ "key": object ]) {

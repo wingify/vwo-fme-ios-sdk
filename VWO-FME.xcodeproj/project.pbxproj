@@ -21,6 +21,7 @@
 /* End PBXAggregateTarget section */
 
 /* Begin PBXBuildFile section */
+		BAE7B6452F67FCF9003FC298 /* CustomBucketingSeedTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = BAE7B6442F67FCF9003FC298 /* CustomBucketingSeedTests.swift */; };
 		BAFC4AE72FC861390087E01B /* Wingify_FME.h in Headers */ = {isa = PBXBuildFile; fileRef = BAFC4A9E2FC861390087E01B /* Wingify_FME.h */; };
 		BAFC4AE82FC861390087E01B /* SettingsWithSameSalt.json in Resources */ = {isa = PBXBuildFile; fileRef = BAFC4ACA2FC861390087E01B /* SettingsWithSameSalt.json */; };
 		BAFC4AE92FC861390087E01B /* RolloutAndTestingSettingsWithPreSegmentMobileUA.json in Resources */ = {isa = PBXBuildFile; fileRef = BAFC4AC82FC861390087E01B /* RolloutAndTestingSettingsWithPreSegmentMobileUA.json */; };
@@ -186,12 +187,10 @@
 		BAFC4C132FC861390087E01B /* InternalEventSamplingSettings.swift in Sources */ = {isa = PBXBuildFile; fileRef = BAFC4C102FC861390087E01B /* InternalEventSamplingSettings.swift */; };
 		BAFC4C142FC861390087E01B /* InternalEventSamplingUtil.swift in Sources */ = {isa = PBXBuildFile; fileRef = BAFC4C112FC861390087E01B /* InternalEventSamplingUtil.swift */; };
 		BAFC4C152FC861390087E01B /* InternalEventSamplingUtilTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = BAFC4C122FC861390087E01B /* InternalEventSamplingUtilTests.swift */; };
-		BAFC4DC22FD6EC010087E01B /* SdkInitAndUsageStatsPayloadTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = BAFC4DC12FD6EC010087E01B /* SdkInitAndUsageStatsPayloadTests.swift */; };
 		BAFC4C182FC861390087E01B /* ErrorLogSamplingCategory.swift in Sources */ = {isa = PBXBuildFile; fileRef = BAFC4C082FC861390087E01B /* ErrorLogSamplingCategory.swift */; };
-		BAFC4DB32FD6AA510087E01B /* VWOExports.swift in Sources */ = {isa = PBXBuildFile; fileRef = BAFC4DB12FD6AA510087E01B /* VWOExports.swift */; };
 		BAFC4DBE2FD6EB240087E01B /* BucketingIdResolverTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = BAFC4DBD2FD6EB240087E01B /* BucketingIdResolverTests.swift */; };
 		BAFC4DC02FD6EB740087E01B /* BucketingIdResolver.swift in Sources */ = {isa = PBXBuildFile; fileRef = BAFC4DBF2FD6EB740087E01B /* BucketingIdResolver.swift */; };
-		BAE7B6452F67FCF9003FC298 /* CustomBucketingSeedTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = BAE7B6442F67FCF9003FC298 /* CustomBucketingSeedTests.swift */; };
+		BAFC4DC22FD6EC010087E01B /* SdkInitAndUsageStatsPayloadTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = BAFC4DC12FD6EC010087E01B /* SdkInitAndUsageStatsPayloadTests.swift */; };
 		EB373E6B2D9D2B51005713D1 /* Wingify_FME.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = EB06C7802C90229B00A25E07 /* Wingify_FME.framework */; };
 /* End PBXBuildFile section */
 
@@ -206,6 +205,7 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
+		BAE7B6442F67FCF9003FC298 /* CustomBucketingSeedTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CustomBucketingSeedTests.swift; sourceTree = "<group>"; };
 		BAFC4A102FC861390087E01B /* GetFlagAPI.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GetFlagAPI.swift; sourceTree = "<group>"; };
 		BAFC4A112FC861390087E01B /* GetUserAliasAPI.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GetUserAliasAPI.swift; sourceTree = "<group>"; };
 		BAFC4A122FC861390087E01B /* SetAttributeAPI.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SetAttributeAPI.swift; sourceTree = "<group>"; };
@@ -372,11 +372,10 @@
 		BAFC4C102FC861390087E01B /* InternalEventSamplingSettings.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InternalEventSamplingSettings.swift; sourceTree = "<group>"; };
 		BAFC4C112FC861390087E01B /* InternalEventSamplingUtil.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InternalEventSamplingUtil.swift; sourceTree = "<group>"; };
 		BAFC4C122FC861390087E01B /* InternalEventSamplingUtilTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InternalEventSamplingUtilTests.swift; sourceTree = "<group>"; };
-		BAFC4DC12FD6EC010087E01B /* SdkInitAndUsageStatsPayloadTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SdkInitAndUsageStatsPayloadTests.swift; sourceTree = "<group>"; };
 		BAFC4DB12FD6AA510087E01B /* VWOExports.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VWOExports.swift; sourceTree = "<group>"; };
 		BAFC4DBD2FD6EB240087E01B /* BucketingIdResolverTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BucketingIdResolverTests.swift; sourceTree = "<group>"; };
 		BAFC4DBF2FD6EB740087E01B /* BucketingIdResolver.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BucketingIdResolver.swift; sourceTree = "<group>"; };
-		BAE7B6442F67FCF9003FC298 /* CustomBucketingSeedTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CustomBucketingSeedTests.swift; sourceTree = "<group>"; };
+		BAFC4DC12FD6EC010087E01B /* SdkInitAndUsageStatsPayloadTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SdkInitAndUsageStatsPayloadTests.swift; sourceTree = "<group>"; };
 		EB06C7802C90229B00A25E07 /* Wingify_FME.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Wingify_FME.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		EB373E672D9D2B51005713D1 /* VWO-FMETests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "VWO-FMETests.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
@@ -1467,7 +1466,7 @@
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
 				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
-				IPHONEOS_DEPLOYMENT_TARGET = 12.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.6;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -1504,7 +1503,7 @@
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
 				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
-				IPHONEOS_DEPLOYMENT_TARGET = 12.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.6;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -1538,7 +1537,7 @@
 					"$(BUILT_PRODUCTS_DIR)",
 				);
 				GENERATE_INFOPLIST_FILE = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = 13.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.6;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@loader_path/Frameworks",
@@ -1565,7 +1564,7 @@
 					"$(BUILT_PRODUCTS_DIR)",
 				);
 				GENERATE_INFOPLIST_FILE = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = 13.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.6;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@loader_path/Frameworks",

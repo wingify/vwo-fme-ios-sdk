@@ -23,11 +23,11 @@ jobs:
           - os: macos-14
             xcode-version: '15.4'
             swift-version: '5.10'
-            destination: 'platform=iOS Simulator,name=iPhone 15,OS=17.2'
+            destination: 'platform=iOS Simulator,name=iPhone 15,OS=18.2'
           - os: macos-14
             xcode-version: '15.2'
             swift-version: '5.9'
-            destination: 'platform=iOS Simulator,name=iPhone 15,OS=17.2'
+            destination: 'platform=iOS Simulator,name=iPhone 15,OS=18.2'
 
     steps:
     - uses: actions/checkout@v4
