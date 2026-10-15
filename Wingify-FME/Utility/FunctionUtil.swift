@@ -156,19 +156,20 @@ struct FunctionUtil {
     /// Returns a human-readable, formatted string representation of an error object.
     /// - Parameter error: The error to format. Can be of various types (Error, String, Dictionary, Codable, etc.).
     /// - Returns: A formatted string based on the type of the input:
-    ///   - If `error` is an `Error`, returns its localized description.
     ///   - If `error` is a `String`, returns it directly.
+    ///   - If `error` is an `Error`, returns its localized description.
     ///   - If `error` is a dictionary, tries to pretty-print it as JSON; if that fails, returns its description.
     ///   - If `error` is `nil`, returns a default message.
     ///   - If `error` conforms to `Encodable`, tries to encode it as pretty-printed JSON.
     ///   - Otherwise, returns the string description of the object.
    static func getFormattedErrorMessage(_ error: Any?) -> String {
         switch error {
+        case let string as String:
+            // Check String before Error. People.framework can make String conform to Error.
+            return string
+
         case let error as Error:
             return error.localizedDescription
-
-        case let string as String:
-            return string
 
         case let dict as [AnyHashable: Any]:
             if let data = try? JSONSerialization.data(withJSONObject: dict, options: [.prettyPrinted]),

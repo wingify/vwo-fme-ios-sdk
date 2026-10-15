@@ -123,7 +123,7 @@ class NetworkClient: NetworkClientInterface {
     
     /**
      * Determines the maximum retry count based on the request and response.
-     * 
+     *
      * - Parameters:
      *   - request: The request model containing request information
      *   - response: Optional response model containing status code information
@@ -352,7 +352,7 @@ class NetworkClient: NetworkClientInterface {
                 ERR: FunctionUtil.getFormattedErrorMessage(response.error ?? request.lastError)
             ]
             
-            var apiEnum: ApiEnum = .Init 
+            var apiEnum: ApiEnum = .Init
             var extraDataForMessage = ""
             
             if let eventName = eventDict["name"] as? String {
@@ -456,8 +456,10 @@ class NetworkClient: NetworkClientInterface {
     
     // MARK: - JSON Sanitization
     
-    /// Sanitizes a dictionary to ensure it can be safely serialized to JSON
-    /// Removes or converts non-JSON-serializable objects like NSError
+    /// Sanitizes a dictionary to ensure it can be safely serialized to JSON.
+    /// JSON primitives are preserved first. Error conversion runs only after that,
+    /// because on iOS 26.2 Apple's People framework (pulled in by DeclaredAgeRange)
+    /// makes String conform to Error, and Swift then bridges that String to NSError.
     private func sanitizeForJSONSerialization(_ object: Any) -> Any {
         switch object {
         case let dict as [String: Any]:
@@ -468,19 +470,12 @@ class NetworkClient: NetworkClientInterface {
             return sanitizedDict
         case let array as [Any]:
             return array.map { sanitizeForJSONSerialization($0) }
-        case is NSError:
-            // Convert NSError to a dictionary with error information
-            if let error = object as? NSError {
-                return [
-                    "domain": error.domain,
-                    "code": error.code,
-                    "localizedDescription": error.localizedDescription
-                ]
-            }
-            return "Error object"
-        case is Error:
-            // Convert Swift Error to string
-            return "Error: \(object)"
+        case let string as String:
+            return string
+        case is NSNumber:
+            return object
+        case is NSNull:
+            return object
         case let data as Data:
             // Convert Data to base64 string
             return data.base64EncodedString()
@@ -491,6 +486,16 @@ class NetworkClient: NetworkClientInterface {
         case let url as URL:
             // Convert URL to string
             return url.absoluteString
+        case let error as NSError:
+            // Convert NSError to a dictionary with error information
+            return [
+                "domain": error.domain,
+                "code": error.code,
+                "localizedDescription": error.localizedDescription
+            ]
+        case is Error:
+            // Convert Swift Error to string
+            return "Error: \(object)"
         default:
             // For other types, check if they're JSON serializable
             if JSONSerialization.isValidJSONObject([object]) {
