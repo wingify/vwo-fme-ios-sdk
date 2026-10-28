@@ -5,6 +5,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.68.0] - 2026-10-27
+
+### Fixed
+
+- Request user-agent strings now use a standard product/version form, for example `VWO_FME iOS/1.67.2 (iPhone; 18.2)`. The product name and SDK version are separated so they can be parsed, and the device model and OS version stay in the comment, separated by a semicolon.
+
 ## [1.67.1] - 2026-10-14
 
 ### Fixed

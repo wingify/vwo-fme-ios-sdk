@@ -20,7 +20,7 @@ struct Constants {
     static let defaultString: String = ""
     static let PLATFORM: String = "ios"
 
-    static let SDK_VERSION: String = "1.67.1"
+    static let SDK_VERSION: String = "1.68.0"
 
     static let MAX_TRAFFIC_PERCENT: Int = 100
     static let MAX_TRAFFIC_VALUE: Int = 10000
@@ -55,7 +55,7 @@ struct Constants {
     static let LIST_ATTRIBUTE_EXPIRY: Int64 = 60 * 60 * 1000 // 60 minutes in milliseconds
 
     static var USER_AGENT_VALUE: String {
-        "\(ProductConfig.current.displayName) FME \(PlatformInfo.name) \(SDK_VERSION) (\(PlatformInfo.deviceModel)/\(PlatformInfo.systemVersion))"
+        "\(ProductConfig.current.displayName)_FME_\(PlatformInfo.name)/\(SDK_VERSION) (\(PlatformInfo.deviceModel); \(PlatformInfo.systemVersion))"
     }
 
 

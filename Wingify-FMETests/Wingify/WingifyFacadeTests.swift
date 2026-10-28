@@ -27,7 +27,8 @@ final class WingifyFacadeTests: XCTestCase {
     func testWingifyUserContextUsesWingifyUserAgent() {
         let context = WingifyUserContext(id: "user-1", customVariables: [:])
 
-        XCTAssertTrue(context.userAgent.contains("Wingify FME"))
+        XCTAssertTrue(context.userAgent.contains("Wingify_FME"))
+        XCTAssertTrue(context.userAgent.contains("/\(Constants.SDK_VERSION)"))
     }
 
     func testWingifyUsesServingUrlForGetAndCollectionUrlForPost() {
