@@ -39,11 +39,15 @@ struct Storage: Codable {
     var notInHoldoutIds: [Int]?
     /// Legacy: single holdout id list
     var holdoutId: [Int]?
-    /// Legacy: holdout group id list 
+    /// Legacy: holdout group id list
     var holdoutGroupId: [Int]?
     /// Decision expiry time in milliseconds (timestamp when decision becomes invalid). Nil or non-positive = valid indefinitely.
     var decisionExpiryTime: Int64?
-    
+    /// Whether `vwo_variationShown` was already sent for this sticky decision.
+    var variationShownSent: Bool?
+
+    init() {}
+
     enum CodingKeys: String, CodingKey {
         case featureKey
         case user = "userId"
@@ -59,11 +63,18 @@ struct Storage: Codable {
         case notInHoldoutIds
         case holdoutId
         case holdoutGroupId
+        case decisionExpiryTime
+        case variationShownSent
     }
-    
+
     /// Returns true when the stored decision has expired (decisionExpiryTime is a positive timestamp in the past).
     func isDecisionExpired() -> Bool {
         guard let expiry = decisionExpiryTime, expiry > 0 else { return false }
         return Date().currentTimeMillis() > expiry
+    }
+
+    /// Returns true when a variation-shown impression was already sent for this sticky decision.
+    func isVariationShownAlreadySent() -> Bool {
+        variationShownSent == true
     }
 }

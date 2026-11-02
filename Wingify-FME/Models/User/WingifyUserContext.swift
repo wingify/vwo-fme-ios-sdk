@@ -70,4 +70,28 @@ import Foundation
         }
     }
 
+    /**
+     * Creates an isolated copy for parallel flag evaluation.
+     * Each evaluation mutates context maps independently without affecting siblings.
+     */
+    func clone() -> WingifyUserContext {
+        let copy = WingifyUserContext(
+            id: id,
+            shouldUseDeviceIdAsUserId: shouldUseDeviceIdAsUserId,
+            customVariables: customVariables,
+            postSegmentationVariables: postSegmentationVariables,
+            ipAddress: ipAddress
+        )
+        copy.userAgent = userAgent
+        copy.variationTargetingVariables = variationTargetingVariables
+        copy.vwo = vwo.map { gateway in
+            var cloned = GatewayService()
+            cloned.location = gateway.location
+            cloned.userAgent = gateway.userAgent
+            return cloned
+        }
+        copy.sessionId = sessionId
+        return copy
+    }
+
 }

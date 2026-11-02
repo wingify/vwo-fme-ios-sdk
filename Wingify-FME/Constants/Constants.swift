@@ -20,7 +20,7 @@ struct Constants {
     static let defaultString: String = ""
     static let PLATFORM: String = "ios"
 
-    static let SDK_VERSION: String = "1.68.0"
+    static let SDK_VERSION: String = "1.70.0"
 
     static let MAX_TRAFFIC_PERCENT: Int = 100
     static let MAX_TRAFFIC_VALUE: Int = 10000
@@ -50,6 +50,9 @@ struct Constants {
     static let VWO_META_MEG_KEY = "_vwo_meta_meg_"
 
     static let DEFAULT_BATCH_UPLOAD_INTERVAL: Int64 = 3 * 60 * 1000 // 3 minutes in milliseconds
+
+    /// Max concurrent MEG-independent flag evaluation batches for getFlags().
+    static let MAX_CONCURRENT_FLAG_EVALUATIONS: Int = 5
 
     static let LOCATION_EXPIRY: Int64 = 60 * 60 * 1000 // 60 minutes in milliseconds
     static let LIST_ATTRIBUTE_EXPIRY: Int64 = 60 * 60 * 1000 // 60 minutes in milliseconds
@@ -88,6 +91,8 @@ struct Constants {
     static let USER_ID = "userId"
     static let KEY_EXPERIMENT_TYPE = "experimentType"
     static let KEY_EXPERIMENT_KEY = "experimentKey"
+    /// Durable sticky-storage flag: whether `vwo_variationShown` was already sent for this decision.
+    static let KEY_VARIATION_SHOWN_SENT = "variationShownSent"
     static let IMPRESSION_NO_FEATURE_ID = -1
     static let REGEX_REQUIRES_GATEWAY_SERVICE = "\\b(country|region|city|browser_string)\\b"
     static let REGEX_SEGMENTATION_FULL = "$REGEX_REQUIRES_GATEWAY_SERVICE|\"custom_variable\"\\s*:\\s*\\{\\s*\"name\"\\s*:\\s*\"inlist\\([^)]*\\)\""

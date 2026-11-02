@@ -22,7 +22,8 @@ public protocol IntegrationCallback {
 
 class HooksManager {
     private var callback: IntegrationCallback?
-    private var decision: [String: Any]?
+    /// Thread-local decision storage so parallel getFlags evaluations do not clobber each other.
+    private static let decisionThreadKey = "com.wingify.fme.hooks.decision"
     // Integration callback should fire only once per unique evaluation payload.
     private var executedSignatures: Set<String> = []
     private let triggerEveryTime: Bool
@@ -65,7 +66,7 @@ class HooksManager {
      */
     func set(properties: [String: Any]?) {
         if self.callback != nil {
-            self.decision = properties
+            Thread.current.threadDictionary[Self.decisionThreadKey] = properties
         }
     }
 
@@ -75,7 +76,7 @@ class HooksManager {
      * @return The decision object
      */
     func get() -> [String: Any]? {
-        return self.decision
+        return Thread.current.threadDictionary[Self.decisionThreadKey] as? [String: Any]
     }
 
     /// Builds a stable signature string for deduplicating integration callback payloads.

@@ -17,75 +17,6 @@
 import Foundation
 
 /**
- * Tracks whether a `vwo_variationShown` impression was dispatched during a single `getFlag` evaluation.
- *
- * Used to decide whether an additional user-tracking event is required for accounts with user-tracking
- * billing enabled. If any impression was sent in the current call, DaCDN handles usage through
- * `variationShown` instead.
- */
-final class VariationShownTracker {
-
-    /// `true` when at least one `variationShown` impression was sent during this `getFlag` call.
-    private(set) var sent = false
-
-    /**
-     * Sends a `vwo_variationShown` impression and marks tracking as active for this evaluation.
-     *
-     * - Parameters:
-     *   - settings: SDK settings for the current account.
-     *   - campaignId: Campaign or holdout ID for the impression.
-     *   - variationId: Variation ID shown to the user.
-     *   - context: User context for the evaluation.
-     *   - serviceContainer: Service container for network and logging access.
-     */
-    func recordVariationShown(
-        settings: Settings,
-        campaignId: Int,
-        variationId: Int,
-        context: WingifyUserContext,
-        serviceContainer: ServiceContainer
-    ) {
-        ImpressionUtil.createAndSendImpressionForVariationShown(
-            settings: settings,
-            campaignId: campaignId,
-            variationId: variationId,
-            context: context,
-            serviceContainer: serviceContainer
-        )
-        sent = true
-    }
-
-    /**
-     * Sends holdout-related `variationShown` impressions and marks tracking as active.
-     *
-     * Holdout impressions include both "in holdout" and "not in holdout" reporting events.
-     *
-     * - Parameters:
-     *   - settings: SDK settings for the current account.
-     *   - impressions: Holdout impressions to dispatch.
-     *   - context: User context for the evaluation.
-     *   - serviceContainer: Service container for network and logging access.
-     */
-    func recordHoldoutImpressions(
-        settings: Settings,
-        impressions: [HoldoutImpression],
-        context: WingifyUserContext,
-        serviceContainer: ServiceContainer
-    ) {
-        guard !impressions.isEmpty else { return }
-        for imp in impressions {
-            recordVariationShown(
-                settings: settings,
-                campaignId: imp.campaignId,
-                variationId: imp.variationId,
-                context: context,
-                serviceContainer: serviceContainer
-            )
-        }
-    }
-}
-
-/**
  * Utility for per-user tracking and usage billing on accounts with user-tracking billing enabled.
  *
  * Accounts with `Settings.isMAU` set to `true` are billed per evaluated user rather than per
@@ -194,6 +125,10 @@ enum UserTrackingUsageUtil {
         feature: Feature?,
         serviceContainer: ServiceContainer
     ) {
+        guard serviceContainer.areUserTrackRequestsAllowed else {
+            return
+        }
+
         let properties = NetworkUtil.getEventsBaseProperties(
             eventName: EventEnum.vwoFmeUserTrackingEvaluated.rawValue,
             visitorUserAgent: ImpressionUtil.encodeURIComponent(context.userAgent),

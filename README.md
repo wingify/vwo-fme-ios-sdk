@@ -329,7 +329,7 @@ This feature is particularly useful for anonymous users or scenarios where expli
 
 ### Basic Feature Flagging
 
-Feature Flags serve as the foundation for all testing, personalization, and rollout rules within FME. To implement a feature flag, first use the `getFlag` API to retrieve the flag configuration. The `getFlag` API provides a simple way to check if a feature is enabled for a specific user and access its variables. It returns a feature flag object that contains methods for checking the feature's status and retrieving any associated variables.
+Feature Flags serve as the foundation for all testing, personalization, and rollout rules within FME. To implement a feature flag, use the `getFlag` API to retrieve one flag, or the `getFlags` API to retrieve several flags in a single call. Both return feature flag objects that contain methods for checking a feature's status and retrieving any associated variables.
 
 | **Parameter** | **Description**                                                      | **Required** | **Type** | **Example**          |
 | ------------- | -------------------------------------------------------------------- | ------------ | -------- | -------------------- |
@@ -350,6 +350,61 @@ VWOFme.getFlag(featureKey: "feature_flag_name", context: userContext) { featureF
     
     // Get the variable value for the given variable key and default value
     let variable1 = featureFlagObj.getVariable(key: "feature_flag_variable", defaultValue: "default-value")
+}
+```
+
+#### Get multiple feature flags
+
+Use `getFlags` when you need several flags for the same user in one call. Pass specific feature keys, or pass `nil` or an empty array to evaluate every feature flag from settings. The completion handler receives a `FlagCollection` that you look up by feature key.
+
+| **Parameter**              | **Description**                                                                                          | **Required** | **Type**         | **Example**                                                                 |
+| -------------------------- | -------------------------------------------------------------------------------------------------------- | ------------ | ---------------- | --------------------------------------------------------------------------- |
+| `flagNames`                | Feature keys to evaluate. Pass `nil` or `[]` to evaluate every feature flag from settings.              | No           | `[String]?`      | `["new_checkout", "new_header"]`                                            |
+| `context`                  | Object containing user identification and contextual information                                         | Yes          | VWOUserContext   | `VWOUserContext(id: "user_123", customVariables: ["key": "value"])`         |
+                                                                 |
+
+Example usage:
+
+```swift
+let userContext = VWOUserContext(id: "user_123", customVariables: ["key": "value"])
+
+// Evaluate specific flags. Omit the Bool parameters to use the defaults (both true).
+VWOFme.getFlags(
+    flagNames: ["feature_flag_1", "feature_flag_2"],
+    context: userContext
+) { flagCollection in
+    let checkoutFlag = flagCollection.get("feature_flag_1")
+    let isEnabled = checkoutFlag.isEnabled()
+    let variable = checkoutFlag.getVariable(key: "feature_flag_variable", defaultValue: "default-value")
+    let variables = checkoutFlag.getVariables()
+
+    // Walk every flag that was evaluated
+    flagCollection.forEach { featureKey, flag in
+        print(featureKey, flag.isEnabled())
+    }
+}
+
+// Evaluate every feature flag from settings
+VWOFme.getFlags(flagNames: nil, context: userContext) { flagCollection in
+    let flag = flagCollection.get("feature_flag_1")
+    _ = flag.isEnabled()
+}
+
+```
+
+On a specific instance:
+
+```swift
+let userContext = VWOUserContext(id: "user_123", customVariables: ["key": "value"])
+
+if let vwoInstance = VWOFme.getInstance(accountId: 123456, sdkKey: "first_sdk_key") {
+    vwoInstance.getFlags(
+        flagNames: ["feature_flag_1", "feature_flag_2"],
+        context: userContext
+    ) { flagCollection in
+        let flag = flagCollection.get("feature_flag_1")
+        _ = flag.isEnabled()
+    }
 }
 ```
 

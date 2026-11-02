@@ -33,6 +33,10 @@ class GatewayServiceUtil {
      * @param completion The completion handler
      */
     static func getFromGatewayService(queryParams: [String: String], endpoint: String, context: WingifyUserContext?, serviceContainer: ServiceContainer? = nil, completion: @escaping (ResponseModel?) -> Void) {
+        guard serviceContainer?.areNetworkRequestsAllowed != false else {
+            completion(nil)
+            return
+        }
         
         // Get instance-specific base URL and gateway service status
         let baseUrl = UrlService.getBaseUrl(for: .get, serviceContainer: serviceContainer)

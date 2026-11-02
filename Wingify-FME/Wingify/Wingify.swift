@@ -376,6 +376,79 @@ enum SDKState {
         }
         instance.getFlag(featureKey: featureKey, context: context, completion: completion)
     }
+
+    /**
+     * Evaluates multiple feature flags and returns a `FlagCollection`.
+     *
+     * Pass `nil` or an empty array for `flagNames` to evaluate all feature keys from settings.
+     * By default only MAU tracking is sent (no variation-shown impressions).
+     * Pass `shouldSendUserTrackCalls: false` for fully offline evaluation, or
+     * `shouldSendTrackingCalls: true` to also send impressions.
+     *
+     * - Parameters:
+     *   - flagNames: Feature keys to evaluate, or `nil`/empty to evaluate all flags from settings.
+     *   - context: User context used for evaluation.
+     *   - shouldSendTrackingCalls: When `true`, sends variation-shown impressions. Defaults to `false`.
+     *   - shouldSendUserTrackCalls: When `true`, sends MAU / user-tracking events. Defaults to `true`.
+     *   - completion: Called with the resulting `FlagCollection`.
+     */
+    public static func getFlags(
+        flagNames: [String]?,
+        context: WingifyUserContext,
+        shouldSendTrackingCalls: Bool = true,
+        shouldSendUserTrackCalls: Bool = true,
+        completion: @escaping (FlagCollection) -> Void
+    ) {
+        getDefaultInstance()?.getFlags(
+            flagNames: flagNames,
+            context: context,
+            shouldSendTrackingCalls: shouldSendTrackingCalls,
+            shouldSendUserTrackCalls: shouldSendUserTrackCalls,
+            completion: completion
+        )
+    }
+
+    /**
+     * Fetches multiple feature flags without variation-shown impressions.
+     * Always sends MAU / user-tracking events only (`shouldSendTrackingCalls: false`,
+     * `shouldSendUserTrackCalls: true`). Call `exposeResult` later to send impressions.
+     *
+     * Pass `nil` or an empty array for `flagNames` to evaluate all feature keys from settings.
+     *
+     * - Parameters:
+     *   - flagNames: Feature keys to evaluate, or `nil`/empty to evaluate all flags from settings.
+     *   - context: User context used for evaluation.
+     *   - completion: Called with the resulting `FlagCollection`.
+     */
+    public static func fetchFlags(
+        flagNames: [String]?,
+        context: WingifyUserContext,
+        completion: @escaping (FlagCollection) -> Void
+    ) {
+        getFlags(
+            flagNames: flagNames,
+            context: context,
+            shouldSendTrackingCalls: false,
+            shouldSendUserTrackCalls: true,
+            completion: completion
+        )
+    }
+
+    /**
+     * Sends a deferred `vwo_variationShown` impression for a feature previously evaluated
+     * via `fetchFlags` / `getFlags(shouldSendTrackingCalls: false)`.
+     * Idempotent: no-ops when `variationShownSent` is already true in sticky storage.
+     *
+     * - Parameters:
+     *   - featureKey: Feature key whose deferred impression should be sent.
+     *   - context: User context that matches the earlier `fetchFlags` / `getFlags` call.
+     * - Returns: `true` when an impression was sent; `false` when there was nothing to send
+     *   or it had already been sent.
+     */
+    @discardableResult
+    public static func exposeResult(featureKey: String, context: WingifyUserContext) -> Bool {
+        getDefaultInstance()?.exposeResult(featureKey: featureKey, context: context) ?? false
+    }
     
     // Tracks an event with properties
     public static func trackEvent(eventName: String, context: WingifyUserContext, eventProperties: [String: Any]? = nil) {
@@ -419,6 +492,114 @@ enum SDKState {
             return
         }
         client.getFlag(featureKey: featureKey, context: context, completion: completion)
+    }
+
+    /**
+     * Evaluates multiple feature flags and returns a `FlagCollection`.
+     *
+     * Pass `nil` or an empty array for `flagNames` to evaluate all feature keys from settings.
+     * By default only MAU tracking is sent (no variation-shown impressions).
+     * Pass `shouldSendUserTrackCalls: false` for fully offline evaluation, or
+     * `shouldSendTrackingCalls: true` to also send impressions.
+     *
+     * - Parameters:
+     *   - flagNames: Feature keys to evaluate, or `nil`/empty to evaluate all flags from settings.
+     *   - context: User context used for evaluation.
+     *   - shouldSendTrackingCalls: When `true`, sends variation-shown impressions. Defaults to `false`.
+     *   - shouldSendUserTrackCalls: When `true`, sends MAU / user-tracking events. Defaults to `true`.
+     *   - completion: Called with the resulting `FlagCollection`.
+     */
+    public func getFlags(
+        flagNames: [String]?,
+        context: WingifyUserContext,
+        shouldSendTrackingCalls: Bool = true,
+        shouldSendUserTrackCalls: Bool = true,
+        completion: @escaping (FlagCollection) -> Void
+    ) {
+        guard let client = wingifyClient else {
+            completion(FlagCollection.createDisabled(flagNames: flagNames, fallbackContext: context))
+            return
+        }
+        client.getFlags(
+            flagNames: flagNames,
+            context: context,
+            shouldSendTrackingCalls: shouldSendTrackingCalls,
+            shouldSendUserTrackCalls: shouldSendUserTrackCalls,
+            completion: completion
+        )
+    }
+
+    /**
+     * Fetches multiple feature flags without variation-shown impressions.
+     * Always sends MAU / user-tracking events only (`shouldSendTrackingCalls: false`,
+     * `shouldSendUserTrackCalls: true`). Call `exposeResult` later to send impressions.
+     *
+     * Pass `nil` or an empty array for `flagNames` to evaluate all feature keys from settings.
+     *
+     * - Parameters:
+     *   - flagNames: Feature keys to evaluate, or `nil`/empty to evaluate all flags from settings.
+     *   - context: User context used for evaluation.
+     *   - completion: Called with the resulting `FlagCollection`.
+     */
+    public func fetchFlags(
+        flagNames: [String]?,
+        context: WingifyUserContext,
+        completion: @escaping (FlagCollection) -> Void
+    ) {
+        getFlags(
+            flagNames: flagNames,
+            context: context,
+            shouldSendTrackingCalls: false,
+            shouldSendUserTrackCalls: true,
+            completion: completion
+        )
+    }
+
+    /**
+     * Sends a deferred `vwo_variationShown` impression for a feature previously evaluated
+     * via `fetchFlags` / `getFlags(shouldSendTrackingCalls: false)`.
+     * Idempotent: no-ops when `variationShownSent` is already true in sticky storage.
+     *
+     * - Parameters:
+     *   - featureKey: Feature key whose deferred impression should be sent.
+     *   - context: User context that matches the earlier `fetchFlags` / `getFlags` call.
+     * - Returns: `true` when an impression was sent; `false` when there was nothing to send
+     *   or it had already been sent.
+     */
+    @discardableResult
+    public func exposeResult(featureKey: String, context: WingifyUserContext) -> Bool {
+        guard let client = wingifyClient,
+              let serviceContainer = client.createServiceContainer(),
+              let settings = client.processedSettings else {
+            return false
+        }
+
+        let userId = UserIdUtil().getUserId(context: context, serviceContainer: serviceContainer)
+        guard let userIdValue = userId.id, !userIdValue.isEmpty else {
+            return false
+        }
+
+        let storageService = serviceContainer.storage ?? StorageService()
+        let raw = storageService.getFeatureFromStorage(featureKey: featureKey, context: userId)
+        let storedEnabled: Bool = {
+            guard let raw = raw else { return false }
+            if raw["experimentVariationId"] != nil { return true }
+            if raw["rolloutVariationId"] != nil { return true }
+            return false
+        }()
+
+        let getFlag = GetFlag()
+        getFlag.setIsEnabled(isEnabled: storedEnabled)
+        getFlag.attachExposeDeps(
+            ImpressionExposureHelper.ExposeDeps(
+                settings: settings,
+                featureKey: featureKey,
+                context: userId,
+                serviceContainer: serviceContainer,
+                isEnabled: storedEnabled
+            )
+        )
+        return getFlag.exposeResult()
     }
     
     // Tracks an event with properties

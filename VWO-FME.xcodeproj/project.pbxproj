@@ -59,6 +59,9 @@
 		BAFC4B092FC861390087E01B /* DecisionUtilTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = BAFC4AD92FC861390087E01B /* DecisionUtilTests.swift */; };
 		BAFC4B0A2FC861390087E01B /* WingifyUserContext.swift in Sources */ = {isa = PBXBuildFile; fileRef = BAFC4A402FC861390087E01B /* WingifyUserContext.swift */; };
 		BAFC4B0B2FC861390087E01B /* GetFlagAPI.swift in Sources */ = {isa = PBXBuildFile; fileRef = BAFC4A102FC861390087E01B /* GetFlagAPI.swift */; };
+		GF00B0012FC861390087E01B /* GetFlagsAPI.swift in Sources */ = {isa = PBXBuildFile; fileRef = GF00A0012FC861390087E01B /* GetFlagsAPI.swift */; };
+		GF00B0022FC861390087E01B /* FlagCollection.swift in Sources */ = {isa = PBXBuildFile; fileRef = GF00A0022FC861390087E01B /* FlagCollection.swift */; };
+		GF00B0032FC861390087E01B /* MegGroupPartitionUtil.swift in Sources */ = {isa = PBXBuildFile; fileRef = GF00A0032FC861390087E01B /* MegGroupPartitionUtil.swift */; };
 		BAFC4B0C2FC861390087E01B /* ServiceContainer.swift in Sources */ = {isa = PBXBuildFile; fileRef = BAFC4A812FC861390087E01B /* ServiceContainer.swift */; };
 		BAFC4B0D2FC861390087E01B /* DecisionMakerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = BAFC4AA22FC861390087E01B /* DecisionMakerTests.swift */; };
 		BAFC4B0E2FC861390087E01B /* Rule.swift in Sources */ = {isa = PBXBuildFile; fileRef = BAFC4A4A2FC861390087E01B /* Rule.swift */; };
@@ -165,6 +168,9 @@
 		BAFC4B752FC861390087E01B /* WingifyFacadeTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = BAFC4AE02FC861390087E01B /* WingifyFacadeTests.swift */; };
 		BAFC4B762FC861390087E01B /* NetworkUtil.swift in Sources */ = {isa = PBXBuildFile; fileRef = BAFC4A912FC861390087E01B /* NetworkUtil.swift */; };
 		BAFC4B772FC861390087E01B /* ImpressionUtil.swift in Sources */ = {isa = PBXBuildFile; fileRef = BAFC4A8E2FC861390087E01B /* ImpressionUtil.swift */; };
+		IM00B0012FC861390087E01B /* ImpressionPayload.swift in Sources */ = {isa = PBXBuildFile; fileRef = IM00A0012FC861390087E01B /* ImpressionPayload.swift */; };
+		IM00B0022FC861390087E01B /* ImpressionExposureHelper.swift in Sources */ = {isa = PBXBuildFile; fileRef = IM00A0022FC861390087E01B /* ImpressionExposureHelper.swift */; };
+		IM00B0032FC861390087E01B /* VariationShownTracker.swift in Sources */ = {isa = PBXBuildFile; fileRef = IM00A0032FC861390087E01B /* VariationShownTracker.swift */; };
 		BAFC4B782FC861390087E01B /* SetUserAliasAPI.swift in Sources */ = {isa = PBXBuildFile; fileRef = BAFC4A132FC861390087E01B /* SetUserAliasAPI.swift */; };
 		BAFC4B792FC861390087E01B /* EventData+CoreDataClass.swift in Sources */ = {isa = PBXBuildFile; fileRef = BAFC4A1D2FC861390087E01B /* EventData+CoreDataClass.swift */; };
 		BAFC4B7A2FC861390087E01B /* EventsUtils.swift in Sources */ = {isa = PBXBuildFile; fileRef = BAFC4A8B2FC861390087E01B /* EventsUtils.swift */; };
@@ -207,6 +213,9 @@
 /* Begin PBXFileReference section */
 		BAE7B6442F67FCF9003FC298 /* CustomBucketingSeedTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CustomBucketingSeedTests.swift; sourceTree = "<group>"; };
 		BAFC4A102FC861390087E01B /* GetFlagAPI.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GetFlagAPI.swift; sourceTree = "<group>"; };
+		GF00A0012FC861390087E01B /* GetFlagsAPI.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GetFlagsAPI.swift; sourceTree = "<group>"; };
+		GF00A0022FC861390087E01B /* FlagCollection.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FlagCollection.swift; sourceTree = "<group>"; };
+		GF00A0032FC861390087E01B /* MegGroupPartitionUtil.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MegGroupPartitionUtil.swift; sourceTree = "<group>"; };
 		BAFC4A112FC861390087E01B /* GetUserAliasAPI.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GetUserAliasAPI.swift; sourceTree = "<group>"; };
 		BAFC4A122FC861390087E01B /* SetAttributeAPI.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SetAttributeAPI.swift; sourceTree = "<group>"; };
 		BAFC4A132FC861390087E01B /* SetUserAliasAPI.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SetUserAliasAPI.swift; sourceTree = "<group>"; };
@@ -302,6 +311,9 @@
 		BAFC4A8C2FC861390087E01B /* FunctionUtil.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FunctionUtil.swift; sourceTree = "<group>"; };
 		BAFC4A8D2FC861390087E01B /* GatewayServiceUtil.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GatewayServiceUtil.swift; sourceTree = "<group>"; };
 		BAFC4A8E2FC861390087E01B /* ImpressionUtil.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ImpressionUtil.swift; sourceTree = "<group>"; };
+		IM00A0012FC861390087E01B /* ImpressionPayload.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ImpressionPayload.swift; sourceTree = "<group>"; };
+		IM00A0022FC861390087E01B /* ImpressionExposureHelper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ImpressionExposureHelper.swift; sourceTree = "<group>"; };
+		IM00A0032FC861390087E01B /* VariationShownTracker.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VariationShownTracker.swift; sourceTree = "<group>"; };
 		BAFC4A8F2FC861390087E01B /* LogMessageUtil.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LogMessageUtil.swift; sourceTree = "<group>"; };
 		BAFC4A902FC861390087E01B /* MegUtil.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MegUtil.swift; sourceTree = "<group>"; };
 		BAFC4A912FC861390087E01B /* NetworkUtil.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NetworkUtil.swift; sourceTree = "<group>"; };
@@ -403,6 +415,7 @@
 			isa = PBXGroup;
 			children = (
 				BAFC4A102FC861390087E01B /* GetFlagAPI.swift */,
+				GF00A0012FC861390087E01B /* GetFlagsAPI.swift */,
 				BAFC4A112FC861390087E01B /* GetUserAliasAPI.swift */,
 				BAFC4A122FC861390087E01B /* SetAttributeAPI.swift */,
 				BAFC4A132FC861390087E01B /* SetUserAliasAPI.swift */,
@@ -498,6 +511,7 @@
 				BAFC4A3C2FC861390087E01B /* FmeSession.swift */,
 				BAFC4A3D2FC861390087E01B /* GatewayService.swift */,
 				BAFC4A3E2FC861390087E01B /* GetFlag.swift */,
+				GF00A0022FC861390087E01B /* FlagCollection.swift */,
 				BAFC4A3F2FC861390087E01B /* WingifyInitOptions.swift */,
 				BAFC4A402FC861390087E01B /* WingifyUserContext.swift */,
 			);
@@ -524,6 +538,7 @@
 				BAFC4A462FC861390087E01B /* Group.swift */,
 				BAFC4A472FC861390087E01B /* HoldoutGroup.swift */,
 				BAFC4A482FC861390087E01B /* ImpactCampaign.swift */,
+				IM00A0012FC861390087E01B /* ImpressionPayload.swift */,
 				BAFC4A492FC861390087E01B /* Metric.swift */,
 				BAFC4A4A2FC861390087E01B /* Rule.swift */,
 				BAFC4A4B2FC861390087E01B /* SdkMetaInfo.swift */,
@@ -709,6 +724,7 @@
 			children = (
 				BAFC4DBF2FD6EB740087E01B /* BucketingIdResolver.swift */,
 				BAFC4A852FC861390087E01B /* CampaignUtil.swift */,
+				GF00A0032FC861390087E01B /* MegGroupPartitionUtil.swift */,
 				BAFC4A862FC861390087E01B /* DataTypeUtil.swift */,
 				BAFC4A872FC861390087E01B /* DebuggerServiceUtil.swift */,
 				BAFC4A882FC861390087E01B /* DecisionUtil.swift */,
@@ -718,6 +734,8 @@
 				BAFC4A8C2FC861390087E01B /* FunctionUtil.swift */,
 				BAFC4A8D2FC861390087E01B /* GatewayServiceUtil.swift */,
 				BAFC4A8E2FC861390087E01B /* ImpressionUtil.swift */,
+				IM00A0022FC861390087E01B /* ImpressionExposureHelper.swift */,
+				IM00A0032FC861390087E01B /* VariationShownTracker.swift */,
 				BAFC4A8F2FC861390087E01B /* LogMessageUtil.swift */,
 				BAFC4A902FC861390087E01B /* MegUtil.swift */,
 				BAFC4A912FC861390087E01B /* NetworkUtil.swift */,
@@ -1167,6 +1185,9 @@
 				BAFC4B072FC861390087E01B /* Event.swift in Sources */,
 				BAFC4B0A2FC861390087E01B /* WingifyUserContext.swift in Sources */,
 				BAFC4B0B2FC861390087E01B /* GetFlagAPI.swift in Sources */,
+				GF00B0012FC861390087E01B /* GetFlagsAPI.swift in Sources */,
+				GF00B0022FC861390087E01B /* FlagCollection.swift in Sources */,
+				GF00B0032FC861390087E01B /* MegGroupPartitionUtil.swift in Sources */,
 				BAFC4B0C2FC861390087E01B /* ServiceContainer.swift in Sources */,
 				BAFC4B0E2FC861390087E01B /* Rule.swift in Sources */,
 				BAFC4B0F2FC861390087E01B /* HooksEnum.swift in Sources */,
@@ -1249,6 +1270,9 @@
 				BAFC4B742FC861390087E01B /* StatusEnum.swift in Sources */,
 				BAFC4B762FC861390087E01B /* NetworkUtil.swift in Sources */,
 				BAFC4B772FC861390087E01B /* ImpressionUtil.swift in Sources */,
+				IM00B0012FC861390087E01B /* ImpressionPayload.swift in Sources */,
+				IM00B0022FC861390087E01B /* ImpressionExposureHelper.swift in Sources */,
+				IM00B0032FC861390087E01B /* VariationShownTracker.swift in Sources */,
 				BAFC4C012FC861390087E01B /* UserTrackingUsageUtil.swift in Sources */,
 				BAFC4C132FC861390087E01B /* InternalEventSamplingSettings.swift in Sources */,
 				BAFC4C142FC861390087E01B /* InternalEventSamplingUtil.swift in Sources */,
@@ -1466,7 +1490,7 @@
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
 				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
-				IPHONEOS_DEPLOYMENT_TARGET = 17.6;
+				IPHONEOS_DEPLOYMENT_TARGET = 15.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -1503,7 +1527,7 @@
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
 				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
-				IPHONEOS_DEPLOYMENT_TARGET = 17.6;
+				IPHONEOS_DEPLOYMENT_TARGET = 15.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -1537,7 +1561,7 @@
 					"$(BUILT_PRODUCTS_DIR)",
 				);
 				GENERATE_INFOPLIST_FILE = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = 17.6;
+				IPHONEOS_DEPLOYMENT_TARGET = 15.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@loader_path/Frameworks",
@@ -1564,7 +1588,7 @@
 					"$(BUILT_PRODUCTS_DIR)",
 				);
 				GENERATE_INFOPLIST_FILE = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = 17.6;
+				IPHONEOS_DEPLOYMENT_TARGET = 15.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@loader_path/Frameworks",

@@ -40,6 +40,99 @@ class ServiceContainer {
     // Optional storage service exposure if needed by callers
     // Initialize with account info for multi-instance support
     internal var storage: StorageService? = StorageService()
+
+    /**
+     * Controls outbound network for this API call.
+     * For `getFlags`, impressions and MAU can be configured independently.
+     * Defaults keep single `getFlag` behavior unchanged (everything allowed).
+     */
+    private(set) var areNetworkRequestsAllowed = true
+    private(set) var areImpressionRequestsAllowed = true
+    private(set) var areUserTrackRequestsAllowed = true
+
+    /**
+     * Configures which tracking network calls `getFlags` may send.
+     *
+     * - Parameters:
+     *   - sendTrackingCalls: When true, `vwo_variationShown` impressions are allowed.
+     *   - sendUserTrackCalls: When true, MAU / user-tracking events are allowed.
+     *
+     * Combinations:
+     * - both false → no tracking/network calls (offline evaluation)
+     * - tracking false, MAU true → MAU only
+     * - tracking true → impressions (+ MAU if `sendUserTrackCalls` is true)
+     */
+    func configureGetFlagsTracking(sendTrackingCalls: Bool, sendUserTrackCalls: Bool) {
+        areImpressionRequestsAllowed = sendTrackingCalls
+        areUserTrackRequestsAllowed = sendUserTrackCalls
+        // Gateway + event pipeline stay available when either tracking channel is enabled.
+        areNetworkRequestsAllowed = sendTrackingCalls || sendUserTrackCalls
+
+        // Without impressions (`shouldSendTrackingCalls: false`), sticky decisions are still
+        // written to persistent storage with `variationShownSent = false` for later exposeResult.
+        // Do not use an ephemeral decision cache.
+        if sendTrackingCalls {
+            storage?.endDecisionCache()
+        }
+    }
+
+    /** Ends any leftover write-to-cache-only mode from older getFlags paths. */
+    func clearGetFlagsDecisionCache() {
+        storage?.endDecisionCache()
+    }
+
+    /// Temporarily overrides whether variationShown network calls are allowed (used by exposeResult).
+    func setImpressionRequestsAllowed(_ allowed: Bool) {
+        areImpressionRequestsAllowed = allowed
+        if allowed {
+            areNetworkRequestsAllowed = true
+        }
+    }
+
+    /// Legacy helper — enables or disables all outbound network for this container.
+    func setNetworkRequestsAllowed(_ allowed: Bool) {
+        areNetworkRequestsAllowed = allowed
+        areImpressionRequestsAllowed = allowed
+        areUserTrackRequestsAllowed = allowed
+    }
+
+    /**
+     * Nested defer count for immediate batch uploads.
+     * Concurrent getFlags evaluations that share this container must not clear
+     * deferral while another evaluation is still running.
+     */
+    private let deferImmediateBatchUploadLock = NSLock()
+    private var deferImmediateBatchUploadCount = 0
+
+    /// Thread-local segmentation manager for parallel getFlags evaluation workers.
+    private static let evalSegmentationThreadKey = "com.wingify.fme.eval.segmentationManager"
+
+    /** True while at least one getFlags evaluation is deferring immediate uploads. */
+    var deferImmediateBatchUpload: Bool {
+        deferImmediateBatchUploadLock.lock()
+        defer { deferImmediateBatchUploadLock.unlock() }
+        return deferImmediateBatchUploadCount > 0
+    }
+
+    /** Begins a nested defer scope. Must be paired with `endDeferImmediateBatchUpload`. */
+    func beginDeferImmediateBatchUpload() {
+        deferImmediateBatchUploadLock.lock()
+        deferImmediateBatchUploadCount += 1
+        deferImmediateBatchUploadLock.unlock()
+    }
+
+    /**
+     * Ends a nested defer scope.
+     * - Returns: `true` when this was the outermost scope (count reached zero).
+     */
+    @discardableResult
+    func endDeferImmediateBatchUpload() -> Bool {
+        deferImmediateBatchUploadLock.lock()
+        defer { deferImmediateBatchUploadLock.unlock() }
+        guard deferImmediateBatchUploadCount > 0 else { return false }
+        deferImmediateBatchUploadCount -= 1
+        return deferImmediateBatchUploadCount == 0
+    }
     
     init(settingsManager: SettingsManager?, options: WingifyInitOptions, settings: Settings?, loggerService: LoggerService?) {
         self.settingsManager = settingsManager
@@ -137,7 +230,24 @@ class ServiceContainer {
     
     // MARK: - Segmentation
     func getSegmentationManager() -> SegmentationManager {
+        if let evalManager = Thread.current.threadDictionary[Self.evalSegmentationThreadKey] as? SegmentationManager {
+            return evalManager
+        }
         return segmentationManager
+    }
+
+    /**
+     * Binds a thread-local `SegmentationManager` for the current getFlags evaluation worker.
+     */
+    func setEvalSegmentationManager(_ manager: SegmentationManager) {
+        Thread.current.threadDictionary[Self.evalSegmentationThreadKey] = manager
+    }
+
+    /**
+     * Clears the thread-local `SegmentationManager` after a getFlags evaluation worker finishes.
+     */
+    func clearEvalSegmentationManager() {
+        Thread.current.threadDictionary.removeObject(forKey: Self.evalSegmentationThreadKey)
     }
     
     // MARK: - AliasIdentifierManager

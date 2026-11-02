@@ -119,8 +119,10 @@ class NetworkManager {
             // Check if the request is for event batching
             let isEventBatchingRequest = request.path == Constants.EVENT_BATCH_ENDPOINT
             
-            // If online batching is allowed and the request is not an event batching request
-            if effectiveSyncManager.isOnlineBatchingAllowed && !isEventBatchingRequest {
+            // If online batching is allowed, or getFlags is deferring immediate upload,
+            // and the request is not an event batching request — store for later flush.
+            if (effectiveSyncManager.isOnlineBatchingAllowed || request.deferImmediateBatchUpload)
+                && !isEventBatchingRequest {
                 // Store the event payload for later processing with account info
                 EventDataManager.shared.createEvent(
                     payload: payloadToStore,

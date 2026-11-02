@@ -27,6 +27,7 @@ final class EnumTests: XCTestCase {
     func testGetFlagRawValue() {
         // Test that the raw value of getFlag is correct
         XCTAssertEqual(ApiEnum.getFlag.rawValue, "getFlag", "The raw value of getFlag should be 'getFlag'")
+        XCTAssertEqual(ApiEnum.getFlags.rawValue, "getFlags", "The raw value of getFlags should be 'getFlags'")
     }
     
     func testTrackRawValue() {

@@ -19,6 +19,26 @@ import Foundation
 class SegmentationManager {
     private var evaluator: SegmentEvaluator?
 
+    /**
+     * Per-account locks for gateway user-detail fetch.
+     * Avoids cross-account blocking and does not hold the lock across network I/O
+     * (holding NSLock across wait was a deadlock/crash risk under parallel getFlags).
+     */
+    private static let gatewayLocksQueue = DispatchQueue(label: "com.wingify.fme.gatewayUserDetail.locks")
+    private static var gatewayLocksByAccount: [String: NSLock] = [:]
+
+    private static func gatewayLock(for serviceContainer: ServiceContainer) -> NSLock {
+        let key = "\(serviceContainer.getAccountId())_\(serviceContainer.getSdkKey())"
+        return gatewayLocksQueue.sync {
+            if let existing = gatewayLocksByAccount[key] {
+                return existing
+            }
+            let lock = NSLock()
+            gatewayLocksByAccount[key] = lock
+            return lock
+        }
+    }
+
     init() {
         self.evaluator = SegmentEvaluator()
     }
@@ -72,50 +92,67 @@ class SegmentationManager {
         // If gateway service is required either by feature or holdout groups,
         // and context does not already have Wingify data, fetch from gateway service.
         if (feature.isGatewayServiceRequired || isGatewayServiceRequiredForHoldouts) && context.vwo == nil {
-            
-            var queryParams: [String: String] = [:]
-            
             let storageService = serviceContainer.storage ?? StorageService()
+            let accountLock = Self.gatewayLock(for: serviceContainer)
+
+            // 1) Fast path: use cache under a short critical section.
+            accountLock.lock()
             if let cachedResult = storageService.getUserDetail() {
                 context.vwo = cachedResult
+                accountLock.unlock()
                 return
             }
-            
+            accountLock.unlock()
+
+            // 2) Network fetch WITHOUT holding the lock (avoids deadlock with parallel getFlags).
+            var queryParams: [String: String] = [:]
             queryParams["userAgent"] = context.userAgent
             queryParams["accountId"] = "\(serviceContainer.getAccountId())"
-            
             if !context.ipAddress.isEmpty {
                 queryParams["ipAddress"] = context.ipAddress
             }
-            
-            
+
             let dispatchGroup = DispatchGroup()
             dispatchGroup.enter()
-            
-            let params = GatewayServiceUtil.getQueryParams(queryParams)
-            GatewayServiceUtil.getFromGatewayService(queryParams: params, endpoint: UrlEnum.getUserData.rawValue, context: context, serviceContainer: serviceContainer) { gatewayResponse in
-                if let modelData = gatewayResponse {
-                    if let stringData = modelData.data {
-                        do {
-                            let gatewayData = stringData.data(using: .utf8)
-                            let gatewayServiceModel = try JSONDecoder().decode(GatewayService.self, from: gatewayData!)
-                            context.vwo = gatewayServiceModel
-                            storageService.saveUserDetail(userDetail: gatewayServiceModel)
-                        }  catch(let err) {
-                            serviceContainer.getLoggerService()?.errorLog( key: "ERROR_SETTING_SEGMENTATION_CONTEXT",data: ["err":FunctionUtil.getFormattedErrorMessage(err)],
-                                                    debugData: [
-                                    "an": ApiEnum.getFlag.rawValue,
-                                    "uuid": context.uuid,
-                                    "sId": context.sessionId
-                                ]
-                            )
 
-                        }
-                    }
+            var fetchedModel: GatewayService?
+            let params = GatewayServiceUtil.getQueryParams(queryParams)
+            GatewayServiceUtil.getFromGatewayService(
+                queryParams: params,
+                endpoint: UrlEnum.getUserData.rawValue,
+                context: context,
+                serviceContainer: serviceContainer
+            ) { gatewayResponse in
+                defer { dispatchGroup.leave() }
+                guard let stringData = gatewayResponse?.data,
+                      let gatewayData = stringData.data(using: .utf8) else {
+                    return
                 }
-                dispatchGroup.leave()
+                do {
+                    fetchedModel = try JSONDecoder().decode(GatewayService.self, from: gatewayData)
+                } catch {
+                    serviceContainer.getLoggerService()?.errorLog(
+                        key: "ERROR_SETTING_SEGMENTATION_CONTEXT",
+                        data: ["err": FunctionUtil.getFormattedErrorMessage(error)],
+                        debugData: [
+                            "an": ApiEnum.getFlag.rawValue,
+                            "uuid": context.uuid,
+                            "sId": context.sessionId
+                        ]
+                    )
+                }
             }
             dispatchGroup.wait()
+
+            // 3) Publish result under lock; prefer cache if another worker filled it first.
+            accountLock.lock()
+            if let cachedResult = storageService.getUserDetail() {
+                context.vwo = cachedResult
+            } else if let fetchedModel = fetchedModel {
+                context.vwo = fetchedModel
+                storageService.saveUserDetail(userDetail: fetchedModel)
+            }
+            accountLock.unlock()
         }
     }
     

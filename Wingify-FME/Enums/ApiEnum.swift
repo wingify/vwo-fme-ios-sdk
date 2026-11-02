@@ -22,9 +22,14 @@
  */
 enum ApiEnum: String {
     /**
-     * API endpoint for retrieving feature flags.
+     * API endpoint for retrieving a single feature flag.
      */
     case getFlag = "getFlag"
+
+    /**
+     * API endpoint for retrieving multiple feature flags.
+     */
+    case getFlags = "getFlags"
     
     /**
      * API endpoint for tracking user events.

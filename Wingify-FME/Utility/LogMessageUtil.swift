@@ -23,8 +23,10 @@ import Foundation
  * constructing log messages with dynamic data, adding timestamps, or applying formatting rules.
  */
 class LogMessageUtil {
-    private static let NARGS = try! NSRegularExpression(pattern: "\\{([0-9a-zA-Z_]+)\\}", options: [])
-    
+    private static let placeholderRegex = try! NSRegularExpression(pattern: "\\{([0-9a-zA-Z_]+)\\}", options: [])
+    /// Serializes message construction — parallel getFlags workers log concurrently.
+    private static let buildLock = NSLock()
+
     /**
      * Constructs a message by replacing placeholders in a template with corresponding values from a data object.
      *
@@ -33,24 +35,69 @@ class LogMessageUtil {
      *   - data: A dictionary containing keys and values used to replace the placeholders in the template.
      * - Returns: The constructed message with all placeholders replaced by their corresponding values from the data object.
      */
-    
     static func buildMessage(template: String?, data: [String: Any?]?) -> String? {
-        guard let template = template, let data = data else {
+        buildLock.lock()
+        defer { buildLock.unlock() }
+        return buildMessageUnlocked(template: template, data: data)
+    }
+
+    /// Convenience overload for non-optional dictionary values used by most call sites.
+    static func buildMessage(template: String?, data: [String: Any]?) -> String? {
+        guard let data = data else {
+            return buildMessage(template: template, data: nil as [String: Any?]?)
+        }
+        var optionalData: [String: Any?] = [:]
+        optionalData.reserveCapacity(data.count)
+        for (key, value) in data {
+            optionalData[key] = value
+        }
+        return buildMessage(template: template, data: optionalData)
+    }
+
+    /// Convenience overload for `[String: String]` detail maps from LoggerService.
+    static func buildMessage(template: String?, data: [String: String]?) -> String? {
+        guard let data = data else {
+            return buildMessage(template: template, data: nil as [String: Any?]?)
+        }
+        var optionalData: [String: Any?] = [:]
+        optionalData.reserveCapacity(data.count)
+        for (key, value) in data {
+            optionalData[key] = value
+        }
+        return buildMessage(template: template, data: optionalData)
+    }
+
+    private static func buildMessageUnlocked(template: String?, data: [String: Any?]?) -> String? {
+        guard let template = template else {
+            return nil
+        }
+        guard let data = data else {
             return template
         }
-        let result = NSMutableString(string: template)
-        let matches = NARGS.matches(in: template, options: [], range: NSRange(location: 0, length: template.utf16.count))
+
+        // Pure-Swift replacement with guarded ranges — never traps on bad match indexes.
+        let nsTemplate = template as NSString
+        let matches = placeholderRegex.matches(
+            in: template,
+            options: [],
+            range: NSRange(location: 0, length: nsTemplate.length)
+        )
+
+        var result = template
         for match in matches.reversed() {
-            if let keyRange = Range(match.range(at: 1), in: template) {
-                let key = String(template[keyRange])
-                if let value = data[key] {
-                    let replacement = String(describing: value ?? "")
-                    result.replaceCharacters(in: match.range, with: NSRegularExpression.escapedTemplate(for: replacement))
-                }
+            guard match.numberOfRanges > 1 else { continue }
+            let keyRange = match.range(at: 1)
+            guard keyRange.location != NSNotFound,
+                  let swiftKeyRange = Range(keyRange, in: template),
+                  let fullRange = Range(match.range, in: result) else {
+                continue
             }
+            let key = String(template[swiftKeyRange])
+            guard let value = data[key] else { continue }
+            let replacement = String(describing: value ?? "")
+            result.replaceSubrange(fullRange, with: replacement)
         }
-        return result as String
-        
+        return result
     }
     
     /**

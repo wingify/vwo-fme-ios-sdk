@@ -5,6 +5,36 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+
+## [1.70.0] - 2026-10-28
+
+### Added
+
+- You can now get several feature flag results at once without reporting that the user saw them. This is useful when you want to check the flags first and decide later whether to show them.
+- You can later report that the user saw a flag, after you have already fetched its result. Calling this more than once is safe — it is only reported the first time.
+- You can now get results for several feature flags in a single request, instead of checking them one by one.
+- Returns a simple collection of flag results that you can look up by feature name.
+
+
+```swift
+let userContext = VWOUserContext(id: "user_123", customVariables: ["key": "value"])
+
+// Evaluate specific flags. Pass nil or [] for flagNames to evaluate every flag from settings.
+VWOFme.getFlags(
+    flagNames: ["feature_flag_1", "feature_flag_2"],
+    context: userContext,
+) { flagCollection in
+    let flag = flagCollection.get("feature_flag_1")
+    let isEnabled = flag.isEnabled()
+    let variable = flag.getVariable(key: "feature_flag_variable", defaultValue: "default-value")
+
+    flagCollection.forEach { featureKey, featureFlag in
+        print(featureKey, featureFlag.isEnabled())
+    }
+}
+
+```
+
 ## [1.68.0] - 2026-10-27
 
 ### Fixed

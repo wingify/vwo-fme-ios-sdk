@@ -130,6 +130,82 @@ public typealias VWOStorageConnector = WingifyStorageConnector
         WingifyFme.getFlag(featureKey: featureKey, context: context, completion: completion)
     }
 
+    /**
+     * Evaluates multiple feature flags and returns a `FlagCollection`.
+     *
+     * Pass `nil` or an empty array for `flagNames` to evaluate all feature keys from settings.
+     * By default only MAU tracking is sent (no variation-shown impressions).
+     * Pass `shouldSendUserTrackCalls: false` for fully offline evaluation, or
+     * `shouldSendTrackingCalls: true` to also send impressions.
+     *
+     * - Parameters:
+     *   - flagNames: Feature keys to evaluate, or `nil`/empty to evaluate all flags from settings.
+     *   - context: User context used for evaluation.
+     *   - shouldSendTrackingCalls: When `true`, sends variation-shown impressions. Defaults to `false`.
+     *   - shouldSendUserTrackCalls: When `true`, sends MAU / user-tracking events. Defaults to `true`.
+     *   - completion: Called with the resulting `FlagCollection`.
+     */
+    @available(*, deprecated, message: "VWO-branded API is deprecated. Use WingifyFme.getFlags instead.")
+    public static func getFlags(
+        flagNames: [String]?,
+        context: VWOUserContext,
+        shouldSendTrackingCalls: Bool = true,
+        shouldSendUserTrackCalls: Bool = true,
+        completion: @escaping (FlagCollection) -> Void
+    ) {
+        ProductConfig.use(.vwo)
+        WingifyFme.getFlags(
+            flagNames: flagNames,
+            context: context,
+            shouldSendTrackingCalls: shouldSendTrackingCalls,
+            shouldSendUserTrackCalls: shouldSendUserTrackCalls,
+            completion: completion
+        )
+    }
+
+    /**
+     * Fetches multiple feature flags without variation-shown impressions.
+     * Always sends MAU / user-tracking events only. Call `exposeResult` later to send impressions.
+     *
+     * Pass `nil` or an empty array for `flagNames` to evaluate all feature keys from settings.
+     *
+     * - Parameters:
+     *   - flagNames: Feature keys to evaluate, or `nil`/empty to evaluate all flags from settings.
+     *   - context: User context used for evaluation.
+     *   - completion: Called with the resulting `FlagCollection`.
+     */
+    @available(*, deprecated, message: "VWO-branded API is deprecated. Use WingifyFme.fetchFlags instead.")
+    public static func fetchFlags(
+        flagNames: [String]?,
+        context: VWOUserContext,
+        completion: @escaping (FlagCollection) -> Void
+    ) {
+        ProductConfig.use(.vwo)
+        WingifyFme.fetchFlags(
+            flagNames: flagNames,
+            context: context,
+            completion: completion
+        )
+    }
+
+    /**
+     * Sends a deferred `vwo_variationShown` impression for a feature previously evaluated
+     * via `fetchFlags` / `getFlags(shouldSendTrackingCalls: false)`.
+     * Idempotent: no-ops when the impression has already been sent.
+     *
+     * - Parameters:
+     *   - featureKey: Feature key whose deferred impression should be sent.
+     *   - context: User context that matches the earlier `fetchFlags` / `getFlags` call.
+     * - Returns: `true` when an impression was sent; `false` when there was nothing to send
+     *   or it had already been sent.
+     */
+    @available(*, deprecated, message: "VWO-branded API is deprecated. Use WingifyFme.exposeResult instead.")
+    @discardableResult
+    public static func exposeResult(featureKey: String, context: VWOUserContext) -> Bool {
+        ProductConfig.use(.vwo)
+        return WingifyFme.exposeResult(featureKey: featureKey, context: context)
+    }
+
     @available(*, deprecated, message: "VWO-branded API is deprecated. Use WingifyInitOptions instead.")
     public static func trackEvent(eventName: String, context: VWOUserContext, eventProperties: [String: Any]? = nil) {
         ProductConfig.use(.vwo)
@@ -164,6 +240,82 @@ public typealias VWOStorageConnector = WingifyStorageConnector
     public func getFlag(featureKey: String, context: VWOUserContext, completion: @escaping (GetFlag) -> Void) {
         ProductConfig.use(.vwo)
         baseInstance.getFlag(featureKey: featureKey, context: context, completion: completion)
+    }
+
+    /**
+     * Evaluates multiple feature flags and returns a `FlagCollection`.
+     *
+     * Pass `nil` or an empty array for `flagNames` to evaluate all feature keys from settings.
+     * By default only MAU tracking is sent (no variation-shown impressions).
+     * Pass `shouldSendUserTrackCalls: false` for fully offline evaluation, or
+     * `shouldSendTrackingCalls: true` to also send impressions.
+     *
+     * - Parameters:
+     *   - flagNames: Feature keys to evaluate, or `nil`/empty to evaluate all flags from settings.
+     *   - context: User context used for evaluation.
+     *   - shouldSendTrackingCalls: When `true`, sends variation-shown impressions. Defaults to `false`.
+     *   - shouldSendUserTrackCalls: When `true`, sends MAU / user-tracking events. Defaults to `true`.
+     *   - completion: Called with the resulting `FlagCollection`.
+     */
+    @available(*, deprecated, message: "VWO-branded API is deprecated. Use WingifyFme.getFlags instead.")
+    public func getFlags(
+        flagNames: [String]?,
+        context: VWOUserContext,
+        shouldSendTrackingCalls: Bool = true,
+        shouldSendUserTrackCalls: Bool = true,
+        completion: @escaping (FlagCollection) -> Void
+    ) {
+        ProductConfig.use(.vwo)
+        baseInstance.getFlags(
+            flagNames: flagNames,
+            context: context,
+            shouldSendTrackingCalls: shouldSendTrackingCalls,
+            shouldSendUserTrackCalls: shouldSendUserTrackCalls,
+            completion: completion
+        )
+    }
+
+    /**
+     * Fetches multiple feature flags without variation-shown impressions.
+     * Always sends MAU / user-tracking events only. Call `exposeResult` later to send impressions.
+     *
+     * Pass `nil` or an empty array for `flagNames` to evaluate all feature keys from settings.
+     *
+     * - Parameters:
+     *   - flagNames: Feature keys to evaluate, or `nil`/empty to evaluate all flags from settings.
+     *   - context: User context used for evaluation.
+     *   - completion: Called with the resulting `FlagCollection`.
+     */
+    @available(*, deprecated, message: "VWO-branded API is deprecated. Use WingifyFme.fetchFlags instead.")
+    public func fetchFlags(
+        flagNames: [String]?,
+        context: VWOUserContext,
+        completion: @escaping (FlagCollection) -> Void
+    ) {
+        ProductConfig.use(.vwo)
+        baseInstance.fetchFlags(
+            flagNames: flagNames,
+            context: context,
+            completion: completion
+        )
+    }
+
+    /**
+     * Sends a deferred `vwo_variationShown` impression for a feature previously evaluated
+     * via `fetchFlags` / `getFlags(shouldSendTrackingCalls: false)`.
+     * Idempotent: no-ops when the impression has already been sent.
+     *
+     * - Parameters:
+     *   - featureKey: Feature key whose deferred impression should be sent.
+     *   - context: User context that matches the earlier `fetchFlags` / `getFlags` call.
+     * - Returns: `true` when an impression was sent; `false` when there was nothing to send
+     *   or it had already been sent.
+     */
+    @available(*, deprecated, message: "VWO-branded API is deprecated. Use WingifyFme.exposeResult instead.")
+    @discardableResult
+    public func exposeResult(featureKey: String, context: VWOUserContext) -> Bool {
+        ProductConfig.use(.vwo)
+        return baseInstance.exposeResult(featureKey: featureKey, context: context)
     }
 
     @available(*, deprecated, message: "VWO-branded API is deprecated. Use WingifyInitOptions instead.")

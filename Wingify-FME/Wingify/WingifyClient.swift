@@ -148,6 +148,87 @@ class WingifyClient {
             completion(getFlag)
         }
     }
+
+    /**
+     * Evaluates multiple feature flags in parallel and returns a `FlagCollection`.
+     *
+     * - Parameters:
+     *   - flagNames: Feature keys to evaluate, or nil/empty to evaluate all flags from settings.
+     *   - context: User context (resolved once; each flag gets an isolated copy for evaluation).
+     *   - shouldSendTrackingCalls: When true, sends variation-shown impressions. Defaults to false.
+     *   - shouldSendUserTrackCalls: When true, sends MAU / user-tracking events. Defaults to true.
+     *   - completion: Called with the resulting `FlagCollection`.
+     */
+    func getFlags(
+        flagNames: [String]?,
+        context: WingifyUserContext,
+        shouldSendTrackingCalls: Bool = true,
+        shouldSendUserTrackCalls: Bool = true,
+        completion: @escaping (FlagCollection) -> Void
+    ) {
+        let apiName = ApiEnum.getFlags.rawValue
+
+        guard let serviceContainer = createServiceContainer() else {
+            completion(FlagCollection.createDisabled(flagNames: flagNames, fallbackContext: context))
+            return
+        }
+        serviceContainer.configureGetFlagsTracking(
+            sendTrackingCalls: shouldSendTrackingCalls,
+            sendUserTrackCalls: shouldSendUserTrackCalls
+        )
+
+        do {
+            serviceContainer.getLoggerService()?.log(level: .debug, key: "API_CALLED", details: ["apiName": apiName])
+
+            let userId = UserIdUtil().getUserId(context: context, serviceContainer: serviceContainer)
+            guard let userIdValue = userId.id, !userIdValue.isEmpty else {
+                serviceContainer.getLoggerService()?.errorLog(
+                    key: "API_CONTEXT_INVALID",
+                    data: [:],
+                    debugData: ["an": ApiEnum.getFlags.rawValue]
+                )
+                throw NSError(domain: Constants.userIdErrorMessage, code: 0, userInfo: nil)
+            }
+
+            var effectiveContext = userId
+
+            guard let procSettings = self.processedSettings, isSettingsValid else {
+                serviceContainer.getLoggerService()?.errorLog(
+                    key: "INVALID_SETTINGS_SCHEMA",
+                    data: [:],
+                    debugData: [
+                        "an": ApiEnum.getFlags.rawValue,
+                        "uuid": effectiveContext.uuid
+                    ]
+                )
+                completion(FlagCollection.createDisabled(flagNames: flagNames, fallbackContext: effectiveContext))
+                return
+            }
+
+            let collection = GetFlagsAPI.getFlags(
+                flagNames: flagNames,
+                settings: procSettings,
+                context: effectiveContext,
+                serviceContainer: serviceContainer,
+                shouldSendTrackingCalls: shouldSendTrackingCalls,
+                shouldSendUserTrackCalls: shouldSendUserTrackCalls
+            )
+            completion(collection)
+        } catch {
+            serviceContainer.getLoggerService()?.errorLog(
+                key: "EXECUTION_FAILED",
+                data: [
+                    "apiName": apiName,
+                    "err": error.localizedDescription
+                ],
+                debugData: [
+                    "an": ApiEnum.getFlags.rawValue,
+                    "uuid": context.uuid
+                ]
+            )
+            completion(FlagCollection.createDisabled(flagNames: flagNames, fallbackContext: context))
+        }
+    }
     
     private func track(eventName: String, context: WingifyUserContext?, eventProperties: [String: Any]) {
         let apiName = "trackEvent"

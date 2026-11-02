@@ -25,7 +25,11 @@ import Foundation
 @objc public class GetFlag: NSObject {
     private var isFlagEnabled: Bool = false
     private var variables: [Variable] = []
-    
+
+    private var impressionAlreadySent = false
+    private var pendingImpressions = ImpressionPayload()
+    private var exposeDeps: ImpressionExposureHelper.ExposeDeps?
+
     /**
      * Sets the variables for the feature flag.
      *
@@ -34,26 +38,24 @@ import Foundation
     func setVariables(_ variables: [Variable]) {
         self.variables = variables
     }
-    
+
     var variablesValue: [Variable] {
         return variables
     }
-    
+
+    /**
+     * Returns whether this feature flag is enabled for the user.
+     */
     @objc public func isEnabled() -> Bool {
         return isFlagEnabled
     }
-    
+
     func setIsEnabled(isEnabled: Bool) {
         self.isFlagEnabled = isEnabled
     }
-    
+
     /**
      * Retrieves the value of a specific variable by its key.
-     *
-     * - Parameters:
-     *   - key: The key of the variable to retrieve.
-     *   - defaultValue: The default value to return if the variable is not found or its value is nil.
-     * - Returns: The value of the variable if found, otherwise the default value.
      */
     @objc public func getVariable(key: String?, defaultValue: Any) -> Any {
         for variable in variablesValue {
@@ -63,22 +65,73 @@ import Foundation
         }
         return defaultValue
     }
-    
+
     /**
      * Retrieves the list of variables as an array of dictionaries.
-     *
-     * - Returns: The list of variables, where each variable is represented as a dictionary with keys "key", "value", "type", and "id".
      */
     @objc public func getVariables() -> [[String: Any]] {
         return variablesValue.map { convertVariableModelToDict($0) }
     }
-    
+
     /**
-     * Converts a Variable object to a dictionary representation.
+     * Sends a previously deferred `vwo_variationShown` impression for this flag result.
+     * Use after `fetchFlags` / `getFlags(shouldSendTrackingCalls: false)`.
+     * Idempotent — safe to call multiple times.
      *
-     * - Parameter variableModel: The Variable object to convert.
-     * - Returns: A dictionary representation of the Variable object.
+     * - Returns: `true` when an impression was sent; `false` when there was nothing to send
+     *   or it had already been sent.
      */
+    @objc public func exposeResult() -> Bool {
+        return ImpressionExposureHelper.expose(getFlag: self)
+    }
+
+    // MARK: - Impression defer / expose (internal)
+
+    /**
+     * Attaches evaluation dependencies needed later by `exposeResult`.
+     */
+    func attachExposeDeps(_ deps: ImpressionExposureHelper.ExposeDeps) {
+        exposeDeps = deps
+    }
+
+    /**
+     * Returns the expose dependencies attached during evaluation, if any.
+     */
+    func getExposeDeps() -> ImpressionExposureHelper.ExposeDeps? {
+        exposeDeps
+    }
+
+    /**
+     * Merges deferred variation-shown rows into this flag's in-memory stash.
+     */
+    func mergePendingImpressions(_ payload: ImpressionPayload) {
+        pendingImpressions.merge(payload)
+    }
+
+    /**
+     * Returns and clears the in-memory deferred impression stash.
+     */
+    func consumePendingImpressions() -> ImpressionPayload {
+        let copy = ImpressionPayload()
+        copy.merge(pendingImpressions)
+        pendingImpressions.clear()
+        return copy
+    }
+
+    /**
+     * Marks this flag result as having already sent its variation-shown impression.
+     */
+    func markImpressionSent() {
+        impressionAlreadySent = true
+    }
+
+    /**
+     * Returns whether this flag result has already sent its variation-shown impression.
+     */
+    func isImpressionAlreadySent() -> Bool {
+        impressionAlreadySent
+    }
+
     private func convertVariableModelToDict(_ variableModel: Variable) -> [String: Any] {
         return [
             "key": variableModel.key ?? "",

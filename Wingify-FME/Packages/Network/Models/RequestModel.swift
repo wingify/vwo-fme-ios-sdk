@@ -32,6 +32,8 @@ struct RequestModel {
     // Account identifiers for multi-instance support
     internal var accountId: Int? = nil
     internal var sdkKey: String? = nil
+    /// When true, NetworkManager stores the event instead of sending immediately (getFlags defer).
+    internal var deferImmediateBatchUpload: Bool = false
     /**
      * A map containing various options for the request.
      */

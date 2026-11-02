@@ -43,6 +43,46 @@ class ImpressionUtil {
         context: WingifyUserContext,
         serviceContainer: ServiceContainer
     ) {
+        let payload = ImpressionPayload()
+        payload.add(campaignId: campaignId, variationId: variationId)
+        createAndSendImpressionForVariationShown(
+            settings: settings,
+            impressionPayload: payload,
+            context: context,
+            serviceContainer: serviceContainer
+        )
+    }
+
+    /**
+     * Sends every row in `impressionPayload` as a `vwo_variationShown` event.
+     */
+    static func createAndSendImpressionForVariationShown(
+        settings: Settings,
+        impressionPayload: ImpressionPayload,
+        context: WingifyUserContext,
+        serviceContainer: ServiceContainer
+    ) {
+        guard serviceContainer.areImpressionRequestsAllowed else {
+            return
+        }
+        for item in impressionPayload.impressionList {
+            sendSingleVariationShown(
+                settings: settings,
+                campaignId: item.campaignId,
+                variationId: item.variationId,
+                context: context,
+                serviceContainer: serviceContainer
+            )
+        }
+    }
+
+    private static func sendSingleVariationShown(
+        settings: Settings,
+        campaignId: Int,
+        variationId: Int,
+        context: WingifyUserContext,
+        serviceContainer: ServiceContainer
+    ) {
         // Get base properties for the event
         let properties = NetworkUtil.getEventsBaseProperties(
             eventName: EventEnum.vwoVariationShown.rawValue,

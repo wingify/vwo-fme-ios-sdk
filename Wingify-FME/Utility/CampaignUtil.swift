@@ -209,7 +209,10 @@ class CampaignUtil {
         ruleList.forEach { rule in
             if let ruleCampaignId = rule.campaignId, let ruleVariationId = rule.variationId {
                 let group = getGroupDetailsIfCampaignPartOfIt(settings: settings, campaignId: ruleCampaignId, variationId: ruleVariationId)
-                groups.append(group)
+                // Only keep non-empty group entries (campaign is part of a MEG group).
+                if !group.isEmpty, !groups.contains(where: { $0["groupId"] == group["groupId"] }) {
+                    groups.append(group)
+                }
             }
         }
         return groups

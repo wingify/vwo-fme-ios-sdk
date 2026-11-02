@@ -32,10 +32,40 @@ import UIKit
 class StorageService {
 
     private let userDefaults: UserDefaults
-    
+
+    /**
+     * Shared serial queue for all StorageService instances.
+     * Parallel getFlags workers share the same UserDefaults suite; serializing
+     * access prevents races that can corrupt cached gateway/user detail data.
+     */
+    private static let storageQueueKey = DispatchSpecificKey<UInt8>()
+    private static let storageQueueContext: UInt8 = 1
+    private static let storageQueue: DispatchQueue = {
+        let queue = DispatchQueue(label: "com.wingify.fme.localStorage")
+        queue.setSpecific(key: storageQueueKey, value: storageQueueContext)
+        return queue
+    }()
+
     // Account identifiers for multi-instance support
     private var accountId: Int = 0
     private var sdkKey: String = ""
+
+    /**
+     * In-memory decision cache used by `getFlags` / `fetchFlags` when variation-shown
+     * impressions are suppressed. Writes go here instead of UserDefaults.
+     *
+     * Lookup order for reads: **persistent local storage → decision cache → miss (evaluate)**.
+     * After `fetchFlags`, entries remain so a later `getFlag` can reuse the same decision
+     * instead of re-evaluating. Thread-safe via `storageQueue`.
+     */
+    private var useDecisionCacheOnly = false
+    private var decisionCache: [String: [String: Any]] = [:]
+
+    /// Where a feature decision was resolved from.
+    enum FeatureStorageSource {
+        case persistent
+        case decisionCache
+    }
     
     // Account key prefix for storage keys
     private var accountKeyPrefix: String {
@@ -63,6 +93,50 @@ class StorageService {
      */
     private func getAccountKey(_ baseKey: String) -> String {
         return "\(accountKeyPrefix)\(baseKey)"
+    }
+
+    /**
+     * Runs storage work on the shared serial queue.
+     * Re-entrant: nested calls from the same queue execute inline to avoid deadlock
+     * (e.g. getUserDetail → isCachedUserDetailValid → getUserDetailExpiry).
+     */
+    private func performOnStorageQueue<T>(_ work: () -> T) -> T {
+        if DispatchQueue.getSpecific(key: Self.storageQueueKey) == Self.storageQueueContext {
+            return work()
+        }
+        return Self.storageQueue.sync(execute: work)
+    }
+
+    private func performOnStorageQueue(_ work: () -> Void) {
+        if DispatchQueue.getSpecific(key: Self.storageQueueKey) == Self.storageQueueContext {
+            work()
+            return
+        }
+        Self.storageQueue.sync(execute: work)
+    }
+
+    /**
+     * Starts decision caching for a `getFlags` / `fetchFlags` evaluation that does not
+     * send impressions. Feature decisions are kept in memory only (for MEG / rule
+     * consistency) and are not written to persistent storage during the call.
+     */
+    func beginDecisionCache() {
+        performOnStorageQueue {
+            self.useDecisionCacheOnly = true
+            self.decisionCache.removeAll()
+        }
+    }
+
+    /**
+     * Ends write-to-cache-only mode after `getFlags` / `fetchFlags`.
+     * Keeps cached decisions in memory so a subsequent `getFlag` can resolve:
+     * persistent local → decision cache → evaluate.
+     * Cache is cleared on the next `beginDecisionCache` or when an entry is promoted.
+     */
+    func endDecisionCache() {
+        performOnStorageQueue {
+            self.useDecisionCacheOnly = false
+        }
     }
 
     /**
@@ -113,12 +187,14 @@ class StorageService {
      * - Parameter settings: The settings object to be saved.
      */
     func saveSettings(_ settings: Settings) {
-        let encoder = JSONEncoder()
-        do {
-            let data = try encoder.encode(settings)
-            userDefaults.set(data, forKey: getAccountKey(Keys.settings))
-        } catch {
-            LoggerService.log(level: .error, key: "SETTINGS_SCHEMA_INVALID", details: [:])
+        performOnStorageQueue {
+            let encoder = JSONEncoder()
+            do {
+                let data = try encoder.encode(settings)
+                self.userDefaults.set(data, forKey: self.getAccountKey(Keys.settings))
+            } catch {
+                LoggerService.log(level: .error, key: "SETTINGS_SCHEMA_INVALID", details: [:])
+            }
         }
     }
 
@@ -128,23 +204,26 @@ class StorageService {
      * - Returns: The settings object if available, otherwise nil.
      */
     func loadSettings() -> Settings? {
-        if let data = userDefaults.data(forKey: getAccountKey(Keys.settings)) {
-            let decoder = JSONDecoder()
+        return performOnStorageQueue {
+            guard let data = self.userDefaults.data(forKey: self.getAccountKey(Keys.settings)) else {
+                return nil
+            }
             do {
-                let settings = try decoder.decode(Settings.self, from: data)
-                return settings
+                return try JSONDecoder().decode(Settings.self, from: Data(data))
             } catch {
                 LoggerService.log(level: .error, key: "SETTINGS_SCHEMA_INVALID", details: [:])
+                return nil
             }
         }
-        return nil
     }
 
     /**
      * Clears the settings from local storage.
      */
     func clearSettings() {
-        userDefaults.removeObject(forKey: getAccountKey(Keys.settings))
+        performOnStorageQueue {
+            self.userDefaults.removeObject(forKey: self.getAccountKey(Keys.settings))
+        }
     }
 
     /**
@@ -153,11 +232,13 @@ class StorageService {
      * - Returns: The expiry time as an Int64 if available, otherwise nil.
      */
     func getSettingExpiry() -> Int64? {
-        let data = userDefaults.value(forKey: getAccountKey(Keys.settingExpiry))
-        if let expiryTime = data as? Int64 {
-            return expiryTime
+        return performOnStorageQueue {
+            let data = self.userDefaults.value(forKey: self.getAccountKey(Keys.settingExpiry))
+            if let expiryTime = data as? Int64 {
+                return expiryTime
+            }
+            return nil
         }
-        return nil
     }
 
 
@@ -204,11 +285,13 @@ class StorageService {
      * - Returns: The expiry time as an Int64 if available, otherwise nil.
      */
     func getUserDetailExpiry() -> Int64? {
-        let data = userDefaults.value(forKey: getAccountKey(Keys.userDetailExpiry))
-        if let expiryTime = data as? Int64 {
-            return expiryTime
+        return performOnStorageQueue {
+            let data = self.userDefaults.value(forKey: self.getAccountKey(Keys.userDetailExpiry))
+            if let expiryTime = data as? Int64 {
+                return expiryTime
+            }
+            return nil
         }
-        return nil
     }
 
     /**
@@ -217,14 +300,18 @@ class StorageService {
      * - Parameter timeInterval: The expiry time to be saved.
      */
     func saveUserDetailExpiry(timeInterval: Int64) {
-        userDefaults.set(timeInterval, forKey: getAccountKey(Keys.userDetailExpiry))
+        performOnStorageQueue {
+            self.userDefaults.set(timeInterval, forKey: self.getAccountKey(Keys.userDetailExpiry))
+        }
     }
 
     /**
      * Clears the user detail expiry time from local storage.
      */
     func clearUserDetailExpiry() {
-        userDefaults.removeObject(forKey: getAccountKey(Keys.userDetailExpiry))
+        performOnStorageQueue {
+            self.userDefaults.removeObject(forKey: self.getAccountKey(Keys.userDetailExpiry))
+        }
     }
 
     /**
@@ -262,12 +349,13 @@ class StorageService {
      * It creates and save the Device ID
      */
     func getDeviceId() -> String? {
-        if let existingId = userDefaults.string(forKey: Keys.deviceIdKey) {
-            return existingId
-        } else {
-             let vendorIdentifier = DeviceIDUtil.genrateDeviceId()
-                userDefaults.set(vendorIdentifier, forKey: Keys.deviceIdKey)
-                return vendorIdentifier
+        return performOnStorageQueue {
+            if let existingId = self.userDefaults.string(forKey: Keys.deviceIdKey) {
+                return existingId
+            }
+            let vendorIdentifier = DeviceIDUtil.genrateDeviceId()
+            self.userDefaults.set(vendorIdentifier, forKey: Keys.deviceIdKey)
+            return vendorIdentifier
         }
     }
 
@@ -277,20 +365,28 @@ class StorageService {
      * - Returns: The GatewayService object if available and valid, otherwise nil.
      */
     func getUserDetail() -> GatewayService? {
-        if !self.isCachedUserDetailValid() {
-            return nil
-        }
+        return performOnStorageQueue {
+            if !self.isCachedUserDetailValidUnlocked() {
+                return nil
+            }
 
-        if let gatewayData = userDefaults.data(forKey: getAccountKey(Keys.userDetail)) {
-            let decoder = JSONDecoder()
+            let key = self.getAccountKey(Keys.userDetail)
+            guard let gatewayData = self.userDefaults.data(forKey: key), !gatewayData.isEmpty else {
+                return nil
+            }
+
+            // Copy bytes so decode is isolated from concurrent UserDefaults buffer reuse.
+            let dataCopy = Data(gatewayData)
             do {
-                let gatewayResponse = try decoder.decode(GatewayService.self, from: gatewayData)
-                return gatewayResponse
+                return try JSONDecoder().decode(GatewayService.self, from: dataCopy)
             } catch {
+                // Clear corrupt/partial cache written by a previous race so later calls stay healthy.
+                self.userDefaults.removeObject(forKey: key)
+                self.userDefaults.removeObject(forKey: self.getAccountKey(Keys.userDetailExpiry))
                 LoggerService.log(level: .error, key: "STORED_DATA_ERROR", details: ["err": "\(error.localizedDescription)"])
+                return nil
             }
         }
-        return nil
     }
 
     /**
@@ -299,15 +395,17 @@ class StorageService {
      * - Parameter userDetail: The GatewayService object to be saved.
      */
     func saveUserDetail(userDetail: GatewayService) {
-        let encoder = JSONEncoder()
-        do {
-            let data = try encoder.encode(userDetail)
-            userDefaults.set(data, forKey: getAccountKey(Keys.userDetail))
+        performOnStorageQueue {
+            let encoder = JSONEncoder()
+            do {
+                let data = try encoder.encode(userDetail)
+                self.userDefaults.set(data, forKey: self.getAccountKey(Keys.userDetail))
 
-            let timeExpiry = Date().currentTimeMillis() + Constants.LOCATION_EXPIRY
-            self.saveUserDetailExpiry(timeInterval: timeExpiry)
-        } catch {
-            LoggerService.log(level: .error, key: "ERROR_STORING_DATA_IN_STORAGE", details: ["err": "\(error.localizedDescription)"])
+                let timeExpiry = Date().currentTimeMillis() + Constants.LOCATION_EXPIRY
+                self.userDefaults.set(timeExpiry, forKey: self.getAccountKey(Keys.userDetailExpiry))
+            } catch {
+                LoggerService.log(level: .error, key: "ERROR_STORING_DATA_IN_STORAGE", details: ["err": "\(error.localizedDescription)"])
+            }
         }
     }
 
@@ -315,7 +413,9 @@ class StorageService {
      * Clears the user detail from local storage.
      */
     func clearUserDetail() {
-        userDefaults.removeObject(forKey: getAccountKey(Keys.userDetail))
+        performOnStorageQueue {
+            self.userDefaults.removeObject(forKey: self.getAccountKey(Keys.userDetail))
+        }
     }
 
     /**
@@ -458,7 +558,15 @@ class StorageService {
      * - Returns: A Bool indicating if the cached user detail is valid.
      */
     func isCachedUserDetailValid() -> Bool {
-        let savedExpiryTime = self.getUserDetailExpiry()
+        return performOnStorageQueue {
+            return self.isCachedUserDetailValidUnlocked()
+        }
+    }
+
+    /// Must be called on `storageQueue`.
+    private func isCachedUserDetailValidUnlocked() -> Bool {
+        let data = userDefaults.value(forKey: getAccountKey(Keys.userDetailExpiry))
+        let savedExpiryTime = data as? Int64
         let now = Date().currentTimeMillis()
         if let expiryTime = savedExpiryTime {
             return now < expiryTime
@@ -494,31 +602,48 @@ class StorageService {
     /**
      * Retrieves data from storage for a specific feature key and context.
      *
-     * - Parameters:
-     *   - featureKey: The key for the feature.
-     *   - context: The context containing user information.
-     * - Returns: A dictionary of stored data if available, otherwise nil.
+     * Order: persistent local storage → decision cache → nil.
      */
     private func getDataInStorage(featureKey: String?, context: WingifyUserContext) -> [String: Any]? {
-        guard let featureKey = featureKey else { return nil }
-        guard let userId = context.id else { return nil }
+        return getDataInStorageWithSource(featureKey: featureKey, context: context).data
+    }
 
-        // Include account prefix to ensure isolation between instances
+    /**
+     * Same as `getDataInStorage`, also reporting whether the hit was persistent or decision-cache.
+     */
+    private func getDataInStorageWithSource(
+        featureKey: String?,
+        context: WingifyUserContext
+    ) -> (data: [String: Any]?, source: FeatureStorageSource?) {
+        guard let featureKey = featureKey else { return (nil, nil) }
+        guard let userId = context.id else { return (nil, nil) }
+
         let baseStorageKey = "\(featureKey)_\(userId)"
         let storageKey = getAccountKey(baseStorageKey)
-        
-        if let connector = StorageConnectorProvider.shared.getStorageConnector() {
-            if let data = connector.get(forKey: storageKey) {
-                return data
-            } else {
-                return nil
+
+        return performOnStorageQueue {
+            // During an active getFlags/fetchFlags write-to-cache session, prefer the
+            // in-memory decision so MEG siblings stay consistent within the call.
+            if self.useDecisionCacheOnly, let cached = self.decisionCache[storageKey] {
+                return (cached, .decisionCache)
             }
-        } else {
-            if let data = userDefaults.dictionary(forKey: storageKey) {
-                return data
-            } else {
-                return nil
+
+            // 1) Persistent local / connector storage
+            if let connector = StorageConnectorProvider.shared.getStorageConnector() {
+                if let data = connector.get(forKey: storageKey) {
+                    return (data, .persistent)
+                }
+            } else if let data = self.userDefaults.dictionary(forKey: storageKey) {
+                return (data, .persistent)
             }
+
+            // 2) In-memory decision cache left by a prior getFlags / fetchFlags
+            if let cached = self.decisionCache[storageKey] {
+                return (cached, .decisionCache)
+            }
+
+            // 3) Miss → caller evaluates
+            return (nil, nil)
         }
     }
 
@@ -567,11 +692,19 @@ class StorageService {
         // Include account prefix to ensure isolation between instances
         let baseStorageKey = "\(featureKey)_\(userId)"
         let storageKey = getAccountKey(baseStorageKey)
-        
-        if let connector = StorageConnectorProvider.shared.getStorageConnector() {
-            connector.set(dataToStore, forKey: storageKey)
-        } else {
-            userDefaults.set(dataToStore, forKey: storageKey)
+
+        performOnStorageQueue {
+            // getFlags without impressions: keep decisions in memory only so a later
+            // getFlag does not hit STORED_VARIATION_FOUND and skip variationShown.
+            if self.useDecisionCacheOnly {
+                self.decisionCache[storageKey] = data
+                return
+            }
+            if let connector = StorageConnectorProvider.shared.getStorageConnector() {
+                connector.set(dataToStore, forKey: storageKey)
+            } else {
+                self.userDefaults.set(dataToStore, forKey: storageKey)
+            }
         }
     }
 
@@ -586,16 +719,61 @@ class StorageService {
      * - Returns: true if update was performed, false if no existing data.
      */
     func updateDataInStorage(featureKey: String, context: WingifyUserContext, data: [String: Any]) -> Bool {
-        guard var existingData = getDataInStorage(featureKey: featureKey, context: context) else {
-            return false
+        return performOnStorageQueue {
+            guard var existingData = self.getDataInStorageUnlocked(featureKey: featureKey, context: context) else {
+                return false
+            }
+            existingData["featureKey"] = featureKey
+            existingData["userId"] = context.id
+            for (key, value) in data {
+                existingData[key] = value
+            }
+            self.setDataInStorageUnlocked(data: existingData)
+            return true
         }
-        existingData["featureKey"] = featureKey
-        existingData["userId"] = context.id
-        for (key, value) in data {
-            existingData[key] = value
+    }
+
+    /// Must be called on `storageQueue`.
+    /// During getFlags: decision cache first; otherwise persistent → decision cache → nil.
+    private func getDataInStorageUnlocked(featureKey: String?, context: WingifyUserContext) -> [String: Any]? {
+        guard let featureKey = featureKey else { return nil }
+        guard let userId = context.id else { return nil }
+        let baseStorageKey = "\(featureKey)_\(userId)"
+        let storageKey = getAccountKey(baseStorageKey)
+
+        if useDecisionCacheOnly, let cached = decisionCache[storageKey] {
+            return cached
         }
-        setDataInStorage(data: existingData)
-        return true
+        if let connector = StorageConnectorProvider.shared.getStorageConnector() {
+            if let data = connector.get(forKey: storageKey) {
+                return data
+            }
+        } else if let data = userDefaults.dictionary(forKey: storageKey) {
+            return data
+        }
+        if let cached = decisionCache[storageKey] {
+            return cached
+        }
+        return nil
+    }
+
+    /// Must be called on `storageQueue`. Validation is expected to already have passed.
+    private func setDataInStorageUnlocked(data: [String: Any]) {
+        guard let featureKey = data["featureKey"] as? String, let userId = data["userId"] as? String else {
+            return
+        }
+        let baseStorageKey = "\(featureKey)_\(userId)"
+        let storageKey = getAccountKey(baseStorageKey)
+        if useDecisionCacheOnly || decisionCache[storageKey] != nil {
+            // Keep updates in the cache when caching is active or the entry originated there.
+            decisionCache[storageKey] = data
+            return
+        }
+        if let connector = StorageConnectorProvider.shared.getStorageConnector() {
+            connector.set(data, forKey: storageKey)
+        } else {
+            userDefaults.set(data, forKey: storageKey)
+        }
     }
 
     /**
@@ -634,13 +812,40 @@ class StorageService {
     /**
      * Retrieves a feature from storage for a specific feature key and context.
      *
-     * - Parameters:
-     *   - featureKey: The key for the feature.
-     *   - context: The context containing user information.
-     * - Returns: A dictionary of stored data if available, otherwise nil.
+     * Order: persistent local → decision cache → nil (then evaluate).
      */
     func getFeatureFromStorage(featureKey: String, context: WingifyUserContext) -> [String : Any]? {
         return self.getDataInStorage(featureKey: featureKey, context: context)
+    }
+
+    /**
+     * Retrieves a feature decision and whether it came from persistent storage or the
+     * in-memory decision cache left by `getFlags` / `fetchFlags`.
+     */
+    func getFeatureFromStorageWithSource(
+        featureKey: String,
+        context: WingifyUserContext
+    ) -> (data: [String: Any]?, source: FeatureStorageSource?) {
+        return getDataInStorageWithSource(featureKey: featureKey, context: context)
+    }
+
+    /**
+     * Moves a decision-cache entry into persistent storage and removes it from the cache.
+     * Used when `getFlag` serves a cached `fetchFlags` decision and sends impressions.
+     */
+    func promoteDecisionCacheToPersistentStorage(featureKey: String, context: WingifyUserContext) {
+        guard let userId = context.id else { return }
+        let baseStorageKey = "\(featureKey)_\(userId)"
+        let storageKey = getAccountKey(baseStorageKey)
+
+        performOnStorageQueue {
+            guard let data = self.decisionCache.removeValue(forKey: storageKey) else { return }
+            if let connector = StorageConnectorProvider.shared.getStorageConnector() {
+                connector.set(data, forKey: storageKey)
+            } else {
+                self.userDefaults.set(data, forKey: storageKey)
+            }
+        }
     }
 
 }

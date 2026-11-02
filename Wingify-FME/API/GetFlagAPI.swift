@@ -24,21 +24,54 @@ class GetFlagAPI {
      * @param context  WingifyUserContext object containing the user context.
      * @param hookManager  HooksManager object containing the integrations.
      * @param serviceContainer ServiceContainer instance for service access.
+     * @param shouldSendTrackingCalls When false, variationShown is deferred for `exposeResult`
+     *        (used by `fetchFlags` / `getFlags`). Defaults to true for direct `getFlag`.
      * @return GetFlag object containing the flag value.
      */
-    static func getFlag(featureKey: String, settings: Settings, context: WingifyUserContext, hookManager: HooksManager, serviceContainer: ServiceContainer, completion: @escaping (GetFlag) -> Void) {
+    static func getFlag(
+        featureKey: String,
+        settings: Settings,
+        context: WingifyUserContext,
+        hookManager: HooksManager,
+        serviceContainer: ServiceContainer,
+        shouldSendTrackingCalls: Bool = true,
+        completion: @escaping (GetFlag) -> Void
+    ) {
         
         let getFlag = GetFlag()
-        let queueFlag = DispatchQueue(label: "com.wingify.fme.getflag",qos: .userInitiated, attributes: .concurrent)
-        let dispatchGroup = DispatchGroup()
-        dispatchGroup.enter()
-        queueFlag.async {
-            
+        // Run evaluation on the calling thread.
+        // Nested DispatchQueue.async + wait() under parallel getFlags exhausted the
+        // thread pool and caused hangs/crashes; the previous wait made this sync anyway.
+        defer { completion(getFlag) }
+
             var shouldCheckForExperimentsRules = false
             var passedRulesInformation: [String: Any] = [:]
             var evaluatedFeatureMap: [String: Any] = [:]
             let variationShownTracker = VariationShownTracker()
             let triggerCallbackEveryTime = serviceContainer.getWingifyInitOptions().shouldTriggerIntegrationCallbackAlways
+            // Sticky awaiting expose must not auto-send even if caller asked for shouldSend=true.
+            var suppressAutoSendDueToPendingExpose = false
+            var didFlushImpressions = false
+
+            func effectiveShouldSend() -> Bool {
+                shouldSendTrackingCalls && !suppressAutoSendDueToPendingExpose
+            }
+
+            func flushImpressions(feature: Feature?) {
+                guard !didFlushImpressions else { return }
+                didFlushImpressions = true
+                let enqueued = ImpressionExposureHelper.record(
+                    settings: settings,
+                    impressionPayload: variationShownTracker.payload,
+                    context: context,
+                    serviceContainer: serviceContainer,
+                    shouldSendTrackingCalls: effectiveShouldSend(),
+                    getFlag: getFlag,
+                    featureKey: featureKey,
+                    feature: feature
+                )
+                variationShownTracker.markSent(enqueued)
+            }
             
             // get feature object from feature key
             let feature: Feature? = FunctionUtil.getFeatureFromKey(settings: settings, featureKey: featureKey)
@@ -59,6 +92,7 @@ class GetFlagAPI {
 
                 serviceContainer.getLoggerService()?.errorLog(key: "FEATURE_NOT_FOUND",data: ["featureKey":featureKey], debugData: debugEventProps)
                 getFlag.setIsEnabled(isEnabled: false)
+                flushImpressions(feature: nil)
                 UserTrackingUsageUtil.shouldTrackUsage(
                     settings: settings,
                     context: context,
@@ -68,7 +102,6 @@ class GetFlagAPI {
                     flag: getFlag,
                     variationShownSent: false
                 )
-                dispatchGroup.leave()
                 return
             }
             
@@ -204,6 +237,7 @@ class GetFlagAPI {
                             Self.updateDebugEventProps(&debugEventProps, decision: decision)
                             DebuggerServiceUtil.sendDebugEventToWingify(eventProps: debugEventProps, serviceContainer: serviceContainer)
                         }
+                        flushImpressions(feature: feature)
                         UserTrackingUsageUtil.shouldTrackStoredDecision(
                             settings: settings,
                             context: context,
@@ -212,7 +246,6 @@ class GetFlagAPI {
                             serviceContainer: serviceContainer,
                             variationShownSent: variationShownTracker.sent
                         )
-                        dispatchGroup.leave()
                         return
                     }
                         
@@ -258,6 +291,13 @@ class GetFlagAPI {
                                 }
                                 decision["isUserPartOfCampaign"] = true
                                 decision.merge(passedRulesInformation) { (_, new) in new }
+                                if storedData.variationShownSent == false {
+                                    suppressAutoSendDueToPendingExpose = true
+                                    serviceContainer.getLoggerService()?.log(level: .info, key: "CACHED_AWAITING_EXPOSE", details: [
+                                        Constants.USER_ID: context.id ?? "",
+                                        "featureKey": featureKey
+                                    ])
+                                }
                                 if triggerCallbackEveryTime {
                                     DecisionUtil.applyContextVariablesToIntegrationDecision(
                                         settings: settings,
@@ -275,7 +315,8 @@ class GetFlagAPI {
                                     Self.updateDebugEventProps(&debugEventProps, decision: decision)
                                     DebuggerServiceUtil.sendDebugEventToWingify(eventProps: debugEventProps, serviceContainer: serviceContainer)
                                 }
-                                UserTrackingUsageUtil.shouldTrackStoredDecision(
+                                flushImpressions(feature: feature)
+                        UserTrackingUsageUtil.shouldTrackStoredDecision(
                                     settings: settings,
                                     context: context,
                                     featureKey: featureKey,
@@ -283,7 +324,6 @@ class GetFlagAPI {
                                     serviceContainer: serviceContainer,
                                     variationShownSent: variationShownTracker.sent
                                 )
-                                dispatchGroup.leave()
                                 return
                             }
                         }
@@ -336,6 +376,13 @@ class GetFlagAPI {
                             getFlag.setIsEnabled(isEnabled: true)
                             getFlag.setVariables(variation.variables)
                             decision["isUserPartOfCampaign"] = true
+                            if storedData.variationShownSent == false {
+                                suppressAutoSendDueToPendingExpose = true
+                                serviceContainer.getLoggerService()?.log(level: .info, key: "CACHED_AWAITING_EXPOSE", details: [
+                                    Constants.USER_ID: context.id ?? "",
+                                    "featureKey": featureKey
+                                ])
+                            }
                             var featureInfo: [String: Any] = [:]
                             featureInfo["rolloutId"] = rolloutId
                             featureInfo["rolloutKey"] = rolloutKey
@@ -361,7 +408,8 @@ class GetFlagAPI {
                                 Self.updateDebugEventProps(&debugEventProps, decision: decision)
                                 DebuggerServiceUtil.sendDebugEventToWingify(eventProps: debugEventProps, serviceContainer: serviceContainer)
                             }
-                            UserTrackingUsageUtil.shouldTrackStoredDecision(
+                            flushImpressions(feature: feature)
+                        UserTrackingUsageUtil.shouldTrackStoredDecision(
                                 settings: settings,
                                 context: context,
                                 featureKey: featureKey,
@@ -369,7 +417,6 @@ class GetFlagAPI {
                                 serviceContainer: serviceContainer,
                                 variationShownSent: variationShownTracker.sent
                             )
-                            dispatchGroup.leave()
                             return
                         }
                     }
@@ -434,13 +481,23 @@ class GetFlagAPI {
                 holdoutStorageMap[Constants.Holdouts.KEY_STORAGE_HOLDOUT_IDS] = holdoutGroups.compactMap { $0.id }
                 holdoutStorageMap[Constants.Holdouts.KEY_STORAGE_NOT_IN_HOLDOUT_IDS] = holdoutResult.notMatchedHoldoutGroups.compactMap { $0.id }
                 holdoutStorageMap["holdout"] = true
+                holdoutStorageMap[Constants.KEY_VARIATION_SHOWN_SENT] = effectiveShouldSend()
                 storageService.setDataInStorage(data: holdoutStorageMap)
 
                 getFlag.setIsEnabled(isEnabled: false)
                 getFlag.setVariables([])
                 hookManager.set(properties: decision)
                 hookManager.execute(properties: hookManager.get())
-                dispatchGroup.leave()
+                flushImpressions(feature: feature)
+                UserTrackingUsageUtil.shouldTrackUsage(
+                    settings: settings,
+                    context: context,
+                    featureKey: featureKey,
+                    feature: feature,
+                    serviceContainer: serviceContainer,
+                    flag: getFlag,
+                    variationShownSent: variationShownTracker.sent
+                )
                 return
             }
             
@@ -576,6 +633,8 @@ class GetFlagAPI {
                 let newExpiry = Date().currentTimeMillis() + cachedDecisionExpiryTime
                 storageMap["decisionExpiryTime"] = newExpiry
             }
+            // Sticky decision write: false when deferred (fetchFlags); true when sending now.
+            storageMap[Constants.KEY_VARIATION_SHOWN_SENT] = effectiveShouldSend()
             storageService.setDataInStorage(data: storageMap)
 
             // Execute the integrations
@@ -613,6 +672,7 @@ class GetFlagAPI {
                 )
             }
 
+            flushImpressions(feature: feature)
             UserTrackingUsageUtil.shouldTrackUsage(
                 settings: settings,
                 context: context,
@@ -620,12 +680,8 @@ class GetFlagAPI {
                 feature: feature,
                 serviceContainer: serviceContainer,
                 flag: getFlag,
-                variationShownSent: variationShownTracker.sent
+                variationShownSent: variationShownTracker.sent || getFlag.isImpressionAlreadySent()
             )
-            dispatchGroup.leave()
-        }
-        dispatchGroup.wait()
-        completion(getFlag)
     }
 
     /// Integration defaults: whether the feature uses any holdout, and cleared participation until evaluated.

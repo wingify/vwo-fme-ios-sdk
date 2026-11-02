@@ -27,6 +27,7 @@ struct SDKConfigurationProfile {
 
 enum ProductConfig {
     private static var currentProduct: ProductType = .wingify
+    private static let localizeLock = NSLock()
 
     private static let vwoConfiguration = SDKConfigurationProfile(
         displayName: "VWO",
@@ -83,6 +84,9 @@ enum ProductConfig {
     }
 
     static func localizeLogMessage(_ message: String?) -> String? {
+        localizeLock.lock()
+        defer { localizeLock.unlock() }
+
         guard let message = message else { return nil }
         guard currentProduct == .wingify else { return message }
 

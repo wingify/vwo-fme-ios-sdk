@@ -623,6 +623,10 @@ class NetworkUtil {
     
     // Sends a POST request to the VWO server
     static func sendPostApiRequest(properties: [String: String], payload: [String: Any], userAgent: String?, ipAddress: String?, campaignInfo: [String: Any]? = nil, serviceContainer: ServiceContainer? = nil) {
+        guard serviceContainer?.areNetworkRequestsAllowed != false else {
+            return
+        }
+
         NetworkManager.attachClient()
         
         let headers = createHeaders(userAgent: userAgent, ipAddress: ipAddress)
@@ -651,6 +655,7 @@ class NetworkUtil {
         // Set account info in request for multi-instance support
         request.accountId = accountId
         request.sdkKey = sdkKey
+        request.deferImmediateBatchUpload = serviceContainer?.deferImmediateBatchUpload ?? false
         
         NetworkManager.postAsync(request, serviceContainer: serviceContainer) { result in
                         
