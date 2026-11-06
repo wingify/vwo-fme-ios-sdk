@@ -198,6 +198,7 @@
 		BAFC4DC02FD6EB740087E01B /* BucketingIdResolver.swift in Sources */ = {isa = PBXBuildFile; fileRef = BAFC4DBF2FD6EB740087E01B /* BucketingIdResolver.swift */; };
 		BAFC4DC22FD6EC010087E01B /* SdkInitAndUsageStatsPayloadTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = BAFC4DC12FD6EC010087E01B /* SdkInitAndUsageStatsPayloadTests.swift */; };
 		EB373E6B2D9D2B51005713D1 /* Wingify_FME.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = EB06C7802C90229B00A25E07 /* Wingify_FME.framework */; };
+		FF70A0022FC861390087E01B /* FetchFlagsAndExposeResultTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = FF70A0012FC861390087E01B /* FetchFlagsAndExposeResultTests.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -390,6 +391,7 @@
 		BAFC4DC12FD6EC010087E01B /* SdkInitAndUsageStatsPayloadTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SdkInitAndUsageStatsPayloadTests.swift; sourceTree = "<group>"; };
 		EB06C7802C90229B00A25E07 /* Wingify_FME.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Wingify_FME.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		EB373E672D9D2B51005713D1 /* VWO-FMETests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "VWO-FMETests.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
+		FF70A0012FC861390087E01B /* FetchFlagsAndExposeResultTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FetchFlagsAndExposeResultTests.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -832,6 +834,7 @@
 			isa = PBXGroup;
 			children = (
 				BAE7B6442F67FCF9003FC298 /* CustomBucketingSeedTests.swift */,
+				FF70A0012FC861390087E01B /* FetchFlagsAndExposeResultTests.swift */,
 				BAFC4AAC2FC861390087E01B /* FlagTestDataLoader.swift */,
 				BAFC4AAD2FC861390087E01B /* GetFlagTest.json */,
 				BAFC4AAE2FC861390087E01B /* GetFlagTests.swift */,
@@ -1334,6 +1337,7 @@
 				BAFC4B7B2FC861390087E01B /* SegmentOperatorValueEnumTests.swift in Sources */,
 				BAFC4B7D2FC861390087E01B /* CoreDataStackCorruptionTests.swift in Sources */,
 				BAE7B6452F67FCF9003FC298 /* CustomBucketingSeedTests.swift in Sources */,
+				FF70A0022FC861390087E01B /* FetchFlagsAndExposeResultTests.swift in Sources */,
 				BAFC4B7F2FC861390087E01B /* GetFlagTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

@@ -20,6 +20,8 @@ jobs:
             xcode-version: '16.4'
             swift-version: '6.0'
             destination: 'platform=iOS Simulator,name=iPhone 16,OS=18.5'
+          # simctl still lists iOS 17.2, but xcodebuild on this image only
+          # offers iPhone 15 on iOS 18.1 and 18.2.
           - os: macos-14
             xcode-version: '15.4'
             swift-version: '5.10'

@@ -62,7 +62,7 @@ enum SDKState {
     // Private instance variable for WingifyClient
     private var wingifyClient: WingifyClient?
     
-    private init(wingifyClient: WingifyClient) {
+    init(wingifyClient: WingifyClient) {
         self.wingifyClient = wingifyClient
         super.init()
     }
@@ -378,6 +378,23 @@ enum SDKState {
     }
 
     /**
+     * Returns all feature keys from the current processed settings.
+     * Available after a successful `initialize`. Returns an empty array if settings are not ready.
+     */
+    public static func getFeatureKeys() -> [String] {
+        getDefaultInstance()?.getFeatureKeys() ?? []
+    }
+
+    /**
+     * Returns all trackable event identifiers from the current processed settings
+     * (feature metrics + holdout metrics). Available after a successful `initialize`.
+     * Returns an empty array if settings are not ready.
+     */
+    public static func getEventKeys() -> [String] {
+        getDefaultInstance()?.getEventKeys() ?? []
+    }
+
+    /**
      * Evaluates multiple feature flags and returns a `FlagCollection`.
      *
      * Pass `nil` or an empty array for `flagNames` to evaluate all feature keys from settings.
@@ -495,6 +512,41 @@ enum SDKState {
     }
 
     /**
+     * Returns all feature keys from the current processed settings for this instance.
+     * Available after a successful `initialize`. Returns an empty array if settings are not ready.
+     */
+    public func getFeatureKeys() -> [String] {
+        (wingifyClient?.processedSettings?.features ?? [])
+            .compactMap { $0.key }
+            .filter { !$0.isEmpty }
+    }
+
+    /**
+     * Returns all trackable event identifiers from this instance's processed settings
+     * (feature metrics + holdout metrics). Available after a successful `initialize`.
+     * Returns an empty array if settings are not ready.
+     */
+    public func getEventKeys() -> [String] {
+        guard let settings = wingifyClient?.processedSettings else { return [] }
+        var keys = Set<String>()
+        for feature in settings.features {
+            for metric in feature.metrics ?? [] {
+                if let identifier = metric.identifier, !identifier.isEmpty {
+                    keys.insert(identifier)
+                }
+            }
+        }
+        for holdout in settings.holdoutGroups ?? [] {
+            for metric in holdout.metrics ?? [] {
+                if let identifier = metric.identifier, !identifier.isEmpty {
+                    keys.insert(identifier)
+                }
+            }
+        }
+        return Array(keys)
+    }
+
+    /**
      * Evaluates multiple feature flags and returns a `FlagCollection`.
      *
      * Pass `nil` or an empty array for `flagNames` to evaluate all feature keys from settings.
@@ -581,6 +633,8 @@ enum SDKState {
 
         let storageService = serviceContainer.storage ?? StorageService()
         let raw = storageService.getFeatureFromStorage(featureKey: featureKey, context: userId)
+        // Enabled when an experiment/rollout assignment exists. Holdout-only sticky
+        // stays disabled but must still rebuild holdout variationShown rows on expose.
         let storedEnabled: Bool = {
             guard let raw = raw else { return false }
             if raw["experimentVariationId"] != nil { return true }

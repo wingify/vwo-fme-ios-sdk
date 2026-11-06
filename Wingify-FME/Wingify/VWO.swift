@@ -71,6 +71,7 @@ public typealias VWOStorageConnector = WingifyStorageConnector
                          postSegmentationVariables: [String]? = nil,
                          bucketingSeed: String? = nil,
                          ipAddress: String? = nil) {
+
         ProductConfig.use(.vwo)
         super.init(id: id,
                    shouldUseDeviceIdAsUserId: shouldUseDeviceIdAsUserId,
@@ -128,6 +129,12 @@ public typealias VWOStorageConnector = WingifyStorageConnector
     public static func getFlag(featureKey: String, context: VWOUserContext, completion: @escaping (GetFlag) -> Void) {
         ProductConfig.use(.vwo)
         WingifyFme.getFlag(featureKey: featureKey, context: context, completion: completion)
+    }
+
+    @available(*, deprecated, message: "VWO-branded API is deprecated. Use WingifyFme.getFeatureKeys() instead.")
+    public static func getFeatureKeys() -> [String] {
+        ProductConfig.use(.vwo)
+        return WingifyFme.getFeatureKeys()
     }
 
     /**

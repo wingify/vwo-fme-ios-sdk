@@ -25,15 +25,15 @@ import Foundation
  */
 @objc public class WingifyUserContext:NSObject {
     var id: String?
-    var userAgent: String = Constants.USER_AGENT_VALUE
+    @objc public var userAgent: String = Constants.USER_AGENT_VALUE
     var ipAddress: String = ""
     var customVariables: [String: Any] = [:]
     var variationTargetingVariables: [String: Any] = [:]
     var vwo: GatewayService?
     var shouldUseDeviceIdAsUserId: Bool = false
-    /// Optional custom bucketing seed. When set, it is used for bucketing instead of id.
-    var bucketingSeed: String? = nil
     var postSegmentationVariables: [String]? = nil
+    /// Optional seed used for consistent bucketing. When set, it is used instead of the user id.
+    @objc public var bucketingSeed: String? = nil
 
     internal lazy var uuid: String = {
         let settingManager = SettingsManager.instance
@@ -80,6 +80,7 @@ import Foundation
             shouldUseDeviceIdAsUserId: shouldUseDeviceIdAsUserId,
             customVariables: customVariables,
             postSegmentationVariables: postSegmentationVariables,
+            bucketingSeed: bucketingSeed,
             ipAddress: ipAddress
         )
         copy.userAgent = userAgent
